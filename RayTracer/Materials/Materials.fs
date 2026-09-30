@@ -182,8 +182,8 @@ type EmissiveMaterial(lightColour: Colour, lightIntensity: float) =
     default _.BounceMethod _ = [||]
     default _.Bounce(_, hit, _) = if hit.FrontFace then radiance else Colour.Black
 
-type TransparentRay(origin: Point, direction: Vector, refracted: bool, isInside: bool) =
-    inherit Ray(origin, direction)
+type TransparentRay(origin: Point, direction: Vector, refracted: bool, isInside: bool, shutterTime: float) =
+    inherit Ray(origin, direction, shutterTime)
     member _.Refracted = refracted
     member _.IsInside = isInside
 
@@ -218,7 +218,7 @@ type TransparentMaterial
         let etaT, etaI = this.Indices hit
         let normal = if hit.FrontFace then hit.GeometricNormal else -hit.GeometricNormal
         match SurfaceSampling.dielectric hit.Ray.GetDirection normal etaI etaT with
-        | _, Some direction -> TransparentRay(hit.OffsetPoint direction, direction, true, hit.FrontFace)
+        | _, Some direction -> TransparentRay(hit.OffsetPoint direction, direction, true, hit.FrontFace, hit.Ray.ShutterTime)
         | _, None -> invalidOp "Total internal reflection has no refracted ray."
 
     default _.IsRecursive = true
@@ -238,11 +238,11 @@ type TransparentMaterial
         let normal = if hit.FrontFace then hit.GeometricNormal else -hit.GeometricNormal
         let incoming = hit.Ray.GetDirection.Normalise
         let reflection = (incoming - 2. * (incoming * normal) * normal).Normalise
-        let reflected = TransparentRay(hit.OffsetPoint reflection, reflection, false, not hit.FrontFace) :> Ray
+        let reflected = TransparentRay(hit.OffsetPoint reflection, reflection, false, not hit.FrontFace, hit.Ray.ShutterTime) :> Ray
         match SurfaceSampling.dielectric incoming normal etaI etaT with
         | _, None -> [| reflected |]
         | _, Some direction ->
-            [| reflected; TransparentRay(hit.OffsetPoint direction, direction, true, hit.FrontFace) :> Ray |]
+            [| reflected; TransparentRay(hit.OffsetPoint direction, direction, true, hit.FrontFace, hit.Ray.ShutterTime) :> Ray |]
 
 [<Struct>]
 type ScatteredRay =

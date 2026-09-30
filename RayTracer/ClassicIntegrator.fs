@@ -120,7 +120,7 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
 
     let shadowSegment (hit: HitPoint) (sample: LightSample) =
         let origin = hit.OffsetPoint sample.Direction
-        if Double.IsPositiveInfinity sample.Distance then Ray(origin, sample.Direction), infinity
+        if Double.IsPositiveInfinity sample.Distance then Ray(origin, sample.Direction, hit.Ray.ShutterTime), infinity
         else
             let target = hit.Point + sample.Distance * sample.Direction
             let delta = target - origin
@@ -129,7 +129,7 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
                 max (max (abs origin.X) (max (abs origin.Y) (abs origin.Z)))
                     (max (abs target.X) (max (abs target.Y) (abs target.Z)))
             let endpointMargin = 32. * 2.220446049250313e-16 * scale
-            Ray(origin, delta.Normalise), max 0. (Math.BitDecrement(distance - endpointMargin))
+            Ray(origin, delta.Normalise, hit.Ray.ShutterTime), max 0. (Math.BitDecrement(distance - endpointMargin))
 
     let visibility (ray: Ray) distance medium =
         if distance <= 0. then Colour.White

@@ -8,8 +8,13 @@ type ISampledCamera =
     abstract member CreateRay: x: int * y: int * key: uint64 * sample: int -> Ray
 
 [<AbstractClass>]
-type Camera(position: Tracer.Basics.Point, lookat: Tracer.Basics.Point, up: Vector, zoom: float, width: float, height: float, resX: int, resY: int) =
+type Camera(position: Tracer.Basics.Point, lookat: Tracer.Basics.Point, up: Vector, zoom: float, width: float, height: float, resX: int, resY: int,
+            ?shutterOpen: float, ?shutterClose: float) =
+    let shutterOpen = defaultArg shutterOpen 0.
+    let shutterClose = defaultArg shutterClose shutterOpen
     do
+        if not (Double.IsFinite shutterOpen) || not (Double.IsFinite shutterClose) || shutterClose < shutterOpen then
+            invalidArg "shutterClose" "The shutter interval must be finite and must not close before it opens."
         if not position.IsFinite || not lookat.IsFinite || position = lookat then
             invalidArg "lookat" "Camera position and target must be finite and distinct."
         if not up.IsFinite || up = Vector.Zero then
@@ -54,6 +59,23 @@ type Camera(position: Tracer.Basics.Point, lookat: Tracer.Basics.Point, up: Vect
         if x < 0 || x >= resX || y < 0 || y >= resY then
             invalidArg "pixel" "Pixel coordinates must lie within the camera resolution."
     member internal _.PixelKey x y = mixKey (uint64 y * uint64 resX + uint64 x)
+    member this.ShutterOpen = shutterOpen
+    member this.ShutterClose = shutterClose
+
+    /// Instant sampled by camera sample `sample` of `count`. Samples are stratified across the shutter,
+    /// with a per-pixel rotation and jitter so time is not correlated with the image-plane pattern.
+    /// A closed shutter returns ShutterOpen exactly, so still renders are unchanged.
+    member internal _.ShutterTimeAt(key: uint64, sample: int, count: int) =
+        if shutterClose = shutterOpen then shutterOpen
+        else
+            let timeKey = mixKey (key ^^^ 0x73687574746572UL)
+            let count = max 1 count
+            // Rotate whole strata per pixel so each stratum still receives exactly one sample.
+            let rotation, _ = sample2D (mixKey timeKey) 0
+            let stratum = (sample + int (rotation * float count)) % count
+            let jitter, _ = sample2D timeKey sample
+            let u = (float stratum + jitter) / float count
+            shutterOpen + u * (shutterClose - shutterOpen)
 
     // Built-in cameras use the sampled fast path; array-only subclasses retain their existing implementation.
     member this.SampleCount =

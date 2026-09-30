@@ -4,8 +4,8 @@ open Tracer.Basics.Sampling
 
 type PinholeCamera(position: Tracer.Basics.Point, lookat: Tracer.Basics.Point,
                     up: Vector, zoom: float, width: float, height: float, 
-                    resX: int, resY: int, sampler : Sampler) =
-    inherit Camera(position, lookat, up, zoom, width, height, resX, resY)
+                    resX: int, resY: int, sampler : Sampler, ?shutterOpen: float, ?shutterClose: float) =
+    inherit Camera(position, lookat, up, zoom, width, height, resX, resY, ?shutterOpen = shutterOpen, ?shutterClose = shutterClose)
 
     default this.CreateRays x y =
         this.CreateRaysAt x y (this.PixelKey x y)
@@ -22,7 +22,7 @@ type PinholeCamera(position: Tracer.Basics.Point, lookat: Tracer.Basics.Point,
             Vector(px * v.X + py * u.X - zoom * w.X,
                    px * v.Y + py * u.Y - zoom * w.Y,
                    px * v.Z + py * u.Z - zoom * w.Z).Normalise
-        Ray(this.Position, direction)
+        Ray(this.Position, direction, this.ShutterTimeAt(key, sample, sampler.SampleCount))
 
     override this.CreateRaysAt x y key =
         Array.init sampler.SampleCount (fun sample -> this.RayAt(x, y, key, sample))

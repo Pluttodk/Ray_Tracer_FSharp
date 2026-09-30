@@ -225,7 +225,7 @@ type PathIntegrator
                                                 (max (abs target.X) (max (abs target.Y) (abs target.Z)))
                                         let margin = 32. * 2.220446049250313e-16 * scale
                                         max 0. (Math.BitDecrement(delta.Magnitude - margin))
-                                let shadowRay = Ray(origin, sample.Direction)
+                                let shadowRay = Ray(origin, sample.Direction, hit.Ray.ShutterTime)
                                 let transmittance = visibility shadowRay maximum mediumFilter
                                 if not transmittance.IsBlack then
                                     let radiance = mulColour sample.Radiance transmittance

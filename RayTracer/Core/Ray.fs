@@ -1,9 +1,13 @@
 ﻿namespace Tracer.Basics
 
-type Ray(origin: Point, direction: Vector) = 
+/// shutterTime is the instant (in scene seconds) the ray samples; it drives motion blur and is
+/// unrelated to the ray parameter t used by PointAtTime/TimeAtPoint.
+type Ray(origin: Point, direction: Vector, shutterTime: float) = 
     static let none = Ray(Point.Zero, Vector.Zero)
+    new(origin: Point, direction: Vector) = Ray(origin, direction, 0.)
     member this.GetOrigin = origin
     member this.GetDirection = direction
+    member this.ShutterTime = shutterTime
     member this.IsValid =
         origin.IsFinite && direction.IsFinite
         && (direction.X <> 0. || direction.Y <> 0. || direction.Z <> 0.)
@@ -29,16 +33,17 @@ type Ray(origin: Point, direction: Vector) =
         else parameter p.Z origin.Z direction.Z
 
     member this.Invert = 
-        Ray(origin, direction.Invert)
+        Ray(origin, direction.Invert, shutterTime)
 
     static member None = 
         none
 
-    override this.GetHashCode() = hash (this.GetOrigin, this.GetDirection)
+    override this.GetHashCode() = hash (this.GetOrigin, this.GetDirection, shutterTime)
     override this.Equals(other) =
         match other with
         | :? Ray as r -> if (this.GetOrigin.Equals(r.GetOrigin)
-                         && this.GetDirection.Equals(r.GetDirection)) then true
+                         && this.GetDirection.Equals(r.GetDirection)
+                         && shutterTime.Equals(r.ShutterTime)) then true
                          else false
         | _ -> false
     

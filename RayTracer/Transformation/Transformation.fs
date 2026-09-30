@@ -187,3 +187,34 @@ open Tracer.Basics
 
 
     
+    let identityMatrix = defaultQuickMatrix
+    let identity = mkTransformation (defaultQuickMatrix, defaultQuickMatrix)
+
+    /// Builds a transformation from an affine matrix (bottom row 0 0 0 1), computing its inverse.
+    let ofAffine (m: QuickMatrix) =
+        if not (finiteMatrix m) || m.Pos4x1 <> 0. || m.Pos4x2 <> 0. || m.Pos4x3 <> 0. || m.Pos4x4 <> 1. then
+            invalidArg (nameof m) "Expected a finite affine matrix."
+        let det =
+            m.Pos1x1 * (m.Pos2x2 * m.Pos3x3 - m.Pos2x3 * m.Pos3x2)
+            - m.Pos1x2 * (m.Pos2x1 * m.Pos3x3 - m.Pos2x3 * m.Pos3x1)
+            + m.Pos1x3 * (m.Pos2x1 * m.Pos3x2 - m.Pos2x2 * m.Pos3x1)
+        if det = 0. || not (Double.IsFinite det) || not (Double.IsFinite (1. / det)) then
+            invalidArg (nameof m) "An affine transformation must be invertible."
+        let i11 = (m.Pos2x2 * m.Pos3x3 - m.Pos2x3 * m.Pos3x2) / det
+        let i12 = (m.Pos1x3 * m.Pos3x2 - m.Pos1x2 * m.Pos3x3) / det
+        let i13 = (m.Pos1x2 * m.Pos2x3 - m.Pos1x3 * m.Pos2x2) / det
+        let i21 = (m.Pos2x3 * m.Pos3x1 - m.Pos2x1 * m.Pos3x3) / det
+        let i22 = (m.Pos1x1 * m.Pos3x3 - m.Pos1x3 * m.Pos3x1) / det
+        let i23 = (m.Pos1x3 * m.Pos2x1 - m.Pos1x1 * m.Pos2x3) / det
+        let i31 = (m.Pos2x1 * m.Pos3x2 - m.Pos2x2 * m.Pos3x1) / det
+        let i32 = (m.Pos1x2 * m.Pos3x1 - m.Pos1x1 * m.Pos3x2) / det
+        let i33 = (m.Pos1x1 * m.Pos2x2 - m.Pos1x2 * m.Pos2x1) / det
+        let inverse =
+            { defaultQuickMatrix with
+                Pos1x1 = i11; Pos1x2 = i12; Pos1x3 = i13
+                Pos1x4 = -(i11 * m.Pos1x4 + i12 * m.Pos2x4 + i13 * m.Pos3x4)
+                Pos2x1 = i21; Pos2x2 = i22; Pos2x3 = i23
+                Pos2x4 = -(i21 * m.Pos1x4 + i22 * m.Pos2x4 + i23 * m.Pos3x4)
+                Pos3x1 = i31; Pos3x2 = i32; Pos3x3 = i33
+                Pos3x4 = -(i31 * m.Pos1x4 + i32 * m.Pos2x4 + i33 * m.Pos3x4) }
+        mkTransformation (m, inverse)

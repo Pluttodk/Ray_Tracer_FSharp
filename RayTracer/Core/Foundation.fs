@@ -81,7 +81,7 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
         if not outgoing.IsFinite || outgoing.IsZero then
             invalidArg (nameof outgoing) "A spawned ray requires a finite, nonzero direction."
         let direction = outgoing.Normalise
-        Ray(this.OffsetPoint direction, direction)
+        Ray(this.OffsetPoint direction, direction, ray.ShutterTime)
 
     // Point at which the ray hit, a little above the surface (for reflected rays)
     member this.EscapedPoint: Point = this.OffsetPoint(if frontFace then geometric else -geometric)

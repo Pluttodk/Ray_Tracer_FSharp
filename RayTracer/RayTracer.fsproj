@@ -25,6 +25,7 @@
     <Compile Include="Materials/Textures.fs" />
     <Compile Include="Transformation/Transformation.fsi" />
     <Compile Include="Transformation/Transformation.fs" />
+    <Compile Include="Transformation/Motion.fs" />
     <Compile Include="Shapes/Shapes.fs" />
     <Compile Include="Shapes/CSG.fs" />
     <Compile Include="Shapes/BaseShape.fs" />

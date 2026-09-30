@@ -29,6 +29,7 @@
     <Compile Include="GeometryRegressionTests.fs" />
     <Compile Include="MeshRegressionTests.fs" />
     <Compile Include="NumericalRegressionTests.fs" />
+    <Compile Include="MotionTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

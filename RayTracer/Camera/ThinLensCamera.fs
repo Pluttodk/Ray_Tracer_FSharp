@@ -15,9 +15,11 @@ type ThinLensCamera
         r: float,
         f: float,
         viewSampler : Sampler,
-        lensSampler : Sampler
+        lensSampler : Sampler,
+        ?shutterOpen : float,
+        ?shutterClose : float
     ) = 
-    inherit Camera(position, lookat, up, zoom, width, height, resX, resY)
+    inherit Camera(position, lookat, up, zoom, width, height, resX, resY, ?shutterOpen = shutterOpen, ?shutterClose = shutterClose)
     do
         if not (System.Double.IsFinite r) || r < 0. then
             invalidArg "r" "Lens radius must be finite and nonnegative."
@@ -47,7 +49,7 @@ type ThinLensCamera
             Vector((px - lx) * v.X + (py - ly) * u.X - f * w.X,
                    (px - lx) * v.Y + (py - ly) * u.Y - f * w.Y,
                    (px - lx) * v.Z + (py - ly) * u.Z - f * w.Z).Normalise
-        Ray(origin, direction)
+        Ray(origin, direction, this.ShutterTimeAt(key, sample, sampleCount))
 
     override this.CreateRaysAt x y key =
         Array.init sampleCount (fun sample -> this.RayAt(x, y, key, sample))

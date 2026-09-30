@@ -22,7 +22,8 @@ let private suites: (string * (unit -> unit)) list =
       "lighting-regression", LightingRegressionTests.allTest
       "geometry", GeometryRegressionTests.allTest
       "mesh", MeshRegressionTests.allTest
-      "numerics", NumericalRegressionTests.allTest ]
+      "numerics", NumericalRegressionTests.allTest
+      "motion", MotionTests.allTest ]
 
 let private usage () =
     printfn "Usage: dotnet run --project UnitTests -- [--suite NAME | --suites NAME,NAME]..."

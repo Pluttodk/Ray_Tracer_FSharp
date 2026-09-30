@@ -23,7 +23,7 @@ module internal Geometry =
                     let cursor = Math.BitIncrement(minimum + 32.*2.2204460492503131e-16*max minimum originScale)
                     if not (Double.IsFinite cursor) || cursor >= maximum then HitPoint(ray)
                     else
-                        let hit = shape.hitFunction(Ray(ray.PointAtTime cursor, d))
+                        let hit = shape.hitFunction(Ray(ray.PointAtTime cursor, d, ray.ShutterTime))
                         if not hit.DidHit then HitPoint(ray)
                         else
                             HitPoint(ray, cursor+hit.Time, hit.GeometricNormal, hit.ShadingNormal,
@@ -302,37 +302,41 @@ type HollowCylinder(center: Point, radius: float, height: float, tex: Texture) =
 module Transform =
     let transformRay (ray: Ray) transformation =
         let inverse = getInvMatrix transformation
-        Ray(transformPoint(ray.GetOrigin, inverse), transformVector(ray.GetDirection, inverse))
+        Ray(transformPoint(ray.GetOrigin, inverse), transformVector(ray.GetDirection, inverse), ray.ShutterTime)
 
     let transformNormal (normal: Vector) transformation =
         transformVector(normal, (getInvMatrix transformation).transpose)
 
+    let internal transformBoundsBy matrix (box: BBox) =
+        if box.IsEmpty then box
+        else
+            let low, high = box.lowPoint, box.highPoint
+            let mutable newLow = transformPoint(low, matrix)
+            let mutable newHigh = newLow
+            for x in [low.X; high.X] do
+                for y in [low.Y; high.Y] do
+                    for z in [low.Z; high.Z] do
+                        let p = transformPoint(Point(x,y,z), matrix)
+                        newLow <- newLow.Lowest p
+                        newHigh <- newHigh.Highest p
+            BBox(newLow, newHigh)
+
+    let internal intersectLocal (shape: Shape) (owner: Shape) (ray: Ray) minimum maximum inverse (normalMatrix: QuickMatrix) =
+        // Do not normalize this direction: affine transforms preserve the original ray parameter.
+        let localRay = Ray(transformPoint(ray.GetOrigin, inverse), transformVector(ray.GetDirection, inverse), ray.ShutterTime)
+        let hit = Geometry.hitWithin shape localRay minimum maximum
+        if not hit.DidHit then HitPoint(ray)
+        else
+            HitPoint(ray, hit.Time, transformVector(hit.GeometricNormal, normalMatrix),
+                     transformVector(hit.ShadingNormal, normalMatrix), hit.Material, owner,
+                     hit.U, hit.V, hit.BarycentricBeta, hit.BarycentricGamma, true)
+
     let transform (shape: Shape) transformation =
         let matrix, inverse = getMatrix transformation, getInvMatrix transformation
         let normalMatrix = inverse.transpose
-        let transformBounds (box: BBox) =
-            if box.IsEmpty then box
-            else
-                let low, high = box.lowPoint, box.highPoint
-                let mutable newLow = transformPoint(low, matrix)
-                let mutable newHigh = newLow
-                for x in [low.X; high.X] do
-                    for y in [low.Y; high.Y] do
-                        for z in [low.Z; high.Z] do
-                            let p = transformPoint(Point(x,y,z), matrix)
-                            newLow <- newLow.Lowest p
-                            newHigh <- newHigh.Highest p
-                BBox(newLow, newHigh)
-        let bounds = lazy (shape.Bounds |> Option.map transformBounds)
+        let bounds = lazy (shape.Bounds |> Option.map (transformBoundsBy matrix))
         let intersect (owner: Shape) (ray: Ray) minimum maximum =
-            // Do not normalize this direction: affine transforms preserve the original ray parameter.
-            let localRay = Ray(transformPoint(ray.GetOrigin, inverse), transformVector(ray.GetDirection, inverse))
-            let hit = Geometry.hitWithin shape localRay minimum maximum
-            if not hit.DidHit then HitPoint(ray)
-            else
-                HitPoint(ray, hit.Time, transformVector(hit.GeometricNormal, normalMatrix),
-                         transformVector(hit.ShadingNormal, normalMatrix), hit.Material, owner,
-                         hit.U, hit.V, hit.BarycentricBeta, hit.BarycentricGamma, true)
+            intersectLocal shape owner ray minimum maximum inverse normalMatrix
         { new Shape() with
             member this.hitFunction ray = intersect this ray 0. infinity
             member _.Bounds = bounds.Value
@@ -342,6 +346,52 @@ module Transform =
             member _.isInside p = shape.isInside(transformPoint(p, inverse))
           interface IIntervalShape with
             member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum }
+
+/// Instancing whose transform changes during the shutter: each ray is intersected against the pose at its
+/// ShutterTime, which is what produces motion blur.
+module MotionTransform =
+    /// Rotating keys sweep arcs that can leave the keyed boxes, so bounds are also sampled between keys.
+    let private boundsSubsteps = 8
+
+    let transform (shape: Shape) (motion: AnimatedTransform) =
+        if motion.IsStatic then Transform.transform shape (Transformation.ofAffine motion.Matrices.[0])
+        else
+            let bounds =
+                lazy (
+                    shape.Bounds |> Option.map (fun box ->
+                        if box.IsEmpty then box
+                        else
+                            let times = motion.Times
+                            let samples =
+                                [| for i in 0 .. times.Length - 2 do
+                                       for step in 0 .. boundsSubsteps - 1 do
+                                           yield times.[i] + (times.[i + 1] - times.[i]) * float step / float boundsSubsteps
+                                   yield times.[times.Length - 1] |]
+                            let boxes =
+                                samples |> Array.map (fun time ->
+                                    let struct (matrix, _) = motion.At time
+                                    Transform.transformBoundsBy matrix box)
+                            let low = boxes |> Array.fold (fun (p: Point) b -> p.Lowest b.lowPoint) boxes.[0].lowPoint
+                            let high = boxes |> Array.fold (fun (p: Point) b -> p.Highest b.highPoint) boxes.[0].highPoint
+                            // Pad for the chord-versus-arc error between sub-samples.
+                            let pad = 1e-3 * (high - low).Magnitude + 1e-9
+                            BBox(low - Vector(pad, pad, pad), high + Vector(pad, pad, pad))))
+            let intersect (owner: Shape) (ray: Ray) minimum maximum =
+                let struct (_, inverse) = motion.At ray.ShutterTime
+                Transform.intersectLocal shape owner ray minimum maximum inverse inverse.transpose
+            let midpoint = 0.5 * (motion.Start + motion.End)
+            { new Shape() with
+                member this.hitFunction ray = intersect this ray 0. infinity
+                member _.Bounds = bounds.Value
+                member _.IsOpaque = shape.IsOpaque
+                member _.getBoundingBox() =
+                    bounds.Value |> Option.defaultWith (fun () -> invalidOp "An unbounded moving shape has no finite bounding box.")
+                // Inside tests (CSG, media) have no ray time; use the pose at mid-shutter.
+                member _.isInside p =
+                    let struct (_, inverse) = motion.At midpoint
+                    shape.isInside(transformPoint(p, inverse))
+              interface IIntervalShape with
+                member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum }
 
 type SolidCylinder(center: Point, radius: float, height: float, cylinder: Texture, top: Texture, bottom: Texture) =
     inherit Shape()

@@ -12,6 +12,10 @@ type Transformation
   
 /// Constructs a transform from finite matrices; the caller must supply the matching inverse.
 val mkTransformation : QuickMatrix * QuickMatrix -> Transformation
+val identityMatrix : QuickMatrix
+val identity : Transformation
+/// Builds a transformation from a finite, invertible affine matrix and computes its inverse.
+val ofAffine : QuickMatrix -> Transformation
 val translate : x : float -> y : float -> z : float -> Transformation
 val getMatrix : Transformation -> QuickMatrix
 val getInvMatrix : Transformation -> QuickMatrix
