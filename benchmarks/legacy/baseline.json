@@ -1,0 +1,14 @@
+{
+  "name": "legacy-port",
+  "sourceCommit": "066c59eba68d222d63b373b7e25d408796eb1d12",
+  "originalDirectory": "benchmarks/legacy/original",
+  "checksums": "benchmarks/legacy/source.sha256",
+  "description": "Frozen original algorithms with separately documented build and headless image-I/O adaptations. Not a historical Windows runtime timing.",
+  "permittedAdaptations": [
+    "SDK project and dependency wiring",
+    "Required compiler compatibility",
+    "Headless image and texture I/O",
+    "Input paths and output capture",
+    "Coarse phase timing"
+  ]
+}

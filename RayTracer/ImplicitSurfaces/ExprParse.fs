@@ -3,12 +3,18 @@ namespace Tracer
 module ExprParse =
   open Tracer.Basics
 
+  let realRoot value degree =
+    if degree <= 0 then invalidArg "degree" "A root degree must be positive."
+    if value < 0. && degree % 2 = 1 then -((-value) ** (1. / float degree))
+    else value ** (1. / float degree)
+
   type terminal = 
     | Add               // addition
     | Mul               // multiplication
     | Div               // Division
     | Pwr               // Power
     | Root              // Root    
+    | Neg
     | Lpar              // Left parenthesis
     | Rpar              // Right parenthesis
     | Int of int        // Wrapped value of integer
@@ -16,7 +22,7 @@ module ExprParse =
     | Var of string     // Wrapped variable of string
 
   let isblank c = System.Char.IsWhiteSpace c
-  let isdigit c  = System.Char.IsDigit c
+  let isdigit c = c >= '0' && c <= '9'
   let isletter c = System.Char.IsLetter c
   let isletterdigit c = System.Char.IsLetterOrDigit c
 
@@ -30,8 +36,17 @@ module ExprParse =
   let rec scnum (cs, value) = 
     match cs with 
     | '.' :: c :: cr when isdigit c       -> scfrac(c :: cr, (float)value, 0.1)
-    | c :: cr when isdigit c              -> scnum(cr, 10* value + intval c)
+    | c :: cr when isdigit c              ->
+        let digit = intval c
+        if value > (System.Int32.MaxValue-digit)/10 then scfloat(cr, 10.*float value + float digit)
+        else scnum(cr, 10*value + digit)
     | _                                   -> (cs,Int value) // Number without fraction is an integer
+  and scfloat (cs, value) =
+    if not (System.Double.IsFinite value) then raise ScanErrorException
+    match cs with
+    | '.' :: c :: cr when isdigit c -> scfrac(c::cr, value, 0.1)
+    | c :: cr when isdigit c -> scfloat(cr, 10.*value + float (intval c))
+    | _ -> cs, Float value
   and scfrac (cs, value, wt) =
     match cs with
     | c :: cr when isdigit c  -> scfrac(cr, value+wt*floatval c, wt/10.0)
@@ -50,32 +65,37 @@ module ExprParse =
         Int i -> Int -i
       | Float f -> Float -f
       | _ -> raise ScanErrorException // Expected a number
-    let rec sc cs = 
+    let rec sc expectsOperand cs =
       match cs with
       | []                              -> []
-      | '+' :: cr                       -> Add :: sc cr
-      | '*' :: cr                       -> Mul :: sc cr
-      | '^' :: cr                       -> Pwr :: sc cr
-      | '/' :: cr                       -> Div :: sc cr
-      | '(' :: cr                       -> Lpar :: sc cr
-      | ')' :: cr                       -> Rpar :: sc cr
-      | '_' :: cr                       -> Root :: sc cr
-      // Subtraction and negation is treated as "add this term and multiply this term with minus 1"
-      | '-' :: cr                       -> Add :: Float -1.0 :: Mul :: sc cr
+      | '+' :: cr                       -> Add :: sc true cr
+      | '*' :: cr                       -> Mul :: sc true cr
+      | '^' :: cr                       -> Pwr :: sc true cr
+      | '/' :: cr                       -> Div :: sc true cr
+      | '(' :: cr                       -> Lpar :: sc true cr
+      | ')' :: cr                       -> Rpar :: sc false cr
+      | '_' :: cr                       -> Root :: sc true cr
+      | '-' :: cr when expectsOperand ->
+          match List.skipWhile isblank cr with
+          | c :: rest when isdigit c ->
+              let remaining, number = scnum(rest, intval c)
+              negateNumber number :: sc false remaining
+          | rest -> Neg :: sc true rest
+      | '-' :: cr -> Add :: Int -1 :: Mul :: sc true cr
       | c :: cr when isdigit c          -> let (cs1, t) = scnum(cr, intval c)
-                                           t :: sc cs1
-      | c :: cr when isblank c          -> sc cr
+                                           t :: sc false cs1
+      | c :: cr when isblank c          -> sc expectsOperand cr
       | c :: cr when isletter c         -> let (cs1, n) = scname(cr, (string)c)
-                                           Var n :: sc cs1
+                                           Var n :: sc false cs1
       | _                               -> raise ScanErrorException
-    sc (explode s)
+    sc true (explode s)
 
   (*
       Active patterns on terminals
   *)
   let (|Lterm|NoMatch|) left = 
     match left with
-    | Float _ | Var _ | Int _ -> Lterm left
+    | Float _ | Var _ | Int _ | Rpar -> Lterm left
     | _                       -> NoMatch
   let (|Rterm|NoMatch|) right =
     match right with
@@ -109,8 +129,10 @@ module ExprParse =
       Topt = "*" F Topt | "/" F Topt | e .
       F    = P Fopt .
       Fopt = "^" Int | "_" Int | e .
-      P    = Int [ Float | Var | "(" E ")" .
+      P    = "-" P | Int | Float | Var | "(" E ")" .
       e is the empty sequence.
+      Signed literals and unary negation are primaries, so -x^2 means (-x)^2.
+      Use -(x^2) to negate the power. Binary subtraction remains addition of -1 times a term.
   *)
   let rec E (ts:terminal list) = (T >> Eopt) ts // or Eopt (T ts), and the full composition translates to Eopt (Topt (Fopt (P ts)))
   and Eopt (ts, (inval)) = 
@@ -130,10 +152,14 @@ module ExprParse =
   and Fopt (ts, inval) =
     match ts with
     | Pwr::Int i::tr  -> (tr, FExponent (inval, i))
-    | Root::Int i::tr -> (tr, FRoot (inval, i))
+    | Root::Int i::tr when i > 0 -> (tr, FRoot (inval, i))
+    | Root::_ -> raise ParseErrorException
     | _               -> (ts, inval)                    
   and P ts = // this function is executed first?
     match ts with
+    | Neg::tr ->
+        let remaining, operand = P tr
+        remaining, FMult(FNum -1., operand)
     | Float r::tr -> (tr, FNum r)
     | Int i::tr   -> (tr, FNum (float i))
     | Var x::tr   -> (tr, FVar x)
@@ -154,6 +180,8 @@ module ExprParse =
   *)
   let rec reduceExpr e =
     let rec inner = function
+      | FNum value when not (System.Double.IsFinite value) ->
+          invalidArg "expression" "Expression constants and constant arithmetic must be finite."
       // remove zero-terms
       | FAdd(e1, FNum 0.0) -> inner e1
       | FAdd(FNum 0.0, e1) -> inner e1
@@ -164,7 +192,11 @@ module ExprParse =
       // some small simplifications with numbers
       | FAdd(FNum c1, FNum c2)  -> FNum (c1 + c2)
       | FMult(FNum c1, FNum c2) -> FNum (c1 * c2)
-      | FRoot(FNum c1, n)       -> FNum (c1**(1. / (float n)))
+      | FRoot(e, 1) -> inner e
+      | FRoot(FNum c1, n) as original ->
+          if not (System.Double.IsFinite c1) then invalidArg "expression" "Root constants must be finite."
+          let value = realRoot c1 n
+          if System.Double.IsFinite value then FNum value else original
       | FDiv(FNum c1, FNum c2)  -> FNum (c1 / c2)
       | FExponent(FNum c1,n)    -> FNum (pown c1 n)
       // all others should just continue recursively
@@ -188,7 +220,7 @@ module ExprParse =
                        | "y" -> p.Y
                        | "z" -> p.Z
                        | _    -> failwith "solveExpr: unmatched variable"
-  | FRoot(e1,n)     -> (solveExpr p e1)**(1. / (float n))
+  | FRoot(e1,n)     -> realRoot (solveExpr p e1) n
   | FAdd(e1,e2)     -> solveExpr p e1 + solveExpr p e2
   | FMult(e1,e2)    -> solveExpr p e1 * solveExpr p e2
   | FDiv(e1,e2)     -> solveExpr p e1 / solveExpr p e2

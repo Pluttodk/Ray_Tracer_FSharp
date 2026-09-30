@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+  <!-- Server GC gives each core its own heap and allocation context, which
+       suits a renderer that allocates heavily across every core.
+
+       Measured 2026-09-10 on the Ultra 9 185H, chair @256x256/4spp: this drops
+       gen0 collections from ~270 to ~110 per render, but the four
+       gcServer/gcConcurrent combinations all overlap within run-to-run noise
+       (min 929-1032 ms trace). It is NOT a measured speedup at this scale. The
+       render's real cost is the 3.4 GB it allocates, not the pauses that
+       allocation causes, so the fix is to stop allocating per ray - see the
+       struct-hit-record work - not to tune the collector. Kept because it is
+       the better default as heaps grow with scene size. -->
+  <PropertyGroup>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+  </PropertyGroup>
+</Project>

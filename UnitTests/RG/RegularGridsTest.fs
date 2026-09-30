@@ -3,7 +3,7 @@
 open Tracer.Basics.RegularGrids
 open Assert
 
-let allTest = 
+let allTest () =
     // Used for debug, will print to console etc. 
     // ----------------------------- Common data -----------------------------
 

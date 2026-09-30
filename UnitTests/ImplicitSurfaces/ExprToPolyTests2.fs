@@ -5,7 +5,7 @@ open Tracer.ExprToPoly
 open Assert
 
 // All these tests are based on the rules listed on page 41 in the Lecture notes (updated 14 April) document
-let allTest = 
+let allTest () =
 
   // case 1:
   let test01 = 

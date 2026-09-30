@@ -28,3 +28,16 @@ type Assert() =
                   printfn "--------TEST FAILED!!! Expected (%A) Actual (%A) in %s" expected result name
     static member AmountPassed = Passed
     static member AmountFailed = Failed
+    static member Fail name =
+        Failed <- Failed + 1
+        eprintfn "--------TEST FAILED!!! %s" name
+    static member Reset() =
+        Passed <- 0
+        Failed <- 0
+    static member Throws<'T when 'T :> exn> (action: unit -> unit, name: string) =
+        try
+            action ()
+            Assert.Fail(sprintf "%s: expected %s" name typeof<'T>.Name)
+        with
+        | :? 'T -> Assert.True(true, name)
+        | error -> Assert.Fail(sprintf "%s: expected %s, received %O" name typeof<'T>.Name error)

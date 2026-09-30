@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../SceneFormat/SceneFormat.fsproj" />
+    <ProjectReference Include="../RayTracer.ImageIO/RayTracer.ImageIO.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Geometry.fs" />
+    <Compile Include="Meshes.fs" />
+    <Compile Include="Textures.fs" />
+    <Compile Include="Scenes.fs" />
+    <Compile Include="Checks.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+</Project>

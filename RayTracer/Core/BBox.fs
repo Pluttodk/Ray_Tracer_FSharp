@@ -1,88 +1,72 @@
-﻿namespace Tracer.Basics
+namespace Tracer.Basics
 
-type BBox(lowPoint:Point, highPoint:Point) =
-    member this.lowPoint = lowPoint
-    member this.highPoint = highPoint
-    member this.isInside (p:Point) =
-        if lowPoint.X <= p.X && p.X <= highPoint.X then
-            if lowPoint.Y <= p.Y && p.Y <= highPoint.Y then
-                if lowPoint.Z <= p.Z && p.Z <= highPoint.Z then true
-                else false
-            else false
-        else false
+open System
 
-    override this.ToString() =
-            "BBox(Max: "+highPoint.ToString()+", Min: "+lowPoint.ToString()+")"
-    override this.GetHashCode() =
-        hash (lowPoint, highPoint)
-    override this.Equals(x) = 
-        match x with
-        | :? BBox as box -> this.highPoint = box.highPoint && 
-                                    this.lowPoint = box.lowPoint
+type BBox(lowPoint: Point, highPoint: Point) =
+    let empty =
+        lowPoint.X > highPoint.X || lowPoint.Y > highPoint.Y || lowPoint.Z > highPoint.Z
+        || Double.IsNaN lowPoint.X || Double.IsNaN lowPoint.Y || Double.IsNaN lowPoint.Z
+        || Double.IsNaN highPoint.X || Double.IsNaN highPoint.Y || Double.IsNaN highPoint.Z
+
+    let slab origin direction low high =
+        if direction = 0. then
+            if origin < low || origin > high then struct (infinity, -infinity)
+            else struct (-infinity, infinity)
+        else
+            let parameter bound =
+                let difference = bound-origin
+                if Double.IsFinite bound && Double.IsInfinity difference then bound/direction-origin/direction
+                else difference/direction
+            let a, b = parameter low, parameter high
+            struct (min a b, max a b)
+
+    let intervals (ray: Ray) =
+        let o, d = ray.GetOrigin, ray.GetDirection
+        let struct (tx, tx') = slab o.X d.X lowPoint.X highPoint.X
+        let struct (ty, ty') = slab o.Y d.Y lowPoint.Y highPoint.Y
+        let struct (tz, tz') = slab o.Z d.Z lowPoint.Z highPoint.Z
+        struct (max tx (max ty tz), min tx' (min ty' tz'), tx, ty, tz, tx', ty', tz')
+
+    member _.lowPoint = lowPoint
+    member _.highPoint = highPoint
+    member _.IsEmpty = empty
+    static member Empty = BBox(Point(infinity, infinity, infinity), Point(-infinity, -infinity, -infinity))
+    member _.isInside(p: Point) =
+        not empty
+        && lowPoint.X <= p.X && p.X <= highPoint.X
+        && lowPoint.Y <= p.Y && p.Y <= highPoint.Y
+        && lowPoint.Z <= p.Z && p.Z <= highPoint.Z
+
+    member _.IntersectInterval(ray: Ray, tMin: float, tMax: float) =
+        if empty || not ray.IsValid || Double.IsNaN tMin || Double.IsNaN tMax || tMin > tMax then None
+        else
+            let struct (entry, exit, _, _, _, _, _, _) = intervals ray
+            let lo, hi = max entry tMin, min exit tMax
+            if lo <= hi then Some(lo, hi) else None
+
+    member _.intersect(ray: Ray) =
+        if empty || not ray.IsValid then None
+        else
+            let struct (entry, exit, _, _, _, _, _, _) = intervals ray
+            if entry <= exit && exit > 0. then Some(entry, exit) else None
+
+    member _.intersectRG(ray: Ray) =
+        if empty || not ray.IsValid then None
+        else
+            let struct (entry, exit, tx, ty, tz, tx', ty', tz') = intervals ray
+            if entry <= exit && exit > 0. then Some(entry, exit, tx, ty, tz, tx', ty', tz')
+            else None
+
+    member _.boundingBoxIntersect(other: BBox) =
+        not empty && not other.IsEmpty
+        && lowPoint.X <= other.highPoint.X && other.lowPoint.X <= highPoint.X
+        && lowPoint.Y <= other.highPoint.Y && other.lowPoint.Y <= highPoint.Y
+        && lowPoint.Z <= other.highPoint.Z && other.lowPoint.Z <= highPoint.Z
+
+    override _.ToString() =
+        "BBox(Max: " + highPoint.ToString() + ", Min: " + lowPoint.ToString() + ")"
+    override _.GetHashCode() = hash (lowPoint, highPoint)
+    override _.Equals(other) =
+        match other with
+        | :? BBox as box -> lowPoint = box.lowPoint && highPoint = box.highPoint
         | _ -> false
-    member this.intersect (r:Ray) =
-        let boolX = r.GetDirection.X >= 0.0
-        let boolY = r.GetDirection.Y >= 0.0
-        let boolZ = r.GetDirection.Z >= 0.0
-        
-        let tx =  match boolX with
-                  |true -> (lowPoint.X - r.GetOrigin.X)/r.GetDirection.X 
-                  |false -> (highPoint.X - r.GetOrigin.X)/r.GetDirection.X
-        let tx' = match boolX with
-                  |true -> (highPoint.X - r.GetOrigin.X)/r.GetDirection.X 
-                  |false -> (lowPoint.X - r.GetOrigin.X)/r.GetDirection.X
-        let ty =  match boolY with
-                  |true -> (lowPoint.Y - r.GetOrigin.Y)/r.GetDirection.Y 
-                  |false -> (highPoint.Y - r.GetOrigin.Y)/r.GetDirection.Y
-        let ty' = match boolY with
-                  |true -> (highPoint.Y - r.GetOrigin.Y)/r.GetDirection.Y 
-                  |false -> (lowPoint.Y - r.GetOrigin.Y)/r.GetDirection.Y
-        let tz =  match boolZ with
-                  |true -> (lowPoint.Z - r.GetOrigin.Z)/r.GetDirection.Z 
-                  |false -> (highPoint.Z - r.GetOrigin.Z)/r.GetDirection.Z
-        let tz' = match boolZ with
-                  |true -> (highPoint.Z - r.GetOrigin.Z)/r.GetDirection.Z 
-                  |false -> (lowPoint.Z - r.GetOrigin.Z)/r.GetDirection.Z
-        
-
-        let t = max tx (max ty tz)
-
-        let t' = min tx' (min ty' tz')
-
-        match (t < t' && t' > 0.0) with
-        |true -> Some(t, t') 
-        |false -> None
-
-    member this.intersectRG (r:Ray) =
-        let boolX = r.GetDirection.X >= 0.0
-        let boolY = r.GetDirection.Y >= 0.0
-        let boolZ = r.GetDirection.Z >= 0.0
-        
-        let tx = if boolX then (lowPoint.X - r.GetOrigin.X)/r.GetDirection.X else (highPoint.X - r.GetOrigin.X)/r.GetDirection.X
-        let tx' = if boolX then (highPoint.X - r.GetOrigin.X)/r.GetDirection.X else (lowPoint.X - r.GetOrigin.X)/r.GetDirection.X
-        let ty = if boolY then (lowPoint.Y - r.GetOrigin.Y)/r.GetDirection.Y else (highPoint.Y - r.GetOrigin.Y)/r.GetDirection.Y
-        let ty' = if boolY then (highPoint.Y - r.GetOrigin.Y)/r.GetDirection.Y else (lowPoint.Y - r.GetOrigin.Y)/r.GetDirection.Y
-        let tz = if boolZ then (lowPoint.Z - r.GetOrigin.Z)/r.GetDirection.Z else (highPoint.Z - r.GetOrigin.Z)/r.GetDirection.Z
-        let tz' = if boolZ then (highPoint.Z - r.GetOrigin.Z)/r.GetDirection.Z else (lowPoint.Z - r.GetOrigin.Z)/r.GetDirection.Z
-        
-
-        let t = max tx (max ty tz)
-
-        let t' = min tx' (min ty' tz')
-
-        if t < t' && t' > 0.0 then Some(t, t', tx, ty, tz, tx', ty', tz') else None
-
-    member this.boundingBoxIntersect (other:BBox) : bool =
-        let newLow = Point((min lowPoint.X other.lowPoint.X), (min lowPoint.Y other.lowPoint.Y), (min lowPoint.Z other.lowPoint.Z))
-        let newHigh = Point((max highPoint.X other.highPoint.X), (max highPoint.Y other.highPoint.Y), (max highPoint.Z other.highPoint.Z))
-        
-        let halfDistX = (newHigh.X-newLow.X)/2.
-        let halfDistY = (newHigh.Y-newLow.Y)/2.
-        let halfDistZ = (newHigh.Z-newLow.Z)/2.
-
-        lowPoint.X <= halfDistX && halfDistX <= newHigh.X
-        || lowPoint.Y <= halfDistY && halfDistY <= newHigh.Y
-        || lowPoint.Z <= halfDistZ && halfDistZ <= newHigh.Z
-
-
-

@@ -8,7 +8,7 @@ open Tracer.Basics
 open Tracer.PolyToUnipoly
 open Tracer.Basics
 
-let allTest =
+let allTest () =
    
   // partial derivatives, first checking that its only done with respect to the given variable
   let test01 = 

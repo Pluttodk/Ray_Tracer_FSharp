@@ -1,0 +1,526 @@
+diff --git a/benchmarks/legacy/original/RayTracer/RayTracer.fsproj b/benchmarks/legacy/LegacyRayTracer.fsproj
+index 24e8ca5..02322d9 100644
+--- a/benchmarks/legacy/original/RayTracer/RayTracer.fsproj
++++ b/benchmarks/legacy/LegacyRayTracer.fsproj
+@@ -1,155 +1,63 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
++<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+-    <SchemaVersion>2.0</SchemaVersion>
+-    <ProjectGuid>e7cbcc59-8c6c-4828-8840-47eabf7c95fb</ProjectGuid>
+-    <OutputType>Exe</OutputType>
++    <TargetFramework>net10.0</TargetFramework>
++    <OutputType>Library</OutputType>
++    <AssemblyName>LegacyRayTracer</AssemblyName>
+     <RootNamespace>Basics</RootNamespace>
+-    <AssemblyName>Basics</AssemblyName>
+-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+-    <UseStandardResourceNames>true</UseStandardResourceNames>
+-    <TargetFSharpCoreVersion>4.4.3.0</TargetFSharpCoreVersion>
+-    <Name>RayTracer</Name>
++    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
++    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
++    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
++    <LegacyDotNetHost Condition="'$(DOTNET_HOST_PATH)' != ''">$(DOTNET_HOST_PATH)</LegacyDotNetHost>
++    <LegacyDotNetHost Condition="'$(LegacyDotNetHost)' == ''">dotnet</LegacyDotNetHost>
+   </PropertyGroup>
+-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+-    <DebugSymbols>true</DebugSymbols>
+-    <DebugType>full</DebugType>
+-    <Optimize>false</Optimize>
+-    <Tailcalls>false</Tailcalls>
+-    <OutputPath>bin\$(Configuration)\</OutputPath>
+-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+-    <WarningLevel>3</WarningLevel>
+-    <PlatformTarget>AnyCPU</PlatformTarget>
+-    <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+-    <Prefer32Bit>true</Prefer32Bit>
+-  </PropertyGroup>
+-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+-    <DebugType>pdbonly</DebugType>
+-    <Optimize>true</Optimize>
+-    <Tailcalls>true</Tailcalls>
+-    <OutputPath>bin\$(Configuration)\</OutputPath>
+-    <DefineConstants>TRACE</DefineConstants>
+-    <WarningLevel>3</WarningLevel>
+-    <PlatformTarget>AnyCPU</PlatformTarget>
+-    <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+-    <Prefer32Bit>true</Prefer32Bit>
+-  </PropertyGroup>
+-  <PropertyGroup>
+-    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
+-  </PropertyGroup>
+-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+-    <DebugSymbols>true</DebugSymbols>
+-    <DebugType>full</DebugType>
+-    <Optimize>false</Optimize>
+-    <Tailcalls>false</Tailcalls>
+-    <OutputPath>bin\$(Configuration)\</OutputPath>
+-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+-    <WarningLevel>3</WarningLevel>
+-    <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+-    <Prefer32Bit>true</Prefer32Bit>
+-    <PlatformTarget>x64</PlatformTarget>
+-  </PropertyGroup>
+-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+-    <DebugType>pdbonly</DebugType>
+-    <Optimize>true</Optimize>
+-    <Tailcalls>true</Tailcalls>
+-    <OutputPath>bin\$(Configuration)\</OutputPath>
+-    <DefineConstants>TRACE</DefineConstants>
+-    <WarningLevel>3</WarningLevel>
+-    <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+-    <Prefer32Bit>true</Prefer32Bit>
+-    <PlatformTarget>x64</PlatformTarget>
+-  </PropertyGroup>
+-  <Choose>
+-    <When Condition="'$(VisualStudioVersion)' == '11.0'">
+-      <PropertyGroup Condition=" '$(FSharpTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets') ">
+-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+-      </PropertyGroup>
+-    </When>
+-    <Otherwise>
+-      <PropertyGroup Condition=" '$(FSharpTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets') ">
+-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
+-      </PropertyGroup>
+-    </Otherwise>
+-  </Choose>
+-  <Import Project="$(FSharpTargetsPath)" />
+   <ItemGroup>
+-    <Compile Include="Sampling\Sampling.fsi" />
+-    <Compile Include="Sampling\Sampling.fs" />
+-    <Compile Include="Core\Vector.fs" />
+-    <Compile Include="Core\Colour.fs" />
+-    <Compile Include="Core\Point.fs" />
+-    <Compile Include="Core\Ray.fs" />
+-    <Compile Include="Core\BBox.fs" />
+-    <Compile Include="Core\Foundation.fs" />
+-    <Compile Include="Materials\Materials.fs" />
+-    <Compile Include="Materials\Textures.fsi" />
+-    <Compile Include="Materials\Textures.fs" />
+-    <Compile Include="Transformation\Transformation.fsi" />
+-    <Compile Include="Transformation\Transformation.fs" />
+-    <Compile Include="Shapes\Shapes.fs" />
+-    <Compile Include="Shapes\CSG.fs" />
+-    <Compile Include="Shapes\BaseShape.fs" />
+-    <Compile Include="Lights\GlobalLight.fs" />
+-    <Compile Include="Lights\BasicLight.fs" />
+-    <Compile Include="Lights\AreaLight.fs" />
+-    <Compile Include="Acceleration\KDTree.fs" />
+-    <Compile Include="Acceleration\BVH.fs" />
+-    <Compile Include="Acceleration\RegularGrids.fs" />
+-    <Compile Include="Acceleration\Acceleration.fs" />
+-    <Compile Include="Camera\Camera.fs" />
+-    <Compile Include="Camera\PinholeCamera.fs" />
+-    <Compile Include="Camera\ThinLensCamera.fs" />
+-    <Compile Include="TriangleMesh\PLYParser.fs" />
+-    <Compile Include="TriangleMesh\TriangleMesh.fs" />
+-    <Compile Include="ImplicitSurfaces\ExprParse.fsi" />
+-    <Compile Include="ImplicitSurfaces\ExprParse.fs" />
+-    <Compile Include="ImplicitSurfaces\ExprToPoly.fsi" />
+-    <Compile Include="ImplicitSurfaces\ExprToPoly.fs" />
+-    <Compile Include="ImplicitSurfaces\PolyToUnipoly.fsi" />
+-    <Compile Include="ImplicitSurfaces\PolyToUnipoly.fs" />
+-    <Compile Include="ImplicitSurfaces\ImplicitSurfaces.fsi" />
+-    <Compile Include="ImplicitSurfaces\ImplicitSurfaces.fs" />
+-    <Compile Include="Scene.fs" />
+-    <Compile Include="Render.fs" />
+-    <Compile Include="API\API.fsi" />
+-    <Compile Include="API\API.fs" />
+-    <Compile Include="AssemblyInfo.fs" />
+-    <None Include="App.config" />
+-    <Content Include="packages.config" />
++    <Compile Include="adapted/Sampling/Sampling.fsi" Link="Sampling/Sampling.fsi" />
++    <Compile Include="adapted/Sampling/Sampling.fs" Link="Sampling/Sampling.fs" />
++    <Compile Include="adapted/Core/Vector.fs" Link="Core/Vector.fs" />
++    <Compile Include="original/RayTracer/Core/Colour.fs" Link="Core/Colour.fs" />
++    <Compile Include="original/RayTracer/Core/Point.fs" Link="Core/Point.fs" />
++    <Compile Include="original/RayTracer/Core/Ray.fs" Link="Core/Ray.fs" />
++    <Compile Include="original/RayTracer/Core/BBox.fs" Link="Core/BBox.fs" />
++    <Compile Include="adapted/Core/Foundation.fs" Link="Core/Foundation.fs" />
++    <Compile Include="original/RayTracer/Materials/Materials.fs" Link="Materials/Materials.fs" />
++    <Compile Include="original/RayTracer/Materials/Textures.fsi" Link="Materials/Textures.fsi" />
++    <Compile Include="original/RayTracer/Materials/Textures.fs" Link="Materials/Textures.fs" />
++    <Compile Include="adapted/Transformation/Transformation.fsi" Link="Transformation/Transformation.fsi" />
++    <Compile Include="adapted/Transformation/Transformation.fs" Link="Transformation/Transformation.fs" />
++    <Compile Include="original/RayTracer/Shapes/Shapes.fs" Link="Shapes/Shapes.fs" />
++    <Compile Include="original/RayTracer/Shapes/CSG.fs" Link="Shapes/CSG.fs" />
++    <Compile Include="original/RayTracer/Shapes/BaseShape.fs" Link="Shapes/BaseShape.fs" />
++    <Compile Include="original/RayTracer/Lights/GlobalLight.fs" Link="Lights/GlobalLight.fs" />
++    <Compile Include="original/RayTracer/Lights/BasicLight.fs" Link="Lights/BasicLight.fs" />
++    <Compile Include="original/RayTracer/Lights/AreaLight.fs" Link="Lights/AreaLight.fs" />
++    <Compile Include="original/RayTracer/Acceleration/KDTree.fs" Link="Acceleration/KDTree.fs" />
++    <Compile Include="original/RayTracer/Acceleration/BVH.fs" Link="Acceleration/BVH.fs" />
++    <Compile Include="adapted/Acceleration/RegularGrids.fs" Link="Acceleration/RegularGrids.fs" />
++    <Compile Include="original/RayTracer/Acceleration/Acceleration.fs" Link="Acceleration/Acceleration.fs" />
++    <Compile Include="original/RayTracer/Camera/Camera.fs" Link="Camera/Camera.fs" />
++    <Compile Include="original/RayTracer/Camera/PinholeCamera.fs" Link="Camera/PinholeCamera.fs" />
++    <Compile Include="original/RayTracer/Camera/ThinLensCamera.fs" Link="Camera/ThinLensCamera.fs" />
++    <Compile Include="original/RayTracer/TriangleMesh/PLYParser.fs" Link="TriangleMesh/PLYParser.fs" />
++    <Compile Include="original/RayTracer/TriangleMesh/TriangleMesh.fs" Link="TriangleMesh/TriangleMesh.fs" />
++    <Compile Include="original/RayTracer/ImplicitSurfaces/ExprParse.fsi" Link="ImplicitSurfaces/ExprParse.fsi" />
++    <Compile Include="original/RayTracer/ImplicitSurfaces/ExprParse.fs" Link="ImplicitSurfaces/ExprParse.fs" />
++    <Compile Include="original/RayTracer/ImplicitSurfaces/ExprToPoly.fsi" Link="ImplicitSurfaces/ExprToPoly.fsi" />
++    <Compile Include="original/RayTracer/ImplicitSurfaces/ExprToPoly.fs" Link="ImplicitSurfaces/ExprToPoly.fs" />
++    <Compile Include="original/RayTracer/ImplicitSurfaces/PolyToUnipoly.fsi" Link="ImplicitSurfaces/PolyToUnipoly.fsi" />
++    <Compile Include="original/RayTracer/ImplicitSurfaces/PolyToUnipoly.fs" Link="ImplicitSurfaces/PolyToUnipoly.fs" />
++    <Compile Include="original/RayTracer/ImplicitSurfaces/ImplicitSurfaces.fsi" Link="ImplicitSurfaces/ImplicitSurfaces.fsi" />
++    <Compile Include="original/RayTracer/ImplicitSurfaces/ImplicitSurfaces.fs" Link="ImplicitSurfaces/ImplicitSurfaces.fs" />
++    <Compile Include="original/RayTracer/Scene.fs" Link="Scene.fs" />
++    <Compile Include="adapted/Render.fs" Link="Render.fs" />
++    <Compile Include="original/RayTracer/API/API.fsi" Link="API/API.fsi" />
++    <Compile Include="original/RayTracer/API/API.fs" Link="API/API.fs" />
++    <Compile Include="original/RayTracer/AssemblyInfo.fs" Link="AssemblyInfo.fs" />
+   </ItemGroup>
+   <ItemGroup>
+-    <Reference Include="FParsec">
+-      <HintPath>..\..\packages\FParsec.1.0.3\lib\net40-client\FParsec.dll</HintPath>
+-    </Reference>
+-    <Reference Include="FParsecCS">
+-      <HintPath>..\..\packages\FParsec.1.0.3\lib\net40-client\FParsecCS.dll</HintPath>
+-    </Reference>
+-    <Reference Include="mscorlib" />
+-    <Reference Include="FSharp.Core">
+-      <Name>FSharp.Core</Name>
+-      <AssemblyName>FSharp.Core.dll</AssemblyName>
+-      <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\$(TargetFSharpCoreVersion)\FSharp.Core.dll</HintPath>
+-    </Reference>
+-    <Reference Include="System" />
+-    <Reference Include="System.Core" />
+-    <Reference Include="System.Drawing" />
+-    <Reference Include="System.Numerics" />
+-    <Reference Include="System.ValueTuple">
+-      <HintPath>..\packages\System.ValueTuple.4.3.1\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+-      <Private>True</Private>
+-    </Reference>
+-    <Reference Include="System.Windows.Forms" />
++    <PackageReference Include="FParsec" Version="1.1.1" />
++    <ProjectReference Include="../../RayTracer.ImageIO/RayTracer.ImageIO.fsproj" />
+   </ItemGroup>
+-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+-       Other similar extension points exist, see Microsoft.Common.targets.
+-  <Target Name="BeforeBuild">
+-  </Target>
+-  <Target Name="AfterBuild">
++  <Target Name="VerifyLegacyPortability" BeforeTargets="BeforeBuild">
++    <Exec Command="&quot;$(LegacyDotNetHost)&quot; fsi &quot;$(MSBuildProjectDirectory)/prepare-port.fsx&quot; -- --check" />
+   </Target>
+-  -->
+-</Project>
+\ No newline at end of file
++</Project>
+
+
+diff --git a/benchmarks/legacy/original/RayTracer/Sampling/Sampling.fs b/benchmarks/legacy/adapted/Sampling/Sampling.fs
+index 2cce19c..551ae33 100644
+--- a/benchmarks/legacy/original/RayTracer/Sampling/Sampling.fs
++++ b/benchmarks/legacy/adapted/Sampling/Sampling.fs
+@@ -2,6 +2,7 @@
+ 
+ open System
+ open System.Drawing
++open Tracer.Imaging
+ open System.Threading
+ 
+ let mutable rand = new Random()
+@@ -290,10 +291,10 @@ let mapToHemisphere (x, y) e =
+     (Math.Sin(theta) * Math.Cos(phi), Math.Sin(theta) * Math.Sin(phi), Math.Cos(theta))
+ 
+ // A series of helper methods to visualize the sampling as points on square/disc/sphere.
+-let drawSamples (sampler:Sampler) sampleMethod fileName =
++let drawSamples (sampler:Sampler) sampleMethod (fileName:string) =
+     let size = 400
+     let dotSize = 4
+-    let img = new Bitmap(size, size)
++    use img = new RgbImage(size, size)
+     for i in [0..size-1] do
+             for j in [0..size-1] do
+                 img.SetPixel(i, j, Color.White)
+@@ -316,9 +317,9 @@ let drawSamples (sampler:Sampler) sampleMethod fileName =
+         for i in [x-(dotSize/2)..x+(dotSize/2)] do
+             for j in [y-(dotSize/2)..y+(dotSize/2)] do
+                 if i >= 0 && j >= 0 && i < size && j < size then img.SetPixel(i, j, Color.Red)
+-    img.Save(fileName)  
++    img.SavePng(fileName)  
+ 
+-let drawCircle (img:Bitmap) size = 
++let drawCircle (img:RgbImage) size = 
+     let SIZE_HALVED = float size/2.0
+     for i in 1..int 360 do
+         let theta = float i
+@@ -328,10 +329,10 @@ let drawCircle (img:Bitmap) size =
+             for j in [y-1..y+1] do
+                 img.SetPixel(i, j, Color.Black)
+ 
+-let drawDiscSamples (sampler:Sampler) fileName =
++let drawDiscSamples (sampler:Sampler) (fileName:string) =
+     let size = 400
+     let dotSize = 4
+-    let img = new Bitmap(size, size)
++    use img = new RgbImage(size, size)
+     for i in 0..size-1 do
+             for j in [0..size-1] do
+                 img.SetPixel(i, j, Color.White)
+@@ -344,12 +345,12 @@ let drawDiscSamples (sampler:Sampler) fileName =
+         for i in [x-(dotSize/2)..x+(dotSize/2)] do
+             for j in [y-(dotSize/2)..y+(dotSize/2)] do
+                 if i >= 0 && j >= 0 && i < size && j < size then img.SetPixel(i, j, Color.Red)
+-    img.Save(fileName)  
++    img.SavePng(fileName)  
+ 
+-let drawSphereSamples (sampler:Sampler) e fileName above =
++let drawSphereSamples (sampler:Sampler) e (fileName:string) above =
+     let size = 400
+     let dotSize = 4
+-    let img = new Bitmap(size, size)
++    use img = new RgbImage(size, size)
+     for i in 0..size-1 do
+             for j in [0..size-1] do
+                 img.SetPixel(i, j, Color.White)
+@@ -363,7 +364,7 @@ let drawSphereSamples (sampler:Sampler) e fileName above =
+         for i in [x-(dotSize/2)..x+(dotSize/2)] do
+             for j in [y-(dotSize/2)..y+(dotSize/2)] do
+                 if i >= 0 && j >= 0 && i < size && j < size then img.SetPixel(i, j, Color.Red)
+-    img.Save(fileName)
++    img.SavePng(fileName)
+ 
+ let main argsv =
+     if Array.isEmpty argsv then 
+
+diff --git a/benchmarks/legacy/original/RayTracer/Core/Vector.fs b/benchmarks/legacy/adapted/Core/Vector.fs
+index 061e604..53292c5 100644
+--- a/benchmarks/legacy/original/RayTracer/Core/Vector.fs
++++ b/benchmarks/legacy/adapted/Core/Vector.fs
+@@ -40,7 +40,7 @@ type Vector(x:float, y:float, z:float) =
+       | length    -> new Vector (x / length, y / length, z / length)
+     member this.Round (d:int) = new Vector(System.Math.Round(x,d),System.Math.Round(y,d),System.Math.Round(z,d))
+     static member Zero = Vector(0.,0.,0.)
+-    static member DivideByInt(a: Vector, s: int) = a / float(s)
++    static member DivideByInt(a: Vector, s: int) : Vector = a / float(s)
+ 
+     // Operators
+     static member ( ~- ) (v: Vector) = new Vector(-v.X,-v.Y,-v.Z)
+
+diff --git a/benchmarks/legacy/original/RayTracer/Core/Foundation.fs b/benchmarks/legacy/adapted/Core/Foundation.fs
+index c3bd27f..ea29db2 100644
+--- a/benchmarks/legacy/original/RayTracer/Core/Foundation.fs
++++ b/benchmarks/legacy/adapted/Core/Foundation.fs
+@@ -1,7 +1,6 @@
+ ﻿namespace Tracer.Basics
+ open System
+ open Tracer.Basics.Sampling
+-open System.Numerics
+ 
+ exception LightException
+ 
+
+diff --git a/benchmarks/legacy/original/RayTracer/Transformation/Transformation.fsi b/benchmarks/legacy/adapted/Transformation/Transformation.fsi
+index 2b24d42..73dafd7 100644
+--- a/benchmarks/legacy/original/RayTracer/Transformation/Transformation.fsi
++++ b/benchmarks/legacy/adapted/Transformation/Transformation.fsi
+@@ -1,11 +1,16 @@
+ module Tracer.Basics.Transformation
+ 
+ open Tracer.Basics
+-[<Sealed>]
+ type QuickMatrix =
++    { Pos1x1: float; Pos1x2: float; Pos1x3: float; Pos1x4: float
++      Pos2x1: float; Pos2x2: float; Pos2x3: float; Pos2x4: float
++      Pos3x1: float; Pos3x2: float; Pos3x3: float; Pos3x4: float
++      Pos4x1: float; Pos4x2: float; Pos4x3: float; Pos4x4: float }
+     member transpose : QuickMatrix
+     static member multi : QuickMatrix * QuickMatrix -> QuickMatrix
+ type Transformation
++
++val mkTransformation : QuickMatrix * QuickMatrix -> Transformation
+   
+ val translate : x : float -> y : float -> z : float -> Transformation
+ val getMatrix : Transformation -> QuickMatrix
+
+
+diff --git a/benchmarks/legacy/original/RayTracer/Acceleration/RegularGrids.fs b/benchmarks/legacy/adapted/Acceleration/RegularGrids.fs
+index 25e9ee1..69430d0 100644
+--- a/benchmarks/legacy/original/RayTracer/Acceleration/RegularGrids.fs
++++ b/benchmarks/legacy/adapted/Acceleration/RegularGrids.fs
+@@ -10,8 +10,8 @@ module RegularGrids =
+ 
+     let clamp (x:float,b:int) : float =
+         match x with
+-        | x when x<0. -> 0.
+-        | x when x>float(b) -> float(b)
++        | x when x < 0. -> 0.
++        | x when x > float(b) -> float(b)
+         | _ -> System.Math.Floor(x)
+ 
+     let calcEdgeLength (wx:float) (wy:float) (wz:float) (n:float) : float = System.Math.Pow (((wx*wy*wz)/n),(1./3.))
+
+diff --git a/benchmarks/legacy/original/RayTracer/Render.fs b/benchmarks/legacy/adapted/Render.fs
+index 9b69ac0..ff5d86c 100644
+--- a/benchmarks/legacy/original/RayTracer/Render.fs
++++ b/benchmarks/legacy/adapted/Render.fs
+@@ -3,13 +3,21 @@ namespace Tracer.Basics.Render
+ open Tracer.Basics
+ open Tracer.Basics.Acceleration
+ open System
+-open System.Drawing
+-open System.Windows.Forms
+ open System.Threading.Tasks
+ open Tracer.Basics.Sampling
+-open System.Runtime.InteropServices
+-open System.Drawing.Imaging
+ open System.Threading
++open Tracer.Imaging
++open System.Diagnostics
++
++type LegacyRenderFilm =
++    { Width: int
++      Height: int
++      LinearRgb: float[]
++      Image: RgbImage
++      BuildMs: float
++      TraceMs: float
++      OutputPreparationMs: float
++      PhaseNotes: string[] }
+ 
+ type Render(scene : Scene, camera : Camera) =
+     // Pre-rendering
+@@ -165,60 +173,79 @@ type Render(scene : Scene, camera : Camera) =
+ 
+         accel
+ 
+-    member this.ShowImageOnScreen (renderedImage:Bitmap) =
+-        let window = new Form(ClientSize=Size(renderedImage.Width, renderedImage.Height), StartPosition=FormStartPosition.CenterScreen)
+-        window.Paint.Add(fun draw -> draw.Graphics.DrawImage(renderedImage, Point(0, 0)))
+-        Application.Run(window)
++    member this.ShowImageOnScreen (_:RgbImage) : unit =
++        raise (PlatformNotSupportedException("Window preview is unavailable in legacy-port. Use renderToFile to save a PNG."))
+ 
+-    member this.SaveImage (renderedImage:Bitmap, filepath) =
+-        // Save image
+-        renderedImage.Save(filepath)
+-        
+-    member this.RenderParallel = 
+-        // Create our timer and Acceleration Structure
+-        let accel = this.PreProcessing
+-
+-        // Prepare image
+-        let renderedImage = (new Bitmap(camera.ResX, camera.ResY))
+-        use g = Graphics.FromImage(renderedImage)
+-        use brush = new SolidBrush(Color.Black)
+-        g.FillRectangle(brush, 0,0,camera.ResX,camera.ResY)
+-        
+-        //ref: http://csharpexamples.com/fast-image-processing-c/
+-        let bitmapData = renderedImage.LockBits(new Rectangle(0, 0, renderedImage.Width, renderedImage.Height), ImageLockMode.ReadWrite, renderedImage.PixelFormat)
+-        let bytesPrPixel = Bitmap.GetPixelFormatSize(renderedImage.PixelFormat) / 8
+-        let byteCount = bitmapData.Stride * renderedImage.Height
+-        let pixel : byte[] = Array.zeroCreate(byteCount)
+-        let firstPixel = bitmapData.Scan0
+-        Marshal.Copy(firstPixel, pixel, 0, pixel.Length)
+-        
+-        Parallel.For(0, bitmapData.Height * bitmapData.Width, fun xy ->
+-            let y = xy / bitmapData.Width
+-            let x = (xy % bitmapData.Width) * bytesPrPixel
++    member this.SaveImage (renderedImage:RgbImage, filepath:string) =
++        renderedImage.SavePng(filepath)
+ 
+-            let currentLine = y * bitmapData.Stride
+-        
+-            let coordsX = x/bytesPrPixel
++    member private this.RenderPixels (captureLinear: bool) =
++        let watch = Stopwatch.StartNew()
++        let accel = this.PreProcessing
++        let buildMs = watch.Elapsed.TotalMilliseconds
++
++        watch.Restart()
++        let renderedImage = new RgbImage(camera.ResX, camera.ResY)
++        let pixel = renderedImage.Pixels
++        let linear : Colour[] =
++            if captureLinear then Array.zeroCreate (camera.ResX * camera.ResY)
++            else Array.empty
++        let bufferSetupMs = watch.Elapsed.TotalMilliseconds
++
++        watch.Restart()
++        Parallel.For(0, camera.ResY * camera.ResX, fun xy ->
++            let y = xy / camera.ResX
++            let coordsX = xy % camera.ResX
+             let rays = camera.CreateRays coordsX y
+             let cols = Array.map (fun ray -> (this.Cast accel ray)) rays
+             let colour = (Array.fold (+) Colour.Black cols)/float cols.Length
+ 
+             let color = colour.ToColor
+ 
+-            pixel.[currentLine + x] <- (byte)color.B
+-            pixel.[currentLine + x + 1] <- (byte)color.G
+-            pixel.[currentLine + x + 2] <- (byte)color.R
++            pixel.[xy * 3] <- color.R
++            pixel.[xy * 3 + 1] <- color.G
++            pixel.[xy * 3 + 2] <- color.B
++            if captureLinear then
++                linear.[(camera.ResY - 1 - y) * camera.ResX + coordsX] <- colour
+ 
+             ) |> ignore
+-
+-        Marshal.Copy(pixel, 0, firstPixel, pixel.Length);
+-        renderedImage.UnlockBits(bitmapData)
+-
+-        renderedImage.RotateFlip(RotateFlipType.RotateNoneFlipY)
+-
+-        renderedImage
+-
+-    member this.Clean (image:Bitmap) =
++        let traceMs = watch.Elapsed.TotalMilliseconds
++
++        watch.Restart()
++        renderedImage.FlipVertical()
++        let outputPreparationMs = bufferSetupMs + watch.Elapsed.TotalMilliseconds
++
++        renderedImage, linear, buildMs, traceMs, outputPreparationMs
++
++    member this.RenderParallel =
++        let image, _, _, _, _ = this.RenderPixels false
++        image
++
++    member this.RenderWithLinear =
++        let image, linear, _, _, _ = this.RenderPixels true
++        image, linear
++
++    member this.RenderCaptured : LegacyRenderFilm =
++        let image, colours, buildMs, traceMs, outputPreparationMs = this.RenderPixels true
++        let watch = Stopwatch.StartNew()
++        let linear = Array.zeroCreate<float> (colours.Length * 3)
++        for i = 0 to colours.Length - 1 do
++            linear.[i * 3] <- colours.[i].R
++            linear.[i * 3 + 1] <- colours.[i].G
++            linear.[i * 3 + 2] <- colours.[i].B
++        { Width = image.Width
++          Height = image.Height
++          LinearRgb = linear
++          Image = image
++          BuildMs = buildMs
++          TraceMs = traceMs
++          OutputPreparationMs = outputPreparationMs + watch.Elapsed.TotalMilliseconds
++          PhaseNotes =
++              [| "BuildMs measures the original single PreProcessing call. Renderer construction/bound partitioning is outside this capture and must be timed by the caller."
++                 "TraceMs includes the original Parallel.For, camera samples, tracing, averaging, original per-pixel Colour.ToColor/RGB8 writes, and optional raw Colour capture; it is not a pure ray-tracing-only measurement."
++                 "OutputPreparationMs covers RGB/raw-buffer setup, the original final vertical flip, and packing original Colour values into top-left interleaved RGB float64. PNG/PFM encoding and original cleanup are outside capture." |] }
++
++    member this.Clean (image:RgbImage) =
+         image.Dispose()
+         Acceleration.listOfAccel <- []
+         GC.Collect()
+@@ -228,7 +255,5 @@ type Render(scene : Scene, camera : Camera) =
+         this.SaveImage(image, filename)
+         this.Clean image
+ 
+-    member this.RenderToScreen =
+-        let image = this.RenderParallel
+-        this.ShowImageOnScreen(image)
+-        this.Clean image
+\ No newline at end of file
++    member this.RenderToScreen : unit =
++        raise (PlatformNotSupportedException("Window preview is unavailable in legacy-port. Use renderToFile to save a PNG."))

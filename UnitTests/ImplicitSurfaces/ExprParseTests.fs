@@ -4,7 +4,7 @@ open Assert
 open Tracer.ExprParse
 
 // All these tests are based on, without shame, ones given in the Functional Programming, Spring 2018, course.
-let allTest = 
+let allTest () =
 
   let testScan= 
     let testlist =
@@ -78,3 +78,16 @@ let allTest =
   testScan
   testInsertMult
   testParse
+
+  let point = Tracer.Basics.Point(2.,3.,0.)
+  for expression, expected in
+      [ "-x^2", 4.
+        "7-x^2", 3.
+        "2/-2", -1.
+        "x^-2", 0.25
+        "x--y", 5.
+        "-(x+y)", -5.
+        "(x+1)(y+1)", 12.
+        "(x+1)y", 9.
+        "- 2.5*x", -5. ] do
+      Assert.Equal(expected, solveExpr point (parseStr expression), "signed-expression-" + expression)

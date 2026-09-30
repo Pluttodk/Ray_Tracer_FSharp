@@ -207,7 +207,16 @@ module API =
   /// (note that negation binds the hardest (-x^2) is (-x)^2 and not -(x^2)
 
   val mkImplicit : string -> baseShape
+  /// Restrict implicit intersections to the supplied finite ray-parameter interval.
+  /// The ordinary mkImplicit has no fixed distance cutoff.
+  val mkImplicitInInterval : string -> minimum : float -> maximum : float -> baseShape
+  /// Restrict an implicit surface to a finite object-space box, without adding caps.
+  val mkBoundedImplicit : string -> low : point -> high : point -> baseShape
   /// Load a triangle mesh from a PLY file.
+  /// ASCII, little-endian and big-endian PLY are supported. Convex planar polygons
+  /// are triangulated; unsupported concave, non-planar or self-crossing faces are rejected.
+  /// Zero-area source triangles remain nonintersecting and are counted in MeshGeometry diagnostics.
+  /// A loaded base shape shares immutable indexed geometry and acceleration across materials.
   /// texture coordinates: [0,1] X [0,1]
 
   val mkPLY : filename : string -> smoothShading : bool -> baseShape

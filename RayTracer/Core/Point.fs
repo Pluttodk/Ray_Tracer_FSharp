@@ -1,6 +1,7 @@
 namespace Tracer.Basics
 
 type Point(x:float, y:float, z:float) = 
+    static let zero = Point(0.,0.,0.)
     //- PRIVATE FIELDS
     let x = x
     let y = y
@@ -10,6 +11,7 @@ type Point(x:float, y:float, z:float) =
     member this.X = x
     member this.Y = y
     member this.Z = z
+    member this.IsFinite = System.Double.IsFinite x && System.Double.IsFinite y && System.Double.IsFinite z
     
     //- PUBLIC METHODS
     override this.ToString() = 
@@ -25,24 +27,10 @@ type Point(x:float, y:float, z:float) =
     member this.Direction (p:Point) (q:Point) = p.Distance(q).Normalise
     member this.Round (d:int) = new Point(System.Math.Round(x,d), System.Math.Round(y,d), System.Math.Round(z,d))
     member this.ToVector = new Vector(x,y,z)
-    member this.Lowest (p:Point) = 
-        let newPoint = Array.zeroCreate(3)
-        if(this.X < p.X) then newPoint.[0] <- this.X
-        else newPoint.[0] <- p.X
-        if(this.Y < p.Y) then newPoint.[1] <- this.Y
-        else newPoint.[1] <- p.Y
-        if(this.Z < p.Z) then newPoint.[2] <- this.Z
-        else newPoint.[2] <- p.Z
-        Point(newPoint.[0],newPoint.[1],newPoint.[2])
+    member this.Lowest (p:Point) =
+        Point(min x p.X, min y p.Y, min z p.Z)
     member this.Highest (p:Point) =
-        let newPoint = Array.zeroCreate(3)
-        if(this.X > p.X) then newPoint.[0] <- this.X
-        else newPoint.[0] <- p.X
-        if(this.Y > p.Y) then newPoint.[1] <- this.Y
-        else newPoint.[1] <- p.Y
-        if(this.Z > p.Z) then newPoint.[2] <- this.Z
-        else newPoint.[2] <- p.Z
-        Point(newPoint.[0],newPoint.[1],newPoint.[2])
+        Point(max x p.X, max y p.Y, max z p.Z)
     static member ( + ) (p:Point, v: Vector) : Point = p.Move v 
     static member ( - ) (p:Point, v: Vector) : Point = 
         p.Move v.Invert
@@ -52,7 +40,7 @@ type Point(x:float, y:float, z:float) =
         let newZ = w * z
         newX + newY + newZ
 
-    static member Zero = Point(0.,0.,0.)
+    static member Zero = zero
     static member ( - ) (p1: Point, p2: Point) = new Vector(p1.X - p2.X, p1.Y - p2.Y, p1.Z - p2.Z)
     static member ( * ) (p: Point, n: float) = new Point((p.X*n), (p.Y*n), (p.Z*n))
     static member ( * ) (n: float, p: Point) = new Point((p.X*n), (p.Y*n), (p.Z*n))

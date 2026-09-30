@@ -5,7 +5,7 @@ module ExprToPolyTests
   open Assert
 
   // All of these tests are based on the ones given in the Functional Programming course
-  let allTest =
+  let allTest () =
 
     let test01 = 
       let ex01 =

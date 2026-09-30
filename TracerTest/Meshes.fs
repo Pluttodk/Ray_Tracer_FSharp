@@ -160,8 +160,8 @@ module Meshes =
     { camera = mkPinholeCamera (mkPoint 2.0 6.0 12.0) (mkPoint 0.0 0.0 0.0) (mkVector 0.0 1.0 0.0) 4.0 5.33 4.0 1024 768 (mkRegularSampler 1);
       scene = mkScene [p; affineDragon] [l1; l2; l3] ambientLight 2}
 
-  let renderGoldDragon numSamples () = 
-    let baseDragon = mkPLY "../../../ply/dragon.ply" false
+  let renderGoldDragonAt numSamples resX resY () =
+    let baseDragon = mkPLY (Util.resolveAssetPath "../../../ply/dragon.ply") false
     let t = mergeTransformations
               [rotateY (Math.PI / 4.0);
                scale 40.0 40.0 40.0;
@@ -178,8 +178,10 @@ module Meshes =
     let p = transform (mkPlane (mkMatTexture (mkMatteReflective (fromColor Color.Blue) 1.0 (fromColor Color.Blue) 0.5)))
               (rotateX (System.Math.PI/2.0))
     let ambientLight = mkAmbientLight (fromColor Color.Blue) 0.1
-    { camera = mkPinholeCamera (mkPoint 2.0 6.0 12.0) (mkPoint 0.0 1.5 0.0) (mkVector 0.0 1.0 0.0) 4.0 4.0 3.0 1024 768 (mkMultiJitteredSampler numSamples 83);
+    { camera = mkPinholeCamera (mkPoint 2.0 6.0 12.0) (mkPoint 0.0 1.5 0.0) (mkVector 0.0 1.0 0.0) 4.0 4.0 3.0 resX resY (mkMultiJitteredSampler numSamples 83);
       scene = mkScene [p; affineDragon] [l1; l2; l3] ambientLight 2}
+
+  let renderGoldDragon numSamples () = renderGoldDragonAt numSamples 1024 768 ()
 
   let renderHappy () =
     let basehappy = mkPLY "../../../ply/happy.ply" false

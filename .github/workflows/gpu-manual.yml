@@ -1,0 +1,27 @@
+name: Explicit CUDA diagnostics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cuda:
+    runs-on: [self-hosted, linux, x64, nvidia-gpu]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore and build
+        run: |
+          dotnet restore RayTracer.Gpu/RayTracer.Gpu.fsproj --locked-mode
+          dotnet build RayTracer.Gpu/RayTracer.Gpu.fsproj -c Release --no-restore -p:ContinuousIntegrationBuild=true
+      - name: Actual CUDA layout and geometry gate
+        run: dotnet RayTracer.Gpu/bin/Release/net10.0/RayTracer.Gpu.dll --gate artifacts/gpu-ci/feasibility.json
+      - name: Actual CUDA classic transport diagnostics
+        run: dotnet RayTracer.Gpu/bin/Release/net10.0/RayTracer.Gpu.dll --self-test artifacts/gpu-ci/classic.json

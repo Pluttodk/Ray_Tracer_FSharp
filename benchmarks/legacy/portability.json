@@ -1,0 +1,119 @@
+{
+  "adaptations": [
+    {
+      "original": "benchmarks/legacy/original/RayTracer/Sampling/Sampling.fsi",
+      "adapted": "benchmarks/legacy/adapted/Sampling/Sampling.fsi",
+      "originalSha256": "12ccfa2d685fe85fd07da5485874a05810372e517fe473f6487a44a09a5c9a26",
+      "adaptedSha256": "12ccfa2d685fe85fd07da5485874a05810372e517fe473f6487a44a09a5c9a26",
+      "reason": "Unchanged signature copied alongside its adapted implementation because the F# compiler pairs signatures by physical path."
+    },
+    {
+      "original": "benchmarks/legacy/original/RayTracer/Sampling/Sampling.fs",
+      "adapted": "benchmarks/legacy/adapted/Sampling/Sampling.fs",
+      "originalSha256": "1dd97552b308fa7d7ca6824dbab59ef081a6508fa2993fad9eaa2fbf8e7d09f7",
+      "adaptedSha256": "13bb63faa77e71ed0265e8b4dd1802a5457e06aecbf1313d78e4d1bb0ac662bd",
+      "reason": "Headless diagnostic visualizers only: Bitmap becomes owned RGB8 image; sampling, RNG, locks, mappings and main dispatch are unchanged."
+    },
+    {
+      "original": "benchmarks/legacy/original/RayTracer/Core/Vector.fs",
+      "adapted": "benchmarks/legacy/adapted/Core/Vector.fs",
+      "originalSha256": "915d797dc8ce3401c9a99fb523c0dc645c4d537b935b6bd3ee6a9c441b531ee4",
+      "adaptedSha256": "1ace79558b6f799c3f1355d646ad4f6ec83c174c07df86c77656cd3de3ba10dd",
+      "reason": "Compiler inference only: declare DivideByInt\u0027s Vector result so the later overloaded division member resolves identically."
+    },
+    {
+      "original": "benchmarks/legacy/original/RayTracer/Core/Foundation.fs",
+      "adapted": "benchmarks/legacy/adapted/Core/Foundation.fs",
+      "originalSha256": "82fdb5e1214a695adb343366e9e4aa6b07533ba30a8b854954407180c00d3114",
+      "adaptedSha256": "47f9b93fab5b165acb1c665f6e0b43d445fb0af71df56b3112d8ec7a2ff318f9",
+      "reason": "Compiler name resolution only: remove unused System.Numerics import that shadows the renderer\u0027s Vector type on modern .NET."
+    },
+    {
+      "original": "benchmarks/legacy/original/RayTracer/Transformation/Transformation.fsi",
+      "adapted": "benchmarks/legacy/adapted/Transformation/Transformation.fsi",
+      "originalSha256": "d806275f5289fa8bb47f033b8e07a64f6b603c20ffb3d0b677e20e5cdf6feb14",
+      "adaptedSha256": "0630a53ca572251bed48326b4a5a1efc5054f098a11932b3307ad715f1b50aec",
+      "reason": "Input API visibility only: expose the original immutable QuickMatrix record fields and existing mkTransformation pair constructor for a shared affine16 matrix/inverse input. No transformation or inverse mathematics change."
+    },
+    {
+      "original": "benchmarks/legacy/original/RayTracer/Transformation/Transformation.fs",
+      "adapted": "benchmarks/legacy/adapted/Transformation/Transformation.fs",
+      "originalSha256": "886884b38a6c6bc8f7c789882b9c6a7113fb1ca957f1cdce7c0a3846c73ac63d",
+      "adaptedSha256": "886884b38a6c6bc8f7c789882b9c6a7113fb1ca957f1cdce7c0a3846c73ac63d",
+      "reason": "Byte-identical implementation copy beside the visibility-adapted signature, required for F# signature pairing. All original transformation, inverse, and normal mathematics are retained."
+    },
+    {
+      "original": "benchmarks/legacy/original/RayTracer/Acceleration/RegularGrids.fs",
+      "adapted": "benchmarks/legacy/adapted/Acceleration/RegularGrids.fs",
+      "originalSha256": "184d13d1d2bb46b517c42654f6ef7f2dd69239a34e0d8ccc2720e230b500a09c",
+      "adaptedSha256": "0030bcdcf4520f711e89971133cd8e34d7cd8ba58a47376e718fb2024ff1b8a8",
+      "reason": "Compiler token spacing only: separate comparison operators from identifiers/numeric literals; no grid algorithm changes."
+    },
+    {
+      "original": "benchmarks/legacy/original/RayTracer/Render.fs",
+      "adapted": "benchmarks/legacy/adapted/Render.fs",
+      "originalSha256": "aadd7394df97eedf466e28883620ec755446e0633fa4144ca18b9cd1a5d6ab3a",
+      "adaptedSha256": "6c351ed0843f3f7aabb197027cc7943f274ad751b2905e3b02a02686cb1da3b3",
+      "reason": "Headless RGB8 PNG/unsupported preview boundary, optional linear output capture and coarse Stopwatch phase boundaries only. Original Cast/PreProcessing, camera calls, array averaging, Parallel.For index order, Colour.ToColor, Y flip, acceleration reset and forced GC are retained."
+    }
+  ],
+  "compileInputs": [
+    "adapted/Sampling/Sampling.fsi",
+    "adapted/Sampling/Sampling.fs",
+    "adapted/Core/Vector.fs",
+    "original/RayTracer/Core/Colour.fs",
+    "original/RayTracer/Core/Point.fs",
+    "original/RayTracer/Core/Ray.fs",
+    "original/RayTracer/Core/BBox.fs",
+    "adapted/Core/Foundation.fs",
+    "original/RayTracer/Materials/Materials.fs",
+    "original/RayTracer/Materials/Textures.fsi",
+    "original/RayTracer/Materials/Textures.fs",
+    "adapted/Transformation/Transformation.fsi",
+    "adapted/Transformation/Transformation.fs",
+    "original/RayTracer/Shapes/Shapes.fs",
+    "original/RayTracer/Shapes/CSG.fs",
+    "original/RayTracer/Shapes/BaseShape.fs",
+    "original/RayTracer/Lights/GlobalLight.fs",
+    "original/RayTracer/Lights/BasicLight.fs",
+    "original/RayTracer/Lights/AreaLight.fs",
+    "original/RayTracer/Acceleration/KDTree.fs",
+    "original/RayTracer/Acceleration/BVH.fs",
+    "adapted/Acceleration/RegularGrids.fs",
+    "original/RayTracer/Acceleration/Acceleration.fs",
+    "original/RayTracer/Camera/Camera.fs",
+    "original/RayTracer/Camera/PinholeCamera.fs",
+    "original/RayTracer/Camera/ThinLensCamera.fs",
+    "original/RayTracer/TriangleMesh/PLYParser.fs",
+    "original/RayTracer/TriangleMesh/TriangleMesh.fs",
+    "original/RayTracer/ImplicitSurfaces/ExprParse.fsi",
+    "original/RayTracer/ImplicitSurfaces/ExprParse.fs",
+    "original/RayTracer/ImplicitSurfaces/ExprToPoly.fsi",
+    "original/RayTracer/ImplicitSurfaces/ExprToPoly.fs",
+    "original/RayTracer/ImplicitSurfaces/PolyToUnipoly.fsi",
+    "original/RayTracer/ImplicitSurfaces/PolyToUnipoly.fs",
+    "original/RayTracer/ImplicitSurfaces/ImplicitSurfaces.fsi",
+    "original/RayTracer/ImplicitSurfaces/ImplicitSurfaces.fs",
+    "original/RayTracer/Scene.fs",
+    "adapted/Render.fs",
+    "original/RayTracer/API/API.fsi",
+    "original/RayTracer/API/API.fs",
+    "original/RayTracer/AssemblyInfo.fs"
+  ],
+  "name": "legacy-port",
+  "project": "benchmarks/legacy/LegacyRayTracer.fsproj",
+  "projectSha256": "8aee5724f45605dcd0ea4e40a6b6972297bc38120a97b5383f19bb8625bedfd1",
+  "retainedBehavior": [
+    "Original mathematics",
+    "Original RNG and shared sampler state",
+    "Original accelerators and global cache",
+    "Original per-light recursion",
+    "Original Colour.ToColor gamma-2 approximation",
+    "Original vertical flip",
+    "Original parallel pixel loop",
+    "Original cleanup and forced GC"
+  ],
+  "sharedProject": "RayTracer.ImageIO/RayTracer.ImageIO.fsproj",
+  "sourceCommit": "066c59eba68d222d63b373b7e25d408796eb1d12",
+  "targetFramework": "net10.0"
+}

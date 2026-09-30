@@ -1,0 +1,1782 @@
+{
+  "schemaVersion": 1,
+  "id": "space-sentinel",
+  "title": "Vesper Sentinel \u2014 an original masked guardian",
+  "description": "Original science-fiction armored bust with a twelve-facet elongated helmet, offset crown fin, broken-chevron cyan visor, ungrilled asymmetric mask, copper-edged cuirass, broad segmented pauldrons and wine-purple cape. Not Darth Vader or a replica costume. Emissive visor/status details are visible accents; separate explicit lights supply direct illumination.",
+  "camera": {
+    "position": [
+      4.3,
+      3.66,
+      10.15
+    ],
+    "target": [
+      0,
+      2.41,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewDistance": 1,
+    "viewWidth": 0.6114613629173208,
+    "viewHeight": 0.6114613629173208,
+    "lensRadius": 0,
+    "focusDistance": 11.093917252260358
+  },
+  "ambientColour": [
+    0.9,
+    0.94,
+    1
+  ],
+  "ambientIntensity": 0.36,
+  "maxBounces": 4,
+  "materials": [
+    {
+      "id": "charcoal",
+      "kind": "matte",
+      "colour": [
+        0.055,
+        0.071,
+        0.09
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "sentinel-shell",
+      "kind": "glossy",
+      "colour": [
+        0.055,
+        0.071,
+        0.13
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0.3,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/brushed-metal.png"
+    },
+    {
+      "id": "sentinel-panel",
+      "kind": "glossy",
+      "colour": [
+        0.105,
+        0.145,
+        0.2
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0.24,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/brushed-metal.png"
+    },
+    {
+      "id": "sentinel-copper",
+      "kind": "glossy",
+      "colour": [
+        0.52,
+        0.23,
+        0.11
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0.34,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/brushed-metal.png"
+    },
+    {
+      "id": "sentinel-joint",
+      "kind": "phong",
+      "colour": [
+        0.08,
+        0.095,
+        0.11
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "cape",
+      "kind": "matte",
+      "colour": [
+        0.19,
+        0.045,
+        0.135
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/woven-fabric.png"
+    },
+    {
+      "id": "sentinel-wall",
+      "kind": "matte",
+      "colour": [
+        0.09,
+        0.055,
+        0.13
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "visor",
+      "kind": "emissive",
+      "colour": [
+        0.12,
+        0.72,
+        0.83
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 1.4,
+      "texture": ""
+    },
+    {
+      "id": "amber-signal",
+      "kind": "emissive",
+      "colour": [
+        1,
+        0.25,
+        0.045
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 1.2,
+      "texture": ""
+    },
+    {
+      "id": "reflection-card",
+      "kind": "emissive",
+      "colour": [
+        0.82,
+        0.92,
+        1
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 1.1,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "small-sphere",
+      "path": "../../artifacts/scene-assets/meshes/small-sphere.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-cylinder",
+      "path": "../../artifacts/scene-assets/meshes/rounded-cylinder.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "moulded-pedestal",
+      "path": "../../artifacts/scene-assets/meshes/moulded-pedestal.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "disc",
+      "path": "../../artifacts/scene-assets/meshes/disc.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "ring",
+      "path": "../../artifacts/scene-assets/meshes/ring.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-box",
+      "path": "../../artifacts/scene-assets/meshes/rounded-box.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "sentinel-cape",
+      "path": "../../artifacts/scene-assets/meshes/sentinel-cape.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "sentinel-helmet",
+      "path": "../../artifacts/scene-assets/meshes/sentinel-helmet.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "armor-torso",
+      "path": "../../artifacts/scene-assets/meshes/armor-torso.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "sentinel-visor",
+      "path": "../../artifacts/scene-assets/meshes/sentinel-visor.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "sentinel-faceplate",
+      "path": "../../artifacts/scene-assets/meshes/sentinel-faceplate.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "armor-panel",
+      "path": "../../artifacts/scene-assets/meshes/armor-panel.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "sentinel-fin",
+      "path": "../../artifacts/scene-assets/meshes/sentinel-fin.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "octagonal-stone",
+      "path": "../../artifacts/scene-assets/meshes/octagonal-stone.ply",
+      "smooth": false,
+      "closed": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "studio-floor",
+      "mesh": "rounded-box",
+      "material": "charcoal",
+      "transform": [
+        12,
+        0,
+        0,
+        0,
+        0,
+        0.12,
+        0,
+        -0.16,
+        0,
+        0,
+        10,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "studio-backdrop",
+      "mesh": "rounded-box",
+      "material": "sentinel-wall",
+      "transform": [
+        14,
+        0,
+        0,
+        0,
+        0,
+        5.2,
+        0,
+        5,
+        0,
+        0,
+        0.12,
+        -8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-reflection-card",
+      "mesh": "rounded-box",
+      "material": "reflection-card",
+      "transform": [
+        0.025,
+        0,
+        0,
+        -6.5,
+        0,
+        2.15,
+        0,
+        3.1,
+        0,
+        0,
+        1.45,
+        2.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-reflection-card",
+      "mesh": "rounded-box",
+      "material": "reflection-card",
+      "transform": [
+        0.025,
+        0,
+        0,
+        6.5,
+        0,
+        1.65,
+        0,
+        3.5,
+        0,
+        0,
+        1.2,
+        2.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "sentinel-dais",
+      "mesh": "disc",
+      "material": "sentinel-joint",
+      "transform": [
+        1.92,
+        0,
+        0,
+        0,
+        0,
+        0.16,
+        0,
+        0.12,
+        0,
+        0,
+        1.52,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "sentinel-dais-ring",
+      "mesh": "ring",
+      "material": "sentinel-copper",
+      "transform": [
+        1.83,
+        0,
+        0,
+        0,
+        0,
+        0.5,
+        0,
+        0.18,
+        0,
+        0,
+        1.43,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bust-mount",
+      "mesh": "moulded-pedestal",
+      "material": "sentinel-panel",
+      "transform": [
+        0.56,
+        0,
+        0,
+        0,
+        0,
+        0.39,
+        0,
+        0.64,
+        0,
+        0,
+        0.39,
+        -0.08,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cape",
+      "mesh": "sentinel-cape",
+      "material": "cape",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cuirass",
+      "mesh": "armor-torso",
+      "material": "sentinel-shell",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.93,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "neck-ring-0",
+      "mesh": "disc",
+      "material": "sentinel-joint",
+      "transform": [
+        0.35,
+        0,
+        0,
+        0,
+        0,
+        0.039,
+        0,
+        2.66,
+        0,
+        0,
+        0.33,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "neck-ring-1",
+      "mesh": "disc",
+      "material": "sentinel-joint",
+      "transform": [
+        0.35,
+        0,
+        0,
+        0,
+        0,
+        0.039,
+        0,
+        2.766,
+        0,
+        0,
+        0.33,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "neck-ring-2",
+      "mesh": "disc",
+      "material": "sentinel-joint",
+      "transform": [
+        0.35,
+        0,
+        0,
+        0,
+        0,
+        0.039,
+        0,
+        2.8720000000000003,
+        0,
+        0,
+        0.33,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "neck-ring-3",
+      "mesh": "disc",
+      "material": "sentinel-joint",
+      "transform": [
+        0.35,
+        0,
+        0,
+        0,
+        0,
+        0.039,
+        0,
+        2.978,
+        0,
+        0,
+        0.33,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "helmet",
+      "mesh": "sentinel-helmet",
+      "material": "sentinel-shell",
+      "transform": [
+        0.78,
+        0,
+        0,
+        0,
+        0,
+        0.86,
+        0,
+        3.72,
+        0,
+        0,
+        0.78,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "mask-outline",
+      "mesh": "sentinel-faceplate",
+      "material": "sentinel-copper",
+      "transform": [
+        0.81,
+        0,
+        0,
+        0,
+        0,
+        0.7090269696757474,
+        -0.01831758468503034,
+        3.38,
+        0,
+        0.037158528932490116,
+        0.3495203371641008,
+        0.564,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "mask",
+      "mesh": "sentinel-faceplate",
+      "material": "sentinel-panel",
+      "transform": [
+        0.755,
+        0,
+        0,
+        0,
+        0,
+        0.6580968634032642,
+        -0.01831758468503034,
+        3.396,
+        0,
+        0.03448939516409998,
+        0.3495203371641008,
+        0.625,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "visor-recess",
+      "mesh": "sentinel-visor",
+      "material": "charcoal",
+      "transform": [
+        0.755,
+        0,
+        0,
+        0,
+        0,
+        0.8666893873398186,
+        0.08018328332784552,
+        3.965,
+        0,
+        -0.07582549619046261,
+        0.916499122244406,
+        0.606,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "broken-chevron-visor",
+      "mesh": "sentinel-visor",
+      "material": "visor",
+      "transform": [
+        0.713,
+        0,
+        0,
+        0,
+        0,
+        0.5678309779122949,
+        0.020917378259437958,
+        3.981,
+        0,
+        -0.04967877336616515,
+        0.23908672754201893,
+        0.674,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "crown-copper-seam",
+      "mesh": "rounded-cylinder",
+      "material": "sentinel-copper",
+      "transform": [
+        0.01686198829965946,
+        0.025000000000000012,
+        0.0014307412276433802,
+        -0.245,
+        -0.0021617933717512153,
+        0.19499999999999987,
+        0.011159781575618354,
+        4.355,
+        0,
+        -0.11700000000000002,
+        0.018905349896894543,
+        0.40700000000000003,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "offset-crown-fin",
+      "mesh": "sentinel-fin",
+      "material": "sentinel-panel",
+      "transform": [
+        0.27050939457524864,
+        0.0914811439598141,
+        0.0964000778902423,
+        -0.24,
+        -0.05749854681035418,
+        0.4303849443228745,
+        -0.020490469101072217,
+        4.5,
+        -0.04380165021126465,
+        0,
+        0.6222436545749368,
+        -0.065,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "crown-fin-inlay",
+      "mesh": "sentinel-fin",
+      "material": "sentinel-copper",
+      "transform": [
+        0.0966104980625888,
+        0.07276909178621575,
+        0.03060319933023565,
+        -0.24,
+        -0.020535195289412205,
+        0.34235166025683195,
+        -0.006504910825737212,
+        4.5,
+        -0.01564344650402309,
+        0,
+        0.19753766811902757,
+        0.001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-temple",
+      "mesh": "armor-panel",
+      "material": "sentinel-panel",
+      "transform": [
+        0.15040061589865522,
+        -0.11922405880224846,
+        -0.39067653811386926,
+        -0.6,
+        0.03472271813669314,
+        0.5164161343361747,
+        -0.09019478566954611,
+        3.68,
+        0.30294221822404505,
+        0,
+        0.20429572488279607,
+        0.1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-ear-sensor",
+      "mesh": "disc",
+      "material": "sentinel-copper",
+      "transform": [
+        8.694992273946207E-18,
+        -0.027,
+        0,
+        -0.689,
+        0.142,
+        1.6532731788489268E-18,
+        0,
+        3.81,
+        0,
+        0,
+        0.142,
+        -0.04,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-sensor-lens",
+      "mesh": "disc",
+      "material": "sentinel-joint",
+      "transform": [
+        5.082284216461516E-18,
+        -0.029,
+        0,
+        -0.718,
+        0.083,
+        1.775737858763662E-18,
+        0,
+        3.81,
+        0,
+        0,
+        0.083,
+        -0.04,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-shoulder-joint",
+      "mesh": "small-sphere",
+      "material": "sentinel-joint",
+      "transform": [
+        0.38,
+        0,
+        0,
+        -1.02,
+        0,
+        0.35,
+        0,
+        2.34,
+        0,
+        0,
+        0.36,
+        -0.02,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-pauldron-trim",
+      "mesh": "armor-panel",
+      "material": "sentinel-copper",
+      "transform": [
+        0.551727548266295,
+        -0.23140078054710037,
+        -0.43102371333305217,
+        -1.12,
+        0.26909550529901627,
+        0.5151495779849207,
+        0.045268721176495705,
+        2.43,
+        0.14171916423663494,
+        -0.07729547893732798,
+        1.5920644777858814,
+        0.08,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-pauldron",
+      "mesh": "armor-panel",
+      "material": "sentinel-shell",
+      "transform": [
+        0.5202002597939352,
+        -0.21556809556229878,
+        -0.38400294460581014,
+        -1.12,
+        0.2537186192819296,
+        0.47990250159647874,
+        0.040330315229968904,
+        2.452,
+        0.13362092628025582,
+        -0.07200684090477398,
+        1.4183847165728762,
+        0.155,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-pectoral-trim",
+      "mesh": "armor-panel",
+      "material": "sentinel-copper",
+      "transform": [
+        0.5350539060559799,
+        0.07306587800403436,
+        -0.15055370896304193,
+        -0.48,
+        -0.07519692256788235,
+        0.5198907360893245,
+        0.02115894392520682,
+        2.02,
+        0.16519001316834625,
+        0,
+        0.49727847310077844,
+        0.443,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-pectoral",
+      "mesh": "armor-panel",
+      "material": "sentinel-panel",
+      "transform": [
+        0.5009619757586078,
+        0.06749895396563174,
+        -0.13607739079351866,
+        -0.48,
+        -0.07040561422727393,
+        0.48028001333966164,
+        0.019124430086244624,
+        2.034,
+        0.15466463179832776,
+        0,
+        0.4494632353026266,
+        0.495,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-abdominal-lamella-0",
+      "mesh": "rounded-box",
+      "material": "sentinel-panel",
+      "transform": [
+        0.25634528172152626,
+        -0.007665288786971313,
+        -0.02177950420583388,
+        -0.315,
+        0.040601103975299514,
+        0.048396728689161755,
+        -0.0034495345841868827,
+        1.53,
+        0.07442208607058978,
+        0,
+        0.07690093567506551,
+        0.43,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-abdominal-lamella-1",
+      "mesh": "rounded-box",
+      "material": "sentinel-panel",
+      "transform": [
+        0.23166018051871262,
+        -0.007665288786971313,
+        -0.02177950420583388,
+        -0.315,
+        0.036691368036937344,
+        0.048396728689161755,
+        -0.0034495345841868827,
+        1.3800000000000001,
+        0.0672555148193478,
+        0,
+        0.07690093567506551,
+        0.4,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-abdominal-lamella-2",
+      "mesh": "rounded-box",
+      "material": "sentinel-panel",
+      "transform": [
+        0.20697507931589898,
+        -0.007665288786971313,
+        -0.02177950420583388,
+        -0.315,
+        0.03278163209857517,
+        0.048396728689161755,
+        -0.0034495345841868827,
+        1.23,
+        0.060088943568105825,
+        0,
+        0.07690093567506551,
+        0.37,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-cape-clasp",
+      "mesh": "disc",
+      "material": "sentinel-copper",
+      "transform": [
+        0.071,
+        0,
+        0,
+        -0.7,
+        0,
+        0.0034793275240016424,
+        -0.07030903288065148,
+        2.61,
+        0,
+        0.02475670171853926,
+        0.009881290168164664,
+        0.341,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-temple",
+      "mesh": "armor-panel",
+      "material": "sentinel-panel",
+      "transform": [
+        0.15040061589865522,
+        0.11922405880224846,
+        0.39067653811386926,
+        0.6,
+        -0.03472271813669314,
+        0.5164161343361747,
+        -0.09019478566954611,
+        3.68,
+        -0.30294221822404505,
+        0,
+        0.20429572488279607,
+        0.1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-ear-sensor",
+      "mesh": "disc",
+      "material": "sentinel-copper",
+      "transform": [
+        8.694992273946207E-18,
+        -0.027,
+        0,
+        0.689,
+        0.142,
+        1.6532731788489268E-18,
+        0,
+        3.81,
+        0,
+        0,
+        0.142,
+        -0.04,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-sensor-lens",
+      "mesh": "disc",
+      "material": "sentinel-joint",
+      "transform": [
+        5.082284216461516E-18,
+        -0.029,
+        0,
+        0.718,
+        0.083,
+        1.775737858763662E-18,
+        0,
+        3.81,
+        0,
+        0,
+        0.083,
+        -0.04,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-shoulder-joint",
+      "mesh": "small-sphere",
+      "material": "sentinel-joint",
+      "transform": [
+        0.38,
+        0,
+        0,
+        1.02,
+        0,
+        0.35,
+        0,
+        2.34,
+        0,
+        0,
+        0.36,
+        -0.02,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-pauldron-trim",
+      "mesh": "armor-panel",
+      "material": "sentinel-copper",
+      "transform": [
+        0.551727548266295,
+        0.23140078054710037,
+        0.43102371333305217,
+        1.12,
+        -0.26909550529901627,
+        0.5151495779849207,
+        0.045268721176495705,
+        2.43,
+        -0.14171916423663494,
+        -0.07729547893732798,
+        1.5920644777858814,
+        0.08,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-pauldron",
+      "mesh": "armor-panel",
+      "material": "sentinel-shell",
+      "transform": [
+        0.5202002597939352,
+        0.21556809556229878,
+        0.38400294460581014,
+        1.12,
+        -0.2537186192819296,
+        0.47990250159647874,
+        0.040330315229968904,
+        2.452,
+        -0.13362092628025582,
+        -0.07200684090477398,
+        1.4183847165728762,
+        0.155,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-pectoral-trim",
+      "mesh": "armor-panel",
+      "material": "sentinel-copper",
+      "transform": [
+        0.5350539060559799,
+        -0.07306587800403436,
+        0.15055370896304193,
+        0.48,
+        0.07519692256788235,
+        0.5198907360893245,
+        0.02115894392520682,
+        2.02,
+        -0.16519001316834625,
+        0,
+        0.49727847310077844,
+        0.443,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-pectoral",
+      "mesh": "armor-panel",
+      "material": "sentinel-panel",
+      "transform": [
+        0.5009619757586078,
+        -0.06749895396563174,
+        0.13607739079351866,
+        0.48,
+        0.07040561422727393,
+        0.48028001333966164,
+        0.019124430086244624,
+        2.034,
+        -0.15466463179832776,
+        0,
+        0.4494632353026266,
+        0.495,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-abdominal-lamella-0",
+      "mesh": "rounded-box",
+      "material": "sentinel-panel",
+      "transform": [
+        0.25634528172152626,
+        0.007665288786971313,
+        0.02177950420583388,
+        0.315,
+        -0.040601103975299514,
+        0.048396728689161755,
+        -0.0034495345841868827,
+        1.53,
+        -0.07442208607058978,
+        0,
+        0.07690093567506551,
+        0.43,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-abdominal-lamella-1",
+      "mesh": "rounded-box",
+      "material": "sentinel-panel",
+      "transform": [
+        0.23166018051871262,
+        0.007665288786971313,
+        0.02177950420583388,
+        0.315,
+        -0.036691368036937344,
+        0.048396728689161755,
+        -0.0034495345841868827,
+        1.3800000000000001,
+        -0.0672555148193478,
+        0,
+        0.07690093567506551,
+        0.4,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-abdominal-lamella-2",
+      "mesh": "rounded-box",
+      "material": "sentinel-panel",
+      "transform": [
+        0.20697507931589898,
+        0.007665288786971313,
+        0.02177950420583388,
+        0.315,
+        -0.03278163209857517,
+        0.048396728689161755,
+        -0.0034495345841868827,
+        1.23,
+        -0.060088943568105825,
+        0,
+        0.07690093567506551,
+        0.37,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-cape-clasp",
+      "mesh": "disc",
+      "material": "sentinel-copper",
+      "transform": [
+        0.071,
+        0,
+        0,
+        0.7,
+        0,
+        0.0034793275240016424,
+        -0.07030903288065148,
+        2.61,
+        0,
+        0.02475670171853926,
+        0.009881290168164664,
+        0.341,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "chest-insignia",
+      "mesh": "octagonal-stone",
+      "material": "sentinel-copper",
+      "transform": [
+        0.135,
+        0,
+        0,
+        0.03,
+        0,
+        1.5920408388915591E-18,
+        -0.17,
+        2.13,
+        0,
+        0.026,
+        1.0409497792752502E-17,
+        0.584,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "insignia-light",
+      "mesh": "sentinel-fin",
+      "material": "visor",
+      "transform": [
+        0.06181867355918498,
+        0.0299746484543699,
+        0,
+        0.03,
+        -0.02008610463437158,
+        0.09225248208062989,
+        0,
+        2.15,
+        0,
+        0,
+        0.1,
+        0.625,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "offset-cheek-vent-0",
+      "mesh": "rounded-box",
+      "material": "charcoal",
+      "transform": [
+        0.08395350895058672,
+        -0.0018772135804827705,
+        0,
+        0.225,
+        0.013296929528419625,
+        0.011852260087141653,
+        0,
+        3.5,
+        0,
+        0,
+        0.006,
+        0.704,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "offset-cheek-vent-1",
+      "mesh": "rounded-box",
+      "material": "charcoal",
+      "transform": [
+        0.07407662554463534,
+        -0.0018772135804827705,
+        0,
+        0.225,
+        0.011732584878017318,
+        0.011852260087141653,
+        0,
+        3.425,
+        0,
+        0,
+        0.006,
+        0.704,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "offset-cheek-vent-2",
+      "mesh": "rounded-box",
+      "material": "charcoal",
+      "transform": [
+        0.06419974213868396,
+        -0.0018772135804827705,
+        0,
+        0.225,
+        0.010168240227615007,
+        0.011852260087141653,
+        0,
+        3.35,
+        0,
+        0,
+        0.006,
+        0.704,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cheek-status-light",
+      "mesh": "small-sphere",
+      "material": "amber-signal",
+      "transform": [
+        0.014,
+        0,
+        0,
+        -0.25,
+        0,
+        0.042,
+        0,
+        3.46,
+        0,
+        0,
+        0.007,
+        0.714,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "warm-key",
+      "kind": "point",
+      "position": [
+        -3.9,
+        6.8,
+        5.1
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1,
+        0.78,
+        0.57
+      ],
+      "intensity": 2.65,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "cyan-fill",
+      "kind": "point",
+      "position": [
+        4.2,
+        3.6,
+        3
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.39,
+        0.83,
+        1
+      ],
+      "intensity": 1.35,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "violet-rim",
+      "kind": "point",
+      "position": [
+        1.2,
+        5.9,
+        -2.25
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.74,
+        0.39,
+        1
+      ],
+      "intensity": 2.75,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "soft-front",
+      "kind": "directional",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "direction": [
+        0.2,
+        0.7,
+        1
+      ],
+      "colour": [
+        0.78,
+        0.87,
+        1
+      ],
+      "intensity": 0.45,
+      "size": [
+        1,
+        1
+      ]
+    }
+  ],
+  "subjects": [
+    "cape",
+    "cuirass",
+    "neck-ring-0",
+    "neck-ring-1",
+    "neck-ring-2",
+    "neck-ring-3",
+    "helmet",
+    "mask-outline",
+    "mask",
+    "visor-recess",
+    "broken-chevron-visor",
+    "crown-copper-seam",
+    "offset-crown-fin",
+    "crown-fin-inlay",
+    "left-temple",
+    "left-ear-sensor",
+    "left-sensor-lens",
+    "left-shoulder-joint",
+    "left-pauldron-trim",
+    "left-pauldron",
+    "left-pectoral-trim",
+    "left-pectoral",
+    "left-abdominal-lamella-0",
+    "left-abdominal-lamella-1",
+    "left-abdominal-lamella-2",
+    "left-cape-clasp",
+    "right-temple",
+    "right-ear-sensor",
+    "right-sensor-lens",
+    "right-shoulder-joint",
+    "right-pauldron-trim",
+    "right-pauldron",
+    "right-pectoral-trim",
+    "right-pectoral",
+    "right-abdominal-lamella-0",
+    "right-abdominal-lamella-1",
+    "right-abdominal-lamella-2",
+    "right-cape-clasp",
+    "chest-insignia",
+    "insignia-light",
+    "offset-cheek-vent-0",
+    "offset-cheek-vent-1",
+    "offset-cheek-vent-2",
+    "cheek-status-light"
+  ]
+}

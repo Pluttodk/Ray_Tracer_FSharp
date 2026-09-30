@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "id": "cuda-nested-glass",
+  "title": "Independent nested colored dielectric worker comparison",
+  "description": "The pinhole origin is inside two closed concentric cubes with different refractive indices and filters. Both workers independently load the same PLY and affine instances; environment radiance is reached through inner/outer/air transitions.",
+  "camera": {
+    "position": [0, 0, 0],
+    "target": [0, 0, 1],
+    "up": [0, 1, 0],
+    "viewDistance": 1,
+    "viewWidth": 1,
+    "viewHeight": 1,
+    "lensRadius": 0,
+    "focusDistance": 1
+  },
+  "ambientColour": [0, 0, 0],
+  "ambientIntensity": 0,
+  "maxBounces": 2,
+  "materials": [
+    {
+      "id": "outer-glass",
+      "kind": "glass",
+      "colour": [1, 1, 1],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 0,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [0.6, 0.7, 0.9],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "inner-glass",
+      "kind": "glass",
+      "colour": [1, 1, 1],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 0,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.2,
+      "filter": [0.25, 0.5, 0.8],
+      "emission": 0,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "closed-cube",
+      "path": "closed-cube.ply",
+      "smooth": false,
+      "closed": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "outer-medium",
+      "mesh": "closed-cube",
+      "material": "outer-glass",
+      "transform": [2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1]
+    },
+    {
+      "id": "inner-medium",
+      "mesh": "closed-cube",
+      "material": "inner-glass",
+      "transform": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    }
+  ],
+  "subjects": ["outer-medium", "inner-medium"],
+  "lights": [
+    {
+      "id": "constant-environment",
+      "kind": "environment",
+      "position": [0, 0, 0],
+      "direction": [0, 0, 0],
+      "colour": [1, 1, 1],
+      "intensity": 1,
+      "size": [1000000, 1000000]
+    }
+  ]
+}

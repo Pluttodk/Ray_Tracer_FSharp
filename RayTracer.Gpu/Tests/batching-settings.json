@@ -1,0 +1,14 @@
+{
+  "width": 97,
+  "height": 89,
+  "cameraSamples": 1,
+  "lightSamples": 1,
+  "glossySamples": 1,
+  "maxBounces": 2,
+  "threads": 2,
+  "tileSize": 16,
+  "seed": 2026,
+  "precision": "float32",
+  "sampler": "regular",
+  "transfer": "gamma2"
+}

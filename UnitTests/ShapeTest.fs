@@ -6,7 +6,7 @@ open Tracer.Basics
 open System
 
 
-let allTest = 
+let allTest () =
     let rectangle = new Rectangle(Point(0.,0.,0.), Point(0.,1.,0.), Point(1.,0.,0.), Textures.mkMatTexture(MatteMaterial(Colour(1.,1.,1.), 1., Colour(1.,1.,1.), 1.)))
     let disc = new Disc(Point(0.,0.,0.), 2., Textures.mkMatTexture(MatteMaterial(Colour(1.,1.,1.), 1., Colour(1.,1.,1.), 1.)))
     let triangle = new Triangle(Point(0.,0.,0.), Point(0.,1.,0.), Point(1.,0.,0.), MatteMaterial(Colour(1.,1.,1.), 1., Colour(1.,1.,1.), 1.))
@@ -272,5 +272,4 @@ let allTest =
     Assert.True(not (csgIntersection.hitFunction rayMisscsg).DidHit, "test on CSG Intersection HitFunction, for Ray missing")
     Assert.True(not (csgSubtraction.hitFunction rayMisscsg).DidHit, "test on CSG Subtraction HitFunction, for Ray missing")
     Assert.True(not (csgGrouping.hitFunction rayMisscsg).DidHit, "test on CSG Grouping HitFunction, for Ray missing")
-
 

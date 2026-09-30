@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>LegacyRunner</AssemblyName>
+    <DefineConstants>$(DefineConstants);LEGACY</DefineConstants>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../SceneFormat/SceneFormat.fsproj" />
+    <ProjectReference Include="../../../RayTracer.ImageIO/RayTracer.ImageIO.fsproj" />
+    <ProjectReference Include="../LegacyRayTracer.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../../BenchmarkRunner/ScenePolicy.fs" Link="ScenePolicy.fs" />
+    <Compile Include="../../../BenchmarkRunner/SceneBuilder.fs" Link="SceneBuilder.fs" />
+    <Compile Include="../../../BenchmarkRunner/LinearOutput.fs" Link="LinearOutput.fs" />
+    <Compile Include="../../../BenchmarkRunner/Worker.fs" Link="Worker.fs" />
+    <Compile Include="../../../BenchmarkRunner/Program.fs" Link="Program.fs" />
+  </ItemGroup>
+</Project>

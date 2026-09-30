@@ -1,7 +1,7 @@
 namespace Tracer
 
 module ImplicitSurfaces =
-
+  open System
   open Tracer.ExprParse
   open Tracer.ExprToPoly
   open Tracer.PolyToUnipoly
@@ -11,7 +11,6 @@ module ImplicitSurfaces =
   type hitPoint = Tracer.Basics.HitPoint
   type baseShape = Tracer.BaseShape.BaseShape
   type shape = Tracer.Basics.Shape
-
   type expr = ExprParse.expr
   type poly = ExprToPoly.poly
   type unipoly = PolyToUnipoly.unipoly
@@ -19,250 +18,189 @@ module ImplicitSurfaces =
   type simpleIntExpr = PolyToUnipoly.simpleIntExpr
   type simpleExpr = ExprToPoly.simpleExpr
 
-  (*
-      Substitutes ray variables (p + t * d) into an expr, that represents an implicit surface
-  *)
-  let substWithRayVars (e:expr) = 
-      let ex = FAdd(FVar "ox", FMult(FVar "t",FVar "dx"))
-      let ey = FAdd(FVar "oy", FMult(FVar "t",FVar "dy"))
-      let ez = FAdd(FVar "oz", FMult(FVar "t",FVar "dz"))
-      List.fold subst e [("x",ex);("y",ey);("z",ez)]
+  let substWithRayVars expression =
+    let replacement origin direction = FAdd(FVar origin, FMult(FVar "t", FVar direction))
+    List.fold subst expression [("x", replacement "ox" "dx"); ("y", replacement "oy" "dy"); ("z", replacement "oz" "dz")]
 
-  (*
-      Returns a partial derivative of an expr, with respect to var variable
-  *)
-  let rec partialDerivative var e =
-    let rec inner = function
-      // the following rewrites are based on the chain rule
-      | FNum _          -> FNum 0.0 // case 1
-      | FVar x          -> if x <> var then FNum 0.0 // case 1
-                           else FNum 1.0 // case 2
-      | FExponent(e1, n)-> FMult(inner e1, FMult (FNum (float n), FExponent(e1, n-1))) // case 6
-      | FAdd(e1, e2)    -> FAdd (inner e1, inner e2) // case 3
-      | FMult(e1, e2)   -> FAdd (FMult (inner e1, e2), FMult (inner e2, e1)) // case 4
-      | FDiv(e1, e2)    -> FDiv (FAdd (FMult (e2, inner e1), FMult (FNum -1.0, FMult (e1, inner e2))), FExponent(e2,2)) // case 5
-      | FRoot(e1, n)    -> FDiv(inner e1, FMult (FNum (float n), FExponent(FRoot(e1, n), n-1))) // case 7
-    (inner >> reduceExpr) e
+  let partialDerivative variable expression =
+    let rec derivative = function
+      | FNum _ -> FNum 0.
+      | FVar name -> FNum(if name = variable then 1. else 0.)
+      | FExponent(_, 0) -> FNum 0.
+      | FExponent(e, n) -> FMult(derivative e, FMult(FNum(float n), FExponent(e, n-1)))
+      | FAdd(a, b) -> FAdd(derivative a, derivative b)
+      | FMult(a, b) -> FAdd(FMult(derivative a, b), FMult(derivative b, a))
+      | FDiv(a, b) -> FDiv(FAdd(FMult(b, derivative a), FMult(FNum -1., FMult(a, derivative b))), FExponent(b, 2))
+      | FRoot(e, n) -> FDiv(derivative e, FMult(FNum(float n), FExponent(FRoot(e, n), n-1)))
+    derivative expression |> reduceExpr
 
-  (* 
-      Returns a vector, based on the initital implicit shape equation, and partially derived with respect 
-      to x, y, and z from the hitpoint.
-      
-      Thou shall not be simplified!
-  *)
-  let normalVector p dx dy dz  =
-    let x = solveExpr p dx
-    let y = solveExpr p dy
-    let z = solveExpr p dz
-    Vector(x, y, z).Normalise
+  let normalVector point dx dy dz =
+    Vector(solveExpr point dx, solveExpr point dy, solveExpr point dz).Normalise
 
-  (*
-      Calculates a discriminant from the values a, b, and c, from a quadratic equation
-  *)
-  let discriminant (a:float) (b:float) (c:float) =
-    (pown b 2) - 4.0 * a * c
-  
-  (*
-      Returns two t values in a list, when given a quadratic equation's a, b, and discrimant
-      Requires that the discriminant is not negative (otherwise no real solutions exists)
-  *)
-  let getDistances a b d = 
-    let sres = sqrt d
-    let res f = (f (-b) sres) / (2.0 * a)
-    [res (+); res (-)]
+  let discriminant a b c = b*b - 4.*a*c
+  let getDistances a b d = [(-b + sqrt d)/(2.*a); (-b - sqrt d)/(2.*a)]
+  let getValArray (ray: Ray) =
+    let origin, direction = ray.GetOrigin, ray.GetDirection
+    [|origin.X; origin.Y; origin.Z; direction.X; direction.Y; direction.Z|]
+  let nrtolerance = 1e-12
+  let nrepsilon = 1e-10
 
-  (*
-      Creates a float array with values from a ray
-  *)
-  let getValArray (r:Ray) = 
-    let arr = Array.zeroCreate 6
-    arr.[0] <- r.GetOrigin.X // ox
-    arr.[1] <- r.GetOrigin.Y // oy
-    arr.[2] <- r.GetOrigin.Z // oz
-    arr.[3] <- r.GetDirection.X // dz
-    arr.[4] <- r.GetDirection.Y // dy
-    arr.[5] <- r.GetDirection.Z // dz
-    arr
-  
-  (*
-      Static values used in the newtonRaphson function
-  *)
-  let nrtolerance = 10.**(-5.)
-  let nrepsilon = 10.**(-10.)
-  
-  (*
-      Root-finding algorithm that given an initial guess converges on a better approximation.
-
-      Runs 25 times, or when a result has been found, or none is possible.
-
-      Based on the pseudo code given here: https://en.wikipedia.org/wiki/Newton%27s_method#Pseudocode
-      but adapted to a functional, immutable, approach
-  *)
-  let newtonRaphson f f' initial =
-    let rec inner g iter =
-      if iter < 0 then None
+  let newtonRaphson polynomial derivative initial =
+    let rec improve guess remaining =
+      if remaining = 0 || not (Double.IsFinite guess) then None
       else
-        let y  = solveUnipoly f g
-        let y' = solveUnipoly f' g
-        if abs y' < nrepsilon then None
+        let value, slope = solveUnipoly polynomial guess, solveUnipoly derivative guess
+        if not (Double.IsFinite value && Double.IsFinite slope) then None
+        elif value = 0. then Some guess
+        elif abs slope < nrepsilon then None
         else
-          let g' = g - (y / y')
-          if abs (g' - g) <= (nrtolerance * abs g')
-            then Some g'
-          else
-            inner g' (iter - 1)
-    inner initial 25
+          let next = guess - value/slope
+          if not (Double.IsFinite next) then None
+          elif next = guess || abs(next-guess) <= nrtolerance*abs next then Some next
+          else improve next (remaining-1)
+    improve initial 25
 
-  (*
-      Converts a (int*simpleExpr) list into a (int*simpleIntExpr) list
-  *)
-  let sepolyToSIEpoly p = List.foldBack (fun ((n:int),c) acc -> (n,seToSIE c)::acc) p []
+  let sepolyToSIEpoly (terms: (int * simpleExpr) list) : (int * simpleIntExpr) list =
+    terms |> List.map (fun (degree, coefficient) -> degree, seToSIE coefficient)
 
-  (*
-      Returns a simple hitfunction, for a first degree polynomial
+  let private roots terms (ray: Ray) minimum maximum =
+    let polynomial = toUnipoly terms (getValArray ray)
+    let high = if Double.IsFinite maximum then maximum else rootBound polynomial
+    if high < minimum then [||] else realRootsInInterval polynomial minimum high
 
-      As input it takes:
-        (int*simpleIntExpr) list (an optimized form of a polynomial)
-        derivative with respect to x
-        derivative with respect to y
-        derivative with respect to z
-  *)
-  let getFirstDegreeHF (plst:(int*simpleIntExpr) list) pdx pdy pdz : hf =
-    let mutable plst = plst
-    let aSIE = if not plst.IsEmpty && fst plst.[0] = 1 then
-                  let res = snd plst.[0]
-                  plst <- plst.Tail
-                  res
-               else SIE [[]]
-    let bSIE = if not plst.IsEmpty && fst plst.[0] = 0 then
-                  snd plst.[0]
-               else SIE [[]]
-    let hitFunction (r:Ray) =
-      let valArray = getValArray r
-      let a = solveSIE aSIE valArray
-      let b = solveSIE bSIE valArray
-      let t = (-b) / a
-      if t < 0.0 then None
-      else 
-        let c = new Colour(1.,1.,1.)
-        Some (t, normalVector (r.PointAtTime t) pdx pdy pdz)
-    hitFunction
-
-  (*
-      Returns a hitfunction for a second degree polynomial
-
-      As input it takes:
-        (int*simpleIntExpr) list (an optimized form of a polynomial)
-        derivative with respect to x
-        derivative with respect to y
-        derivative with respect to z
-  *)
-  let getSecondDegreeHF (plst:(int*simpleIntExpr) list) pdx pdy pdz :hf =
-    let mutable plst = plst
-    let aSIE = snd plst.[0] // we know it is degree 2, otherwise we douldn't be here
-    plst <- plst.Tail
-    let bSIE = if not plst.IsEmpty && fst plst.[0] = 1 then
-                  let res = snd plst.[0]
-                  plst <- plst.Tail
-                  res
-               else SIE [[]]
-    let cSIE = if not plst.IsEmpty && fst plst.[0] = 0 then
-                  snd plst.[0]
-               else SIE [[]]
-    let hitFunction (r:Ray) =
-      let valArray = getValArray r
-      let a = solveSIE aSIE valArray
-      let b = solveSIE bSIE valArray
-      let c = solveSIE cSIE valArray
-      let d = discriminant a b c
-      if d < 0.0 then None
+  let private polynomialHF terms dx dy dz : hf =
+    fun ray ->
+      if not ray.IsValid then None
       else
-        let ts = getDistances a b d |> List.filter (fun x -> x >= 0.0)
-        if List.isEmpty ts then None
+        roots terms ray 0. infinity
+        |> Array.tryPick (fun time ->
+            if time <= 0. then None
+            else
+              let normal = normalVector (ray.PointAtTime time) dx dy dz
+              if normal.IsFinite && normal <> Vector.Zero then Some(time, normal) else None)
+
+  let getFirstDegreeHF terms dx dy dz = polynomialHF terms dx dy dz
+  let getSecondDegreeHF terms dx dy dz = polynomialHF terms dx dy dz
+  let getHigherDegreeHF terms dx dy dz = polynomialHF terms dx dy dz
+
+  // Evaluate the original expression too: clearing denominators and radicals can introduce extraneous roots.
+  let rec private compile expression : Point -> struct (float * float) =
+    match expression with
+    | FNum value ->
+        if not (Double.IsFinite value) then invalidArg "expression" "Implicit constants must be finite."
+        fun _ -> struct (value, abs value)
+    | FVar name ->
+        let coordinate =
+          match name with
+          | "x" -> fun (point: Point) -> point.X
+          | "y" -> fun (point: Point) -> point.Y
+          | "z" -> fun (point: Point) -> point.Z
+          | _ -> invalidArg "expression" ("Unknown implicit variable '" + name + "'.")
+        fun point -> let value = coordinate point in struct (value, abs value)
+    | FAdd(a,b) ->
+        let a, b = compile a, compile b
+        fun point ->
+          let struct (av, am), struct (bv, bm) = a point, b point
+          struct (av+bv, am+bm)
+    | FMult(a,b) ->
+        let a, b = compile a, compile b
+        fun point ->
+          let struct (av, am), struct (bv, bm) = a point, b point
+          struct (av*bv, am*bm)
+    | FDiv(a,b) ->
+        let a, b = compile a, compile b
+        fun point ->
+          let struct (av, am), struct (bv, _) = a point, b point
+          struct (av/bv, am/abs bv)
+    | FExponent(e, n) ->
+        let e = compile e
+        fun point ->
+          let struct (value, magnitude) = e point
+          struct (pown value n, pown magnitude n)
+    | FRoot(e, n) ->
+        if n <= 0 then invalidArg "expression" "Implicit root degrees must be positive."
+        let e = compile e
+        fun point ->
+          let struct (value, magnitude) = e point
+          struct (realRoot value n, realRoot magnitude n)
+
+  let private createImplicit (expression: string) minimum maximum (bounds: BBox option) : baseShape =
+    let expression = parseStr expression
+    let evaluate = compile expression
+    let dx, dy, dz =
+      compile (partialDerivative "x" expression),
+      compile (partialDerivative "y" expression),
+      compile (partialDerivative "z" expression)
+    let terms =
+      exprToPoly (substWithRayVars expression) "t"
+      |> polyAsList |> sepolyToSIEpoly
+    let normal point =
+      let struct (x, _), struct (y, _), struct (z, _) = dx point, dy point, dz point
+      Vector(x,y,z).Normalise
+    let refine (ray: Ray) low high initial =
+      let mutable time, active, iterations = initial, true, 0
+      while active && iterations < 20 do
+        iterations <- iterations+1
+        let point = ray.PointAtTime time
+        let struct (value, _) = evaluate point
+        let struct (x, _), struct (y, _), struct (z, _) = dx point, dy point, dz point
+        let direction = ray.GetDirection
+        let slope = x*direction.X + y*direction.Y + z*direction.Z
+        if value = 0. || slope = 0. || not (Double.IsFinite value && Double.IsFinite slope) then active <- false
         else
-          let t' = List.min ts
-          let hp = r.PointAtTime t'
-          Some (t', normalVector hp pdx pdy pdz)
-    hitFunction
+          let candidate = time-value/slope
+          if not (Double.IsFinite candidate) || candidate < low || candidate > high || candidate = time then active <- false
+          else time <- candidate
+      time
+    { new baseShape() with
+        member _.toShape texture =
+          let intersect (owner: shape) (ray: Ray) lower upper =
+            let queryMinimum, queryMaximum = max minimum lower, min maximum upper
+            if not ray.IsValid || queryMinimum >= queryMaximum then HitPoint(ray)
+            else
+              let interval =
+                match bounds with
+                | None -> Some(queryMinimum, queryMaximum)
+                | Some box -> box.IntersectInterval(ray, queryMinimum, queryMaximum)
+              match interval with
+              | None -> HitPoint(ray)
+              | Some(low, high) ->
+                  roots terms ray low high
+                  |> Array.tryPick (fun initial ->
+                      let time = refine ray low high initial
+                      if time <= queryMinimum || time >= queryMaximum then None
+                      else
+                        let point = ray.PointAtTime time
+                        let struct (value, magnitude) = evaluate point
+                        if not (Double.IsFinite value && Double.IsFinite magnitude)
+                           || abs value > 1e-8*magnitude then None
+                        else
+                          let outward = normal point
+                          if not outward.IsFinite || outward.IsZero then None
+                          else Some(HitPoint(ray, time, outward, Textures.getFunc texture 0. 0., owner, 0., 0.)))
+                  |> Option.defaultWith (fun () -> HitPoint(ray))
+          { new shape() with
+              member _.Bounds = bounds
+              member _.IsOpaque = Textures.isOpaque texture
+              member this.hitFunction ray = intersect this ray 0. infinity
+              member _.isInside point =
+                let struct (value, _) = evaluate point
+                Double.IsFinite value && value < 0. && (bounds |> Option.forall (fun box -> box.isInside point))
+              member _.getBoundingBox() =
+                match bounds with
+                | Some box -> box
+                | None -> invalidOp "An unbounded implicit surface has no finite bounding box."
+            interface IIntervalShape with
+              member this.HitWithin(ray, lower, upper) = intersect (this :?> shape) ray lower upper } }
 
-   (*
-      Returns a hitfunction for larger than 3rd degree polynomials
+  let mkImplicit (expression: string) : baseShape = createImplicit expression 0. infinity None
 
-      As input it takes:
-        (int*simpleIntExpr) list (an optimized form of a polynomial)
-        derivative with respect to x
-        derivative with respect to y
-        derivative with respect to z
+  let mkImplicitInInterval (expression: string) (minimum: float) (maximum: float) : baseShape =
+    if not (Double.IsFinite minimum && Double.IsFinite maximum) || minimum < 0. || maximum <= minimum then
+      invalidArg "interval" "Implicit ray bounds must be finite, nonnegative and strictly ordered."
+    createImplicit expression minimum maximum None
 
-      Uses a sturm sequence chain to get an initial guess, which is then passed to the newtonRaphson function
-      if the newtonRaphson result is outside the initial guess interval (where we know the smallest real root exists),
-      we try again. This is stopped when a good approximation of the smallest root is found, no result has been found,
-      or we have done the entire operation 5 times.
-  *)
-  let getHigherDegreeHF plst pdx pdy pdz =
-    let hitFunction (r:Ray) =
-      let valArray = getValArray r
-      // now that we know the Ray values, we can turn our multivariable polynomial into a univariate one
-      let up = toUnipoly plst valArray
-      let up' = unipolyDerivative up
-      let ss = sturmSeq up up'
-      let rec findx l h max itcount =
-        if itcount > 4 then None // don't wanna end in an endless loop
-        else 
-          match getInterval ss l h max with
-          | None              -> None
-          | Some (lo,hi,mid)  ->
-              match newtonRaphson up up' mid with
-              | None    -> None
-              | Some t  ->
-                  if t < lo then findx mid hi 5 (itcount + 1)
-                  else 
-                    if t > hi then findx lo mid 5 (itcount + 1)
-                    else
-                      let hp = r.PointAtTime t
-                      Some (t, normalVector hp pdx pdy pdz)
-      findx 0.0 100.0 15 0
-    hitFunction
-
-  (*
-      From a string
-        * parses it to an expression
-        * creates partial derivatives for x, y, z
-        * substitutes the ray values into the expression, and converts it to a polynomial (as a map)
-        * converts the poly to a list, and then changes all simpleExpr to simpleIntExpr
-
-        Sets the hitfunction to a hitfunction of the correct degree, and with the poly
-
-        Returns a baseShape that, given Texture, can be converted to a shape, with the toShape function.
-        That shape contains the hitfunction mentioned earlier, and an isInside function
-  *)
-  let mkImplicit (s:string) : baseShape =
-    let exp = parseStr s // parsing the equation string to expression
-    // partial derivates, needed for the normal, returned when a hit occurs
-    let pdx = partialDerivative "x" exp
-    let pdy = partialDerivative "y" exp
-    let pdz = partialDerivative "z" exp
-    // converting the expression to a polynomial
-    let p = (substWithRayVars >> exprToPoly) exp "t"
-    // turning the polynomial into a list, since it's faster to work with, with our need
-    let plst = (polyAsList >> sepolyToSIEpoly >> List.rev) p
-
-    let hitfunction =
-      match fst (plst.[0]) with
-      | 1 -> getFirstDegreeHF plst pdx pdy pdz
-      | 2 -> getSecondDegreeHF plst pdx pdy pdz
-      | _ -> getHigherDegreeHF plst pdx pdy pdz
-    let bsh = 
-        { new baseShape() with
-            member this.toShape tex =
-              let mat = (Textures.getFunc tex) 1. 1.
-              { new shape() with
-                  member this.hitFunction r = 
-                    match hitfunction r with
-                    | None        -> hitPoint (r)
-                    | Some (t,v)  -> hitPoint (r, t, v, mat, this)
-                  member this.isInside p = solveExpr p exp < 0.0
-                  member this.getBoundingBox () = failwith "getBoundingBox not implemented for implicit surfaces"
-              }
-          }
-    bsh
+  let mkBoundedImplicit (expression: string) (bounds: BBox) : baseShape =
+    if bounds.IsEmpty || not bounds.lowPoint.IsFinite || not bounds.highPoint.IsFinite then
+      invalidArg "bounds" "Implicit bounds must be finite and ordered."
+    createImplicit expression 0. infinity (Some bounds)

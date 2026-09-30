@@ -1,0 +1,1646 @@
+{
+  "schemaVersion": 1,
+  "id": "showcase-gallery-flat",
+  "title": "Showcase gallery, flat shaded - GPU-compatible variant",
+  "description": "Flat-shaded variant of showcase-gallery for the CUDA worker, which requires authored vertex normals for smooth meshes and the Stanford scans carry none. At these triangle densities the faceting is not visible. Same geometry, materials, lights and camera. Hero render. Thai Statuette (10.0M triangles), XYZ RGB Dragon (7.2M) and Happy Buddha (1.09M) from the Stanford Large Geometric Models Archive, with the Stanford Dragon, Armadillo, Horse and Bunny, under two rectangular area lights and a sky environment. Rough metal, rough dielectric, mirror and glass. Glass subjects are the generated closed sphere; the Stanford scans are open surfaces and are never used as glass. The scans remain under Stanford's attributed noncommercial research terms and are not GPL-relicensed. See https://graphics.stanford.edu/data/3Dscanrep/.",
+  "camera": {
+    "position": [
+      0,
+      10.5,
+      42
+    ],
+    "target": [
+      0,
+      6.4,
+      -2
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewDistance": 1,
+    "viewWidth": 0.8455864374763236,
+    "viewHeight": 0.5284915234227022,
+    "lensRadius": 0,
+    "focusDistance": 44
+  },
+  "ambientColour": [
+    0.5,
+    0.56,
+    0.66
+  ],
+  "ambientIntensity": 0.03,
+  "maxBounces": 8,
+  "materials": [
+    {
+      "id": "floor",
+      "kind": "phong",
+      "colour": [
+        0.3,
+        0.31,
+        0.34
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.04,
+      "diffuse": 0.72,
+      "specular": 0.18,
+      "exponent": 28,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "marble",
+      "kind": "phong",
+      "colour": [
+        0.88,
+        0.86,
+        0.8
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.05,
+      "diffuse": 0.85,
+      "specular": 0.22,
+      "exponent": 44,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "ivory",
+      "kind": "matte",
+      "colour": [
+        0.86,
+        0.82,
+        0.72
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.05,
+      "diffuse": 0.9,
+      "specular": 0,
+      "exponent": 0,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "jade",
+      "kind": "phong",
+      "colour": [
+        0.16,
+        0.55,
+        0.38
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.05,
+      "diffuse": 0.8,
+      "specular": 0.3,
+      "exponent": 52,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "slate",
+      "kind": "matte",
+      "colour": [
+        0.26,
+        0.28,
+        0.31
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.05,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 0,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "gold",
+      "kind": "glossy",
+      "colour": [
+        1,
+        0.78,
+        0.34
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": [
+        1,
+        0.8,
+        0.36
+      ],
+      "ambient": 0.04,
+      "diffuse": 0.5,
+      "specular": 0.5,
+      "exponent": 72,
+      "reflectivity": 0.78,
+      "glossExponent": 72,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "copper",
+      "kind": "glossy",
+      "colour": [
+        0.95,
+        0.54,
+        0.4
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": [
+        0.96,
+        0.58,
+        0.44
+      ],
+      "ambient": 0.04,
+      "diffuse": 0.5,
+      "specular": 0.45,
+      "exponent": 48,
+      "reflectivity": 0.66,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "steel",
+      "kind": "glossy",
+      "colour": [
+        0.62,
+        0.65,
+        0.7
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": [
+        0.7,
+        0.73,
+        0.78
+      ],
+      "ambient": 0.04,
+      "diffuse": 0.4,
+      "specular": 0.5,
+      "exponent": 90,
+      "reflectivity": 0.72,
+      "glossExponent": 90,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "chrome",
+      "kind": "mirror",
+      "colour": [
+        0.92,
+        0.93,
+        0.95
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": [
+        0.95,
+        0.96,
+        0.97
+      ],
+      "ambient": 0.03,
+      "diffuse": 0.22,
+      "specular": 0.6,
+      "exponent": 96,
+      "reflectivity": 0.92,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "glass",
+      "kind": "glass",
+      "colour": [
+        0.96,
+        0.98,
+        0.97
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.02,
+      "diffuse": 0.1,
+      "specular": 0.4,
+      "exponent": 96,
+      "reflectivity": 0.1,
+      "glossExponent": 0,
+      "ior": 1.52,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "statuette",
+      "path": "../../artifacts/scene-assets/stanford/xyzrgb_statuette.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "xyzdragon",
+      "path": "../../artifacts/scene-assets/stanford/xyzrgb_dragon.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "buddha",
+      "path": "../../artifacts/scene-assets/stanford/happy_recon/happy_vrip.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "dragon",
+      "path": "../../artifacts/scene-assets/stanford/dragon_recon/dragon_vrip.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "armadillo",
+      "path": "../../ply/armadillo.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "horse",
+      "path": "../../ply/horse.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "bunny",
+      "path": "../../ply/bunny.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "sphere",
+      "path": "../../artifacts/scene-assets/meshes/sphere.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "slab",
+      "path": "../../artifacts/scene-assets/gold-dragon/staging-plane.ply",
+      "smooth": false,
+      "closed": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "floor",
+      "mesh": "slab",
+      "material": "floor",
+      "transform": [
+        4000,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        -0.02,
+        0,
+        -4000,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "statuette",
+      "mesh": "statuette",
+      "material": "marble",
+      "transform": [
+        0.031793613012745026,
+        0,
+        0.00816321236009241,
+        -0.0028642399855762883,
+        0,
+        0.03282486655631909,
+        0,
+        6.252278090847926,
+        -0.00816321236009241,
+        0,
+        0.031793613012745026,
+        -4.058852127944739,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "xyzdragon",
+      "mesh": "xyzdragon",
+      "material": "gold",
+      "transform": [
+        0.036727964247189264,
+        0,
+        -0.050551705965542953,
+        -11.084251895514292,
+        0,
+        0.06248534495199273,
+        0,
+        3.920955395737544,
+        0.050551705965542953,
+        0,
+        0.036727964247189264,
+        2.5264507871942103,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "buddha",
+      "mesh": "buddha",
+      "material": "jade",
+      "transform": [
+        29.182733307788247,
+        0,
+        24.14205657232976,
+        11.320243984333768,
+        0,
+        37.87440849511797,
+        0,
+        -1.8845207552374819,
+        -24.14205657232976,
+        0,
+        29.182733307788247,
+        2.5639165735282377,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "dragon",
+      "mesh": "dragon",
+      "material": "copper",
+      "transform": [
+        -16.644314510066962,
+        0,
+        16.644314510066966,
+        -4.521229796859575,
+        0,
+        23.53861531654,
+        0,
+        -1.2411793832617253,
+        -16.644314510066966,
+        0,
+        -16.644314510066962,
+        9.325529300797614,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "armadillo-0",
+      "mesh": "armadillo",
+      "material": "steel",
+      "transform": [
+        -0.03479663728721816,
+        0,
+        -0.019009489588198553,
+        -18.000004659427056,
+        0,
+        0.03965055688010006,
+        0,
+        2.1507072274417474,
+        0.019009489588198553,
+        0,
+        -0.03479663728721816,
+        -2.0000090022618586,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "armadillo-1",
+      "mesh": "armadillo",
+      "material": "steel",
+      "transform": [
+        -0.0365205813327529,
+        0,
+        0.015440654131863423,
+        18.000004155367655,
+        0,
+        0.03965055688010006,
+        0,
+        2.1507072274417474,
+        -0.015440654131863423,
+        0,
+        -0.0365205813327529,
+        -3.0000092457503054,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-0",
+      "mesh": "horse",
+      "material": "ivory",
+      "transform": [
+        1.9711515460308489,
+        0,
+        -7.356437719205071,
+        -19,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        7.356437719205071,
+        0,
+        1.9711515460308489,
+        -9,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-1",
+      "mesh": "horse",
+      "material": "slate",
+      "transform": [
+        1.9711515460308489,
+        0,
+        7.356437719205071,
+        19,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        -7.356437719205071,
+        0,
+        1.9711515460308489,
+        -9,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-2",
+      "mesh": "horse",
+      "material": "slate",
+      "transform": [
+        1.9711515460308489,
+        0,
+        -7.356437719205071,
+        -20.2,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        7.356437719205071,
+        0,
+        1.9711515460308489,
+        -2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-3",
+      "mesh": "horse",
+      "material": "ivory",
+      "transform": [
+        1.9711515460308489,
+        0,
+        7.356437719205071,
+        20.2,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        -7.356437719205071,
+        0,
+        1.9711515460308489,
+        -2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-4",
+      "mesh": "horse",
+      "material": "slate",
+      "transform": [
+        1.9711515460308489,
+        0,
+        -7.356437719205071,
+        -21.4,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        7.356437719205071,
+        0,
+        1.9711515460308489,
+        5,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-5",
+      "mesh": "horse",
+      "material": "slate",
+      "transform": [
+        1.9711515460308489,
+        0,
+        7.356437719205071,
+        21.4,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        -7.356437719205071,
+        0,
+        1.9711515460308489,
+        5,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-6",
+      "mesh": "horse",
+      "material": "ivory",
+      "transform": [
+        1.9711515460308489,
+        0,
+        -7.356437719205071,
+        -22.6,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        7.356437719205071,
+        0,
+        1.9711515460308489,
+        12,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-7",
+      "mesh": "horse",
+      "material": "slate",
+      "transform": [
+        1.9711515460308489,
+        0,
+        7.356437719205071,
+        22.6,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        -7.356437719205071,
+        0,
+        1.9711515460308489,
+        12,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-8",
+      "mesh": "horse",
+      "material": "slate",
+      "transform": [
+        1.9711515460308489,
+        0,
+        -7.356437719205071,
+        -23.8,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        7.356437719205071,
+        0,
+        1.9711515460308489,
+        19,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "horse-9",
+      "mesh": "horse",
+      "material": "ivory",
+      "transform": [
+        1.9711515460308489,
+        0,
+        7.356437719205071,
+        23.8,
+        0,
+        7.615944743363289,
+        0,
+        2.3,
+        -7.356437719205071,
+        0,
+        1.9711515460308489,
+        19,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-0",
+      "mesh": "bunny",
+      "material": "ivory",
+      "transform": [
+        15.550728428941813,
+        0,
+        0,
+        -11.738119539220865,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        0,
+        0,
+        15.550728428941813,
+        11.023900699352419,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-1",
+      "mesh": "bunny",
+      "material": "jade",
+      "transform": [
+        11.893853145458934,
+        0,
+        10.018054303354306,
+        -6.984305522310438,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -10.018054303354306,
+        0,
+        11.893853145458934,
+        10.849572238394458,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-2",
+      "mesh": "bunny",
+      "material": "copper",
+      "transform": [
+        2.643112881084794,
+        0,
+        15.32446113142458,
+        -2.331935988576596,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -15.32446113142458,
+        0,
+        2.643112881084794,
+        10.745992304218197,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-3",
+      "mesh": "bunny",
+      "material": "slate",
+      "transform": [
+        -7.85072467104153,
+        0,
+        13.423534438075501,
+        2.288421977055303,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -13.423534438075501,
+        0,
+        -7.85072467104153,
+        10.761876158347846,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-4",
+      "mesh": "bunny",
+      "material": "marble",
+      "transform": [
+        -14.652243739420198,
+        0,
+        5.209309749988062,
+        6.961256830332795,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -5.209309749988062,
+        0,
+        -14.652243739420198,
+        10.889753375994168,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-5",
+      "mesh": "bunny",
+      "material": "steel",
+      "transform": [
+        -14.56258362952566,
+        0,
+        -5.45493471122894,
+        11.746376326769703,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        5.45493471122894,
+        0,
+        -14.56258362952566,
+        11.069481303561451,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-6",
+      "mesh": "bunny",
+      "material": "jade",
+      "transform": [
+        -7.62391289201919,
+        0,
+        -13.553638142048898,
+        -12.149221000293968,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        13.553638142048898,
+        0,
+        -7.62391289201919,
+        14.816531088388466,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-7",
+      "mesh": "bunny",
+      "material": "copper",
+      "transform": [
+        2.900403205528933,
+        0,
+        -15.277853773225367,
+        -7.17463735927694,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        15.277853773225367,
+        0,
+        2.900403205528933,
+        14.861742918954802,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-8",
+      "mesh": "bunny",
+      "material": "slate",
+      "transform": [
+        12.060614355466571,
+        0,
+        -9.816656051803628,
+        -2.21198216449416,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        9.816656051803628,
+        0,
+        12.060614355466571,
+        14.783852964890766,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-9",
+      "mesh": "bunny",
+      "material": "marble",
+      "transform": [
+        15.548530121730568,
+        0,
+        0.2614684002633756,
+        2.6622453043905026,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -0.2614684002633756,
+        0,
+        15.548530121730568,
+        14.619494088656783,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-10",
+      "mesh": "bunny",
+      "material": "steel",
+      "transform": [
+        11.723729219259749,
+        0,
+        10.21662017813006,
+        7.413134708924399,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -10.21662017813006,
+        0,
+        11.723729219259749,
+        14.445966837923976,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-11",
+      "mesh": "bunny",
+      "material": "ivory",
+      "transform": [
+        2.3850752766488306,
+        0,
+        15.36673584712829,
+        12.063783529529456,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -15.36673584712829,
+        0,
+        2.3850752766488306,
+        14.344883790150073,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-12",
+      "mesh": "bunny",
+      "material": "copper",
+      "transform": [
+        -8.075316836399251,
+        0,
+        13.289635535351069,
+        -12.11556604044833,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -13.289635535351069,
+        0,
+        -8.075316836399251,
+        17.96378588216933,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-13",
+      "mesh": "bunny",
+      "material": "slate",
+      "transform": [
+        -14.737761260982564,
+        0,
+        4.962211975014846,
+        -7.440563095834075,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        -4.962211975014846,
+        0,
+        -14.737761260982564,
+        18.093783164751756,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-14",
+      "mesh": "bunny",
+      "material": "marble",
+      "transform": [
+        -14.468806280653748,
+        0,
+        -5.699017413871779,
+        -2.6524195683469927,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        5.699017413871779,
+        0,
+        -14.468806280653748,
+        18.27373588463526,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-15",
+      "mesh": "bunny",
+      "material": "steel",
+      "transform": [
+        -7.394945625198937,
+        0,
+        -13.679909863411023,
+        2.2544408262982336,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        13.679909863411023,
+        0,
+        -7.394945625198937,
+        18.419009465819826,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-16",
+      "mesh": "bunny",
+      "material": "ivory",
+      "transform": [
+        3.156873506999703,
+        0,
+        -15.226926949700077,
+        7.2297599747602295,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        15.226926949700077,
+        0,
+        3.156873506999703,
+        18.461279473112025,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bunny-17",
+      "mesh": "bunny",
+      "material": "jade",
+      "transform": [
+        12.223965701347154,
+        0,
+        -9.612482364248452,
+        12.191082542080057,
+        0,
+        15.550728428941813,
+        0,
+        -0.5129781128076412,
+        9.612482364248452,
+        0,
+        12.223965701347154,
+        18.380665661595252,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-0",
+      "mesh": "sphere",
+      "material": "glass",
+      "transform": [
+        1.1,
+        0,
+        0,
+        15,
+        0,
+        1.1,
+        0,
+        8.1,
+        0,
+        0,
+        1.1,
+        -1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-1",
+      "mesh": "sphere",
+      "material": "chrome",
+      "transform": [
+        1.1,
+        0,
+        0,
+        16.217439622243546,
+        0,
+        1.1,
+        0,
+        9.9,
+        0,
+        0,
+        1.1,
+        6.809907304116046,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-2",
+      "mesh": "sphere",
+      "material": "glass",
+      "transform": [
+        1.1,
+        0,
+        0,
+        13.093285839033406,
+        0,
+        1.1,
+        0,
+        11.7,
+        0,
+        0,
+        1.1,
+        15.418461131828625,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-3",
+      "mesh": "sphere",
+      "material": "chrome",
+      "transform": [
+        1.1,
+        0,
+        0,
+        3.337814009344717,
+        0,
+        1.1,
+        0,
+        13.5,
+        0,
+        0,
+        1.1,
+        13.623918682727354,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-4",
+      "mesh": "sphere",
+      "material": "glass",
+      "transform": [
+        1.1,
+        0,
+        0,
+        -4.005376811213658,
+        0,
+        1.1,
+        0,
+        8.1,
+        0,
+        0,
+        1.1,
+        16.548702419272825,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-5",
+      "mesh": "sphere",
+      "material": "chrome",
+      "transform": [
+        1.1,
+        0,
+        0,
+        -13.093285839033403,
+        0,
+        1.1,
+        0,
+        9.9,
+        0,
+        0,
+        1.1,
+        15.418461131828629,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-6",
+      "mesh": "sphere",
+      "material": "glass",
+      "transform": [
+        1.1,
+        0,
+        0,
+        -13.514533018536286,
+        0,
+        1.1,
+        0,
+        11.7,
+        0,
+        0,
+        1.1,
+        5.508256086763374,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-7",
+      "mesh": "sphere",
+      "material": "chrome",
+      "transform": [
+        1.1,
+        0,
+        0,
+        -18,
+        0,
+        1.1,
+        0,
+        13.5,
+        0,
+        0,
+        1.1,
+        -0.9999999999999978,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-8",
+      "mesh": "sphere",
+      "material": "glass",
+      "transform": [
+        1.1,
+        0,
+        0,
+        -18.9203462259508,
+        0,
+        1.1,
+        0,
+        8.1,
+        0,
+        0,
+        1.1,
+        -10.111558521468718,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-9",
+      "mesh": "sphere",
+      "material": "chrome",
+      "transform": [
+        1.1,
+        0,
+        0,
+        -9.352347027881006,
+        0,
+        1.1,
+        0,
+        9.9,
+        0,
+        0,
+        1.1,
+        -12.727472237020445,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-10",
+      "mesh": "sphere",
+      "material": "glass",
+      "transform": [
+        1.1,
+        0,
+        0,
+        -4.0053768112136625,
+        0,
+        1.1,
+        0,
+        11.7,
+        0,
+        0,
+        1.1,
+        -18.548702419272825,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-11",
+      "mesh": "sphere",
+      "material": "chrome",
+      "transform": [
+        1.1,
+        0,
+        0,
+        4.672939613082598,
+        0,
+        1.1,
+        0,
+        13.5,
+        0,
+        0,
+        1.1,
+        -21.473486155818296,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-12",
+      "mesh": "sphere",
+      "material": "glass",
+      "transform": [
+        1.1,
+        0,
+        0,
+        9.352347027881,
+        0,
+        1.1,
+        0,
+        8.1,
+        0,
+        0,
+        1.1,
+        -12.727472237020448,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orb-13",
+      "mesh": "sphere",
+      "material": "chrome",
+      "transform": [
+        1.1,
+        0,
+        0,
+        16.217439622243543,
+        0,
+        1.1,
+        0,
+        9.9,
+        0,
+        0,
+        1.1,
+        -8.80990730411605,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "key",
+      "kind": "rectangle",
+      "position": [
+        -14,
+        42,
+        16
+      ],
+      "direction": [
+        0.32,
+        -1,
+        -0.2
+      ],
+      "colour": [
+        1,
+        0.96,
+        0.88
+      ],
+      "intensity": 30,
+      "size": [
+        18,
+        18
+      ]
+    },
+    {
+      "id": "fill",
+      "kind": "rectangle",
+      "position": [
+        19,
+        34,
+        22
+      ],
+      "direction": [
+        -0.45,
+        -1,
+        -0.26
+      ],
+      "colour": [
+        0.74,
+        0.83,
+        1
+      ],
+      "intensity": 14,
+      "size": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": "rim",
+      "kind": "point",
+      "position": [
+        0,
+        13,
+        -30
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1,
+        0.86,
+        0.72
+      ],
+      "intensity": 2.4,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "sky",
+      "kind": "environment",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "direction": [
+        0,
+        1,
+        0
+      ],
+      "colour": [
+        0.44,
+        0.55,
+        0.74
+      ],
+      "intensity": 0.4,
+      "size": [
+        1000000,
+        1000000
+      ]
+    }
+  ],
+  "subjects": [
+    "statuette",
+    "xyzdragon",
+    "buddha",
+    "dragon",
+    "armadillo-0",
+    "armadillo-1",
+    "horse-0",
+    "horse-1",
+    "horse-2",
+    "horse-3",
+    "horse-4",
+    "horse-5",
+    "horse-6",
+    "horse-7",
+    "horse-8",
+    "horse-9",
+    "bunny-0",
+    "bunny-1",
+    "bunny-2",
+    "bunny-3",
+    "bunny-4",
+    "bunny-5",
+    "bunny-6",
+    "bunny-7",
+    "bunny-8",
+    "bunny-9",
+    "bunny-10",
+    "bunny-11",
+    "bunny-12",
+    "bunny-13",
+    "bunny-14",
+    "bunny-15",
+    "bunny-16",
+    "bunny-17",
+    "orb-0",
+    "orb-1",
+    "orb-2",
+    "orb-3",
+    "orb-4",
+    "orb-5",
+    "orb-6",
+    "orb-7",
+    "orb-8",
+    "orb-9",
+    "orb-10",
+    "orb-11",
+    "orb-12",
+    "orb-13"
+  ]
+}

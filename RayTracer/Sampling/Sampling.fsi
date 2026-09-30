@@ -7,8 +7,13 @@ type Sampler =
     member Next: unit -> (float * float)
     member SampleCount: int
     member SetCount : int
+    member SampleSetAt: key:uint64 -> (float * float) []
+    member SampleAt: key:uint64 * index:int -> float * float
 
 val setRandomSeed : int -> unit
+val mixKey : uint64 -> uint64
+val sampleKey : seed:int -> pixel:int -> sample:int -> uint64
+val sample2D : key:uint64 -> dimension:int -> float * float
 val regular : int -> Sampler
 val random : int -> int -> Sampler
 val jittered : int -> int -> Sampler

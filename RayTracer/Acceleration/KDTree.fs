@@ -1,288 +1,303 @@
-﻿namespace Tracer.Basics
+namespace Tracer.Basics
 
-module KD_tree = 
+open System
+open System.Collections.Generic
 
-    type ShapeBBox (box:BBox, shape:int) =
-        member this.box = box
-        member this.shape = shape
+module internal AccelerationCommon =
+    [<Struct>]
+    type Bounds =
+        { MinX: float; MinY: float; MinZ: float
+          MaxX: float; MaxY: float; MaxZ: float }
+        member b.Minimum axis =
+            match axis with 0 -> b.MinX | 1 -> b.MinY | _ -> b.MinZ
+        member b.Maximum axis =
+            match axis with 0 -> b.MaxX | 1 -> b.MaxY | _ -> b.MaxZ
+        member b.Centroid axis = b.Minimum axis * 0.5 + b.Maximum axis * 0.5
+        member b.HalfExtent axis = b.Maximum axis * 0.5 - b.Minimum axis * 0.5
+        member b.IsEmpty = b.MinX > b.MaxX || b.MinY > b.MaxY || b.MinZ > b.MaxZ
+        member b.IsFinite =
+            Double.IsFinite b.MinX && Double.IsFinite b.MinY && Double.IsFinite b.MinZ
+            && Double.IsFinite b.MaxX && Double.IsFinite b.MaxY && Double.IsFinite b.MaxZ
+            && b.MinX <= b.MaxX && b.MinY <= b.MaxY && b.MinZ <= b.MaxZ
+        member b.ToBBox() = BBox(Point(b.MinX, b.MinY, b.MinZ), Point(b.MaxX, b.MaxY, b.MaxZ))
 
-    type KDTree = Node of int * float * BBox * KDTree * KDTree
-                | Leaf of BBox * ShapeBBox list
-                
-    let findMaxMin (xs:list<ShapeBBox>) = 
-        //Function to find highest point and lowest point from a list of bounding boxes
-        match xs with
-        | [] -> Point(0., 0., 0.), Point(0., 0., 0.)
-        | _  -> 
-            let rec find (maxX:float) (minX:float) (maxY:float) (minY:float) (maxZ:float) (minZ:float) (xs:list<ShapeBBox>) =
-                match xs with
-                | []    -> Point(maxX, maxY, maxZ), Point(minX, minY, minZ)
-                | x::xs -> 
-                    let maxX = if x.box.highPoint.X > maxX then x.box.highPoint.X else maxX
-                    let maxY = if x.box.highPoint.Y > maxY then x.box.highPoint.Y else maxY
-                    let maxZ = if x.box.highPoint.Z > maxZ then x.box.highPoint.Z else maxZ
-                    let minX = if x.box.lowPoint.X  < minX then x.box.lowPoint.X  else minX
-                    let minY = if x.box.lowPoint.Y  < minY then x.box.lowPoint.Y  else minY
-                    let minZ = if x.box.lowPoint.Z  < minZ then x.box.lowPoint.Z  else minZ
-                    find maxX minX maxY minY maxZ minZ xs
-            find -infinity infinity -infinity infinity -infinity infinity xs
+    let emptyBounds =
+        { MinX = infinity; MinY = infinity; MinZ = infinity
+          MaxX = -infinity; MaxY = -infinity; MaxZ = -infinity }
 
-    let partitionAfterSelect (boxes:list<ShapeBBox>) (splitX:float) (splitY:float) (splitZ:float) =
-        //Function to split boxes into 2 list on each axis.
-        let rec inner leftX rightX leftY rightY leftZ rightZ (tosort:list<ShapeBBox>) = 
-            match tosort with
-            | [] -> leftX,rightX,leftY,rightY,leftZ,rightZ
-            | c::cr -> 
-                let lX = if c.box.lowPoint.X <= splitX then c::leftX
-                         else leftX
-                let rX = if c.box.highPoint.X > splitX then c::rightX
-                         else rightX
-                let lY = if c.box.lowPoint.Y <= splitY then c::leftY
-                         else leftY
-                let rY = if c.box.highPoint.Y > splitY then c::rightY
-                         else rightY
-                let lZ = if c.box.lowPoint.Z <= splitZ then c::leftZ
-                         else leftZ
-                let rZ = if c.box.highPoint.Z > splitZ then c::rightZ
-                         else rightZ
-                inner lX rX lY rY lZ rZ cr
-        inner [] [] [] [] [] [] boxes
+    let unbounded =
+        { MinX = -infinity; MinY = -infinity; MinZ = -infinity
+          MaxX = infinity; MaxY = infinity; MaxZ = infinity }
 
-    let findSplitValues (boxes:list<ShapeBBox>) = 
-        //Function to find split values for each axis
-        let boxesLength = float boxes.Length
-        let rec inner accX accY accZ minx maxx miny maxy minz maxz (boxes:list<ShapeBBox>) = 
-            match boxes with
-            | [] -> (accX/boxesLength), (accY/boxesLength), (accZ/boxesLength),
-                     minx, maxx, miny, maxy, minz, maxz
-            | x::xs->
-                    inner 
-                       (accX+x.box.lowPoint.X)
-                       (accY+x.box.lowPoint.Y)
-                       (accZ+x.box.lowPoint.Z)
-                       (min minx x.box.lowPoint.X)
-                       (max maxx x.box.highPoint.X)
-                       (min miny x.box.lowPoint.Y)
-                       (max maxy x.box.highPoint.Y)
-                       (min minz x.box.lowPoint.Z)
-                       (max maxz x.box.highPoint.Z)
-                       xs
-        inner 0. 0. 0. infinity -infinity infinity -infinity infinity -infinity boxes 
-        
-    let rec findPlane fxIntersect sxIntersect fyIntersect syIntersect fzIntersect szIntersect (max:Point) (min:Point) runX runY runZ =
-        //Very ugly function - finds the correct plane to split on using the heuristics, split on longest axis,
-        //buy only if that axis doesn't make more than 60% intersections. In that case, try the next best axis.
-        //If no axis can be used, return axis 3, for a leaf creation in the creationFunction.
-        if (max.X-min.X >= max.Y-min.Y || runY = false) && (max.X-min.X >= max.Z-min.Z || runZ = false) && runX = true then
-            if fxIntersect < 1.6 && sxIntersect < 1.6 then
-                0
+    let ofBBox (box: BBox) =
+        if isNull (box :> obj) then nullArg "box"
+        let result =
+            { MinX = box.lowPoint.X; MinY = box.lowPoint.Y; MinZ = box.lowPoint.Z
+              MaxX = box.highPoint.X; MaxY = box.highPoint.Y; MaxZ = box.highPoint.Z }
+        if Double.IsNaN result.MinX || Double.IsNaN result.MinY || Double.IsNaN result.MinZ
+           || Double.IsNaN result.MaxX || Double.IsNaN result.MaxY || Double.IsNaN result.MaxZ then
+            invalidArg "box" "Bounding-box coordinates must not be NaN."
+        result
+
+    let union a b =
+        { MinX = min a.MinX b.MinX; MinY = min a.MinY b.MinY; MinZ = min a.MinZ b.MinZ
+          MaxX = max a.MaxX b.MaxX; MaxY = max a.MaxY b.MaxY; MaxZ = max a.MaxZ b.MaxZ }
+
+    let ofBoundedBBox argumentName box =
+        let bounds = ofBBox box
+        if not bounds.IsFinite && not bounds.IsEmpty then
+            invalidArg argumentName "Bounds must be finite or empty; use Shape.Bounds=None for unbounded geometry."
+        bounds
+
+    let cacheBounds (shapes: Shape array) =
+        shapes |> Array.map (fun shape ->
+            if isNull (shape :> obj) then nullArg "shapes"
+            match shape.Bounds with
+            | None -> unbounded
+            | Some box -> ofBoundedBBox "shapes" box)
+
+    let partitionBounds (boxes: Bounds array) =
+        let finite = ResizeArray<int>()
+        let fallback = ResizeArray<int>()
+        for index = 0 to boxes.Length - 1 do
+            if not boxes.[index].IsEmpty then
+                if boxes.[index].IsFinite then finite.Add index else fallback.Add index
+        finite.ToArray(), fallback.ToArray()
+
+    let rangeBounds (boxes: Bounds array) (indices: int array) start count =
+        let mutable bounds = emptyBounds
+        for offset = start to start + count - 1 do
+            bounds <- union bounds boxes.[indices.[offset]]
+        bounds
+
+    [<Struct>]
+    type RayData =
+        { X: float; Y: float; Z: float
+          DX: float; DY: float; DZ: float
+          InvX: float; InvY: float; InvZ: float }
+        member r.Origin axis = match axis with 0 -> r.X | 1 -> r.Y | _ -> r.Z
+        member r.Direction axis = match axis with 0 -> r.DX | 1 -> r.DY | _ -> r.DZ
+        member r.Inverse axis = match axis with 0 -> r.InvX | 1 -> r.InvY | _ -> r.InvZ
+
+    let rayData (ray: Ray) =
+        { X = ray.GetOrigin.X; Y = ray.GetOrigin.Y; Z = ray.GetOrigin.Z
+          DX = ray.GetDirection.X; DY = ray.GetDirection.Y; DZ = ray.GetDirection.Z
+          InvX = 1. / ray.GetDirection.X; InvY = 1. / ray.GetDirection.Y; InvZ = 1. / ray.GetDirection.Z }
+
+    let validateQuery (ray: Ray) minimum maximum =
+        if Double.IsNaN minimum || Double.IsNaN maximum then
+            invalidArg "minimum" "Ray bounds must not be NaN."
+        let r = rayData ray
+        if not (Double.IsFinite r.X && Double.IsFinite r.Y && Double.IsFinite r.Z
+                && Double.IsFinite r.DX && Double.IsFinite r.DY && Double.IsFinite r.DZ)
+           || (r.DX = 0. && r.DY = 0. && r.DZ = 0.) then
+            invalidArg "ray" "A ray needs a finite origin and a finite, nonzero direction."
+        r
+
+    let boundaryTime bound origin direction =
+        let difference = bound - origin
+        if Double.IsInfinity difference && Double.IsFinite bound && Double.IsFinite origin then
+            bound / direction - origin / direction
+        else difference / direction
+
+    // Packed nodes are already validated at build time. Parallel/subnormal directions avoid 0 * infinity.
+    let intersectFinite (bounds: Bounds) (ray: RayData) minimum maximum =
+        let mutable near = minimum
+        let mutable far = maximum
+        let mutable axis = 0
+        let mutable overlaps = near <= far
+        while overlaps && axis < 3 do
+            let origin, direction = ray.Origin axis, ray.Direction axis
+            let low, high = bounds.Minimum axis, bounds.Maximum axis
+            if direction = 0. then
+                overlaps <- origin >= low && origin <= high
             else
-                findPlane fxIntersect sxIntersect fyIntersect syIntersect fzIntersect szIntersect max min false runY runZ
-        else if (max.Y-min.Y > max.X-min.X || runX = false) && (max.Y-min.Y >= max.Z-min.Z || runZ = false) && runY = true then
-            if fyIntersect < 1.6 && syIntersect < 1.6 then
-                1
-            else
-                findPlane fxIntersect sxIntersect fyIntersect syIntersect fzIntersect szIntersect max min runX false runZ
-        else if (max.Z-min.Z > max.X-min.X || runX = false) && (max.Z-min.Z > max.Y-min.Y || runY = false) && runZ = true then
-            if fzIntersect < 1.6 && szIntersect < 1.6 then
-                2
-            else
-                findPlane fxIntersect sxIntersect fyIntersect syIntersect fzIntersect szIntersect max min runX runY false
-        else if runX = false && runY = false && runZ = false then
-            3
-        else 3
+                let inverse = ray.Inverse axis
+                let lowDelta, highDelta = low - origin, high - origin
+                let a =
+                    if Double.IsFinite inverse && Double.IsFinite lowDelta then lowDelta * inverse
+                    else boundaryTime low origin direction
+                let b =
+                    if Double.IsFinite inverse && Double.IsFinite highDelta then highDelta * inverse
+                    else boundaryTime high origin direction
+                let first, last = min a b, max a b
+                let first = if Double.IsFinite first then Math.BitDecrement(first - abs first * 6.661338147750943e-16) else first
+                let last = if Double.IsFinite last then Math.BitIncrement(last + abs last * 6.661338147750943e-16) else last
+                near <- max near first
+                far <- min far last
+                overlaps <- near <= far
+            axis <- axis + 1
+        if overlaps then ValueSome(struct (near, far)) else ValueNone
 
+    let intersect (bounds: Bounds) ray minimum maximum =
+        if bounds.IsEmpty then ValueNone
+        elif bounds.IsFinite then intersectFinite bounds ray minimum maximum
+        else ValueSome(struct (minimum, maximum))
 
-    let rec createKDTreeFromList currentDepth (hi:Point) (lo:Point) (boxes:list<ShapeBBox>) = 
-        //Function to create the KD-tree
-        match boxes with
-        | []    -> failwith "There are no shapes to build a tree with!"
-        | boxes -> 
-            if boxes.Length <= 1 then Leaf(BBox(lo, hi), boxes) //If we only have 1 element left
-            else
-                let boxesLength = boxes.Length
-            
-                //Find the split values, and values for the empty space check
-                let (splitX, splitY, splitZ, minx, maxx, miny, maxy, minz, maxz) = findSplitValues boxes
+    [<Struct; NoEquality; NoComparison>]
+    type Candidate =
+        { Distance: float
+          Index: int
+          Hit: HitPoint }
+        member c.Found = c.Index <> Int32.MaxValue
 
-                //Find empty space
-                let empty = (List.sortBy (fun (_,a,b) -> a/b) 
-                              ([(1,(minx - lo.X),(hi.X-lo.X));
-                                (2,(hi.X - maxx),(hi.X-lo.X));
-                                (3,(miny - lo.Y),(hi.Y-lo.Y));
-                                (4,(hi.Y - maxy),(hi.Y-lo.Y));
-                                (5,(minz - lo.Z),(hi.Z-lo.Z));
-                                (6,(hi.Z - maxz),(hi.Z-lo.Z))]))
+    let noCandidate maximum =
+        { Distance = maximum; Index = Int32.MaxValue; Hit = Unchecked.defaultof<HitPoint> }
 
-                //Empty space threshold for depths of the tree
-                let minSpace = match currentDepth with
-                               | 0 -> 0.1
-                               | 1 -> 0.15
-                               | 2 -> 0.2
-                               | 3 -> 0.25
-                               | _ -> 0.3
-                let (ax,em,len) = empty.[empty.Length - 1]
+    let consider (shapes: Shape array) index (ray: Ray) minimum maximum candidate =
+        // Keep exact-distance ties visible even after another primitive tightens the upper bound.
+        let primitiveMaximum = min maximum (Math.BitIncrement candidate.Distance)
+        let hit = Geometry.hitWithin shapes.[index] ray minimum primitiveMaximum
+        if hit.DidHit && Double.IsFinite hit.Time && hit.Time > minimum && hit.Time < maximum
+           && (hit.Time < candidate.Distance || (hit.Time = candidate.Distance && index < candidate.Index)) then
+            { Distance = hit.Time; Index = index; Hit = hit }
+        else candidate
 
-                //Empty space check
-                if em/len >= minSpace then
-                    match ax with
-                    | 1 -> Node(0, minx, BBox(lo, hi), Leaf(BBox(lo, Point(minx, hi.Y, hi.Z)), []), createKDTreeFromList (currentDepth+1) hi (Point(minx, lo.Y, lo.Z)) boxes)
-                    | 2 -> Node(0, maxx, BBox(lo, hi), createKDTreeFromList (currentDepth+1) (Point(maxx, hi.Y, hi.Z)) lo boxes, Leaf(BBox(Point(maxx, lo.Y, lo.Z), hi), []))
-                    | 3 -> Node(1, miny, BBox(lo, hi), Leaf(BBox(lo, Point(hi.X, miny, hi.Z)), []), createKDTreeFromList (currentDepth+1) hi (Point(lo.X, miny, lo.Z)) boxes)
-                    | 4 -> Node(1, maxy, BBox(lo, hi), createKDTreeFromList (currentDepth+1) (Point(hi.X, maxy, hi.Z)) lo boxes, Leaf(BBox(Point(lo.X, maxy, lo.Z), hi), []))
-                    | 5 -> Node(2, minz, BBox(lo, hi), Leaf(BBox(lo, Point(hi.X, hi.Y, minz)), []), createKDTreeFromList (currentDepth+1) hi (Point(lo.X, lo.Y, minz)) boxes)
-                    | 6 -> Node(2, maxz, BBox(lo, hi), createKDTreeFromList (currentDepth+1) (Point(hi.X, hi.Y, maxz)) lo boxes, Leaf(BBox(Point(lo.X, lo.Y, maxz), hi), []))
-                else
-            
-                    //Split boxes into 2 lists for each axis.
-                    let (firstX, secondX, firstY, secondY, firstZ, secondZ) = partitionAfterSelect boxes splitX splitY splitZ
+    let finish (ray: Ray) (candidate: Candidate) = if candidate.Found then candidate.Hit else HitPoint ray
 
-                    //Intersection values for the heuristics check.
-                    let (fxIntersect, sxIntersect, fyIntersect, syIntersect, fzIntersect, szIntersect) = 
-                        (float firstX.Length)/((float boxesLength)/2.), (float secondX.Length)/((float boxesLength)/2.),
-                        (float firstY.Length)/((float boxesLength)/2.), (float secondY.Length)/((float boxesLength)/2.),
-                        (float firstZ.Length)/((float boxesLength)/2.), (float secondZ.Length)/((float boxesLength)/2.)
+module KD_tree =
+    open AccelerationCommon
 
-                    //Find the right plane
-                    let axis = findPlane fxIntersect sxIntersect fyIntersect syIntersect fzIntersect szIntersect hi lo true true true
+    type ShapeBBox(box: BBox, shape: int) =
+        member _.box = box
+        member _.shape = shape
 
-                    //If no plane is good enough, create leaf.
-                    if axis = 3 then
-                        Leaf(BBox(lo, hi), boxes)
-                    else
+    type KDTree =
+        | Node of int * float * BBox * KDTree * KDTree
+        | Leaf of BBox * ShapeBBox list
 
-                        //Set the lists to be used, the point to give to the recursive create, and the splitValue from the correct axis
-                        let (first, second, firstHigh, 
-                             secondLow, splitValue) = if axis = 0 then 
-                                                                firstX, secondX, (Point(splitX, hi.Y, hi.Z)), 
-                                                                Point(splitX, lo.Y, lo.Z), splitX
-                                                            else if axis = 1 then
-                                                                firstY, secondY, (Point(hi.X, splitY, hi.Z)), 
-                                                                Point(lo.X, splitY, lo.Z), splitY
-                                                            else if axis = 2 then
-                                                                firstZ, secondZ, (Point(hi.X, hi.Y, splitZ)), 
-                                                                Point(lo.X, lo.Y, splitZ), splitZ
-                                                            else
-                                                                [], [], hi, lo, 0.
-            
-                        let firstLength = first.Length
-                        let secondLength = second.Length
-
-                        //Last checks for creating the leafs/nodes.
-                        if firstLength = boxesLength && secondLength = boxesLength then 
-                            Leaf(BBox(lo, hi), boxes)
-                        else if firstLength = boxesLength then 
-                            Node(axis, splitValue, BBox(lo, hi), Leaf(BBox(lo, firstHigh), first), createKDTreeFromList (currentDepth+1) secondLow hi (second))
-                        else if secondLength = boxesLength then 
-                            Node(axis, splitValue, BBox(lo, hi), createKDTreeFromList (currentDepth+1) lo firstHigh (first), Leaf((BBox(secondLow, hi)), second))
-                        else Node(axis, splitValue, BBox(lo, hi), createKDTreeFromList (currentDepth+1) lo firstHigh (first), createKDTreeFromList (currentDepth+1) secondLow hi (second))
-                
-    let buildKDTree (shapes:array<Shape>) = 
-        //Function called from the rest of the program
-        let shapeBoxArray = Array.zeroCreate(shapes.Length)
-        for i in 0..(shapes.Length-1) do
-            let id = i
-            let shape = shapes.[i]
-            let newShapeBox = ShapeBBox(shape.getBoundingBox (), id)
-            shapeBoxArray.[i] <- newShapeBox
-        let ShapeBoxList = shapeBoxArray |> Array.toList
-        let (KDMaxXYZ, KDMinXYZ) = findMaxMin ShapeBoxList
-        if shapeBoxArray.Length < 10 then 
-            Leaf(BBox(KDMinXYZ, KDMaxXYZ), ShapeBoxList) //Check for less than 10 shapes. If that is the case, no KD-tree will be built
+    let findMaxMin (boxes: ShapeBBox list) =
+        if List.isEmpty boxes then Point.Zero, Point.Zero
         else
-            createKDTreeFromList 0 KDMaxXYZ KDMinXYZ ShapeBoxList
+            let bounds = boxes |> List.fold (fun acc item -> union acc (ofBBox item.box)) emptyBounds
+            Point(bounds.MaxX, bounds.MaxY, bounds.MaxZ), Point(bounds.MinX, bounds.MinY, bounds.MinZ)
 
-    let findRayDirectionFromA (a:int) (r:Ray) =
-        //Finds the rays direction on a specific axis
-        match a with
-        | 0 -> r.GetDirection.X
-        | 1 -> r.GetDirection.Y
-        | 2 -> r.GetDirection.Z
+    let partitionAfterSelect (boxes: ShapeBBox list) splitX splitY splitZ =
+        let split axis value =
+            List.filter (fun (item: ShapeBBox) -> (ofBBox item.box).Minimum axis <= value) boxes,
+            List.filter (fun (item: ShapeBBox) -> (ofBBox item.box).Maximum axis >= value) boxes
+        let leftX, rightX = split 0 splitX
+        let leftY, rightY = split 1 splitY
+        let leftZ, rightZ = split 2 splitZ
+        leftX, rightX, leftY, rightY, leftZ, rightZ
 
-    let findRayOriginFromA (a:int) (r:Ray) =
-        //Finds the rays origin on a specific axis
-        match a with
-        | 0 -> r.GetOrigin.X
-        | 1 -> r.GetOrigin.Y
-        | 2 -> r.GetOrigin.Z
-
-
-    let closestHit (shapeBoxes:list<ShapeBBox>) (ray:Ray) (shapes:array<Shape>) =
-        // Get closest hitpoint
-        let rec findClosestHit (h:HitPoint) t' (shapeBoxes:list<ShapeBBox>) (shapes:array<Shape>) = 
-            match shapeBoxes with
-            | []    -> h
-            | (s:ShapeBBox)::sl -> 
-                       let hit = shapes.[s.shape].hitFunction ray
-                       if hit.DidHit && hit.Time < t' then findClosestHit hit hit.Time sl shapes
-                       else findClosestHit h t' sl shapes
-        let hit = findClosestHit (HitPoint(ray)) infinity shapeBoxes shapes
-        // Check if the ray hit
-        if hit.DidHit then
-            // If the ray hit, then return the first hit point
-            Some (hit)
+    let findSplitValues (boxes: ShapeBBox list) =
+        if List.isEmpty boxes then 0., 0., 0., 0., 0., 0., 0., 0., 0.
         else
-            // If not, return none
-            None
-    
-    let order (d:float, left:KDTree, right:KDTree) =
-        //Order the lists depending on d
-        if d > 0. then (left, right)
-        else (right, left)
+            let high, low = findMaxMin boxes
+            let n = float boxes.Length
+            let x, y, z =
+                boxes |> List.fold (fun (x, y, z) item ->
+                    x + item.box.lowPoint.X / n, y + item.box.lowPoint.Y / n, z + item.box.lowPoint.Z / n) (0., 0., 0.)
+            x, y, z, low.X, high.X, low.Y, high.Y, low.Z, high.Z
 
+    let findPlane fx sx fy sy fz sz (high: Point) (low: Point) runX runY runZ =
+        [| 0, high.X - low.X, runX && fx < 1.6 && sx < 1.6
+           1, high.Y - low.Y, runY && fy < 1.6 && sy < 1.6
+           2, high.Z - low.Z, runZ && fz < 1.6 && sz < 1.6 |]
+        |> Array.filter (fun (_, _, usable) -> usable)
+        |> Array.sortByDescending (fun (_, extent, _) -> extent)
+        |> Array.tryHead
+        |> Option.map (fun (axis, _, _) -> axis)
+        |> Option.defaultValue 3
 
-    let rec searchKDTree (tree:KDTree) (ray:Ray) (t:float) (t':float) (shapes:array<Shape>):HitPoint = 
-        //Search the KD-tree
-        let SearchKDLeaf (tree:KDTree) (ray:Ray) (t':float) (shapes:array<Shape>) = 
-            //When leaf is hit
-            match tree with
-            | Node(_) -> failwith "Should never be a node here..."
-            | Leaf(_, shapeList) -> 
-                let option = closestHit shapeList ray shapes
-                match option with
-                | Some(hit) -> if hit.Time < t' then hit
-                               else HitPoint(ray)
-                | None ->      HitPoint(ray)
-        
-        let searchKDNode (tree:KDTree) (ray:Ray) (t:float) (t':float) (shapes:array<Shape>) = 
-            //When node is hit
-            match tree with
-            | Leaf(_) -> failwith "Should never be a leaf here..."
-            | Node(axis, value, _, left, right) ->
-                let a = axis
-                if (findRayDirectionFromA a ray) = 0.0 then
-                    if (findRayOriginFromA a ray) <= value then
-                        searchKDTree left ray t t' shapes
-                    else
-                        searchKDTree right ray t t' shapes
+    let createKDTreeFromList currentDepth (hi: Point) (lo: Point) (boxes: ShapeBBox list) =
+        let mutable budget = max 64L (int64 boxes.Length * 32L)
+        let rec build depth (region: Bounds) (items: ShapeBBox array) =
+            let leaf () = Leaf(region.ToBBox(), Array.toList items)
+            if items.Length <= 8 || depth >= 48 || not region.IsFinite then leaf ()
+            else
+                let mutable axis = 0
+                for candidate = 1 to 2 do
+                    if region.HalfExtent candidate > region.HalfExtent axis then axis <- candidate
+                let plane = region.Centroid axis
+                if plane <= region.Minimum axis || plane >= region.Maximum axis then leaf ()
                 else
-                    let tHit = (value - (findRayOriginFromA a ray)) / (findRayDirectionFromA a ray)
-                    let (first, second) = order((findRayDirectionFromA a ray), left, right)
-                    if tHit <= t || tHit <= 0.0 then
-                        searchKDTree second ray t t' shapes
+                    let left = items |> Array.filter (fun item -> (ofBBox item.box).Minimum axis <= plane)
+                    let right = items |> Array.filter (fun item -> (ofBBox item.box).Maximum axis >= plane)
+                    let cost = int64 left.Length + int64 right.Length
+                    if left.Length = 0 || right.Length = 0
+                       || (left.Length = items.Length && right.Length = items.Length) || cost > budget then leaf ()
                     else
-                        if tHit >= t' then
-                            searchKDTree first ray t t' shapes
+                        budget <- budget - cost
+                        let leftBounds, rightBounds =
+                            match axis with
+                            | 0 -> { region with MaxX = plane }, { region with MinX = plane }
+                            | 1 -> { region with MaxY = plane }, { region with MinY = plane }
+                            | _ -> { region with MaxZ = plane }, { region with MinZ = plane }
+                        Node(axis, plane, region.ToBBox(), build (depth + 1) leftBounds left, build (depth + 1) rightBounds right)
+        build currentDepth (ofBBox (BBox(lo, hi))) (List.toArray boxes)
+
+    let internal buildBounded (boxes: Bounds array) (indices: int array) =
+        if indices.Length = 0 then Leaf(BBox(Point.Zero, Point.Zero), [])
+        else
+            let region = rangeBounds boxes indices 0 indices.Length
+            let items = indices |> Array.map (fun index -> ShapeBBox(boxes.[index].ToBBox(), index)) |> Array.toList
+            createKDTreeFromList 0 (Point(region.MaxX, region.MaxY, region.MaxZ)) (Point(region.MinX, region.MinY, region.MinZ)) items
+
+    let buildKDTree (shapes: Shape array) =
+        let boxes = cacheBounds shapes
+        let finite, fallback = partitionBounds boxes
+        let tree = buildBounded boxes finite
+        if fallback.Length = 0 then tree
+        else
+            let leaf = Leaf(unbounded.ToBBox(), fallback |> Array.map (fun index -> ShapeBBox(unbounded.ToBBox(), index)) |> Array.toList)
+            if finite.Length = 0 then leaf else Node(0, 0., unbounded.ToBBox(), tree, leaf)
+
+    let findRayDirectionFromA axis (ray: Ray) =
+        if axis < 0 || axis > 2 then invalidArg "axis" "Axis must be 0, 1, or 2."
+        (rayData ray).Direction axis
+
+    let findRayOriginFromA axis (ray: Ray) =
+        if axis < 0 || axis > 2 then invalidArg "axis" "Axis must be 0, 1, or 2."
+        (rayData ray).Origin axis
+
+    let order (direction: float, left: KDTree, right: KDTree) =
+        if direction >= 0. then left, right else right, left
+
+    let private bounds = function Node(_, _, box, _, _) | Leaf(box, _) -> ofBBox box
+
+    let internal query tree ray data shapes minimum maximum initial stopAtFirst =
+        let stack = Stack<struct (KDTree * float)>()
+        let mutable result = initial
+        let mutable stopped = false
+        let push node =
+            match intersect (bounds node) data minimum result.Distance with
+            | ValueSome(struct (entry, _)) -> stack.Push(struct (node, entry))
+            | ValueNone -> ()
+        if minimum < maximum then push tree
+        while stack.Count > 0 && not stopped do
+            let struct (node, entry) = stack.Pop()
+            if entry <= result.Distance then
+                match node with
+                | Leaf(_, items) ->
+                    let mutable remaining = items
+                    while not stopped && not (List.isEmpty remaining) do
+                        let item = List.head remaining
+                        result <- consider shapes item.shape ray minimum maximum result
+                        stopped <- stopAtFirst && result.Found
+                        remaining <- List.tail remaining
+                | Node(_, _, _, left, right) ->
+                    match intersect (bounds left) data minimum result.Distance,
+                          intersect (bounds right) data minimum result.Distance with
+                    | ValueSome(struct (a, _)), ValueSome(struct (b, _)) ->
+                        if a <= b then
+                            stack.Push(struct (right, b))
+                            stack.Push(struct (left, a))
                         else
-                            let hitPoint = searchKDTree first ray t tHit shapes
-                            let returnPoint = hitPoint
-                            if hitPoint.DidHit then
-                                returnPoint
-                            else
-                                searchKDTree second ray tHit t' shapes
-        match tree with 
-        | Node(_) -> searchKDNode tree ray t t' shapes
-        | Leaf(_) -> SearchKDLeaf tree ray t' shapes
-                            
+                            stack.Push(struct (left, a))
+                            stack.Push(struct (right, b))
+                    | ValueSome(struct (a, _)), ValueNone -> stack.Push(struct (left, a))
+                    | ValueNone, ValueSome(struct (b, _)) -> stack.Push(struct (right, b))
+                    | _ -> ()
+        result
 
-    let traverseKDTree (tree:KDTree) (ray:Ray) (shapes:array<Shape>) = 
-        //Traverse function, if we intersect the KD-tree roots bounding box, run search, else return no-hit
-        match tree with
-        | Node(_, _, bBox, _, _) -> let intersect = bBox.intersect ray
-                                    match intersect with
-                                    | Some (t, t') -> searchKDTree tree ray t t' shapes
-                                    | None -> HitPoint (ray)
-        | Leaf(bBox, _)          -> let intersect = bBox.intersect ray
-                                    match intersect with
-                                    | Some (t, t') -> searchKDTree tree ray t t' shapes
-                                    | None -> HitPoint (ray)
+    let closestHit (shapeBoxes: ShapeBBox list) ray shapes =
+        let result = shapeBoxes |> List.fold (fun acc item -> consider shapes item.shape ray 0. infinity acc) (noCandidate infinity)
+        if result.Found then Some result.Hit else None
+
+    let searchKDTree tree ray minimum maximum shapes =
+        let data = validateQuery ray minimum maximum
+        query tree ray data shapes minimum maximum (noCandidate maximum) false |> finish ray
+
+    let traverseKDTree tree ray shapes = searchKDTree tree ray 0. infinity shapes

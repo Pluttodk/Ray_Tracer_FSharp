@@ -1,0 +1,933 @@
+{
+  "schemaVersion": 1,
+  "id": "sibenik",
+  "title": "sibenik - converted from OBJ",
+  "description": "Converted from sibenik.obj by scripts/obj-to-ply.fsx: 75,284 triangles across 15 material groups. Materials carry OBJ diffuse and specular; textures are not transferred. 5 groups use an alpha map (cut-out foliage or grilles) which this renderer has no alpha test for, so those surfaces render as solid geometry.",
+  "camera": {
+    "position": [
+      35.81205209003469,
+      24.253623638754952,
+      57.761374338765634
+    ],
+    "target": [
+      0,
+      -0.006153583526611328,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewDistance": 1,
+    "viewWidth": 0.8931450925691902,
+    "viewHeight": 0.5023941145701695,
+    "lensRadius": 0,
+    "focusDistance": 72.16242949954707
+  },
+  "ambientColour": [
+    0.5,
+    0.55,
+    0.65
+  ],
+  "ambientIntensity": 0.05,
+  "maxBounces": 4,
+  "materials": [
+    {
+      "id": "sprljci",
+      "kind": "matte",
+      "colour": [
+        0.784314,
+        0.784314,
+        0.784314
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "staklo",
+      "kind": "phong",
+      "colour": [
+        0,
+        0,
+        0
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.10000000000000002,
+      "exponent": 256,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "kamen_zid",
+      "kind": "matte",
+      "colour": [
+        0.734118,
+        0.730588,
+        0.674118
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/sibenik/kamen.png"
+    },
+    {
+      "id": "stupovi",
+      "kind": "matte",
+      "colour": [
+        0.734118,
+        0.730588,
+        0.674118
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/sibenik/KAMEN-stup.png"
+    },
+    {
+      "id": "pod",
+      "kind": "matte",
+      "colour": [
+        0.734118,
+        0.709412,
+        0.674118
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/sibenik/mramor6x6.png"
+    },
+    {
+      "id": "pod_tepih",
+      "kind": "matte",
+      "colour": [
+        1,
+        0.12,
+        0.1
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "pod_rub",
+      "kind": "matte",
+      "colour": [
+        0.734118,
+        0.730588,
+        0.674118
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/sibenik/kamen.png"
+    },
+    {
+      "id": "kamen_zid_prozor",
+      "kind": "matte",
+      "colour": [
+        0.734118,
+        0.730588,
+        0.674118
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/sibenik/kamen.png"
+    },
+    {
+      "id": "zid_vani",
+      "kind": "matte",
+      "colour": [
+        0.734118,
+        0.730588,
+        0.674118
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/sibenik/kamen.png"
+    },
+    {
+      "id": "kamen_zid_parapet",
+      "kind": "matte",
+      "colour": [
+        0.734118,
+        0.730588,
+        0.674118
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/sibenik/KAMEN-stup.png"
+    },
+    {
+      "id": "staklo_crveno",
+      "kind": "phong",
+      "colour": [
+        0.441176,
+        0.103922,
+        0.04902
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.39607833333333337,
+      "exponent": 256,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "rozeta",
+      "kind": "matte",
+      "colour": [
+        0.734118,
+        0.730588,
+        0.674118
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0,
+      "exponent": 8,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/sibenik/KAMEN-stup.png"
+    },
+    {
+      "id": "staklo_zeleno",
+      "kind": "phong",
+      "colour": [
+        0,
+        0,
+        0
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.10000000000000002,
+      "exponent": 256,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "staklo_plavo",
+      "kind": "phong",
+      "colour": [
+        0,
+        0,
+        0
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.10000000000000002,
+      "exponent": 256,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "staklo_zuto",
+      "kind": "phong",
+      "colour": [
+        0,
+        0,
+        0
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.10000000000000002,
+      "exponent": 256,
+      "reflectivity": 0,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "sprljci",
+      "path": "../../artifacts/scene-assets/sibenik/ply/sprljci.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "staklo",
+      "path": "../../artifacts/scene-assets/sibenik/ply/staklo.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "kamen_zid",
+      "path": "../../artifacts/scene-assets/sibenik/ply/kamen_zid.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "stupovi",
+      "path": "../../artifacts/scene-assets/sibenik/ply/stupovi.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "pod",
+      "path": "../../artifacts/scene-assets/sibenik/ply/pod.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "pod_tepih",
+      "path": "../../artifacts/scene-assets/sibenik/ply/pod_tepih.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "pod_rub",
+      "path": "../../artifacts/scene-assets/sibenik/ply/pod_rub.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "kamen_zid_prozor",
+      "path": "../../artifacts/scene-assets/sibenik/ply/kamen_zid_prozor.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "zid_vani",
+      "path": "../../artifacts/scene-assets/sibenik/ply/zid_vani.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "kamen_zid_parapet",
+      "path": "../../artifacts/scene-assets/sibenik/ply/kamen_zid_parapet.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "staklo_crveno",
+      "path": "../../artifacts/scene-assets/sibenik/ply/staklo_crveno.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "rozeta",
+      "path": "../../artifacts/scene-assets/sibenik/ply/rozeta.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "staklo_zeleno",
+      "path": "../../artifacts/scene-assets/sibenik/ply/staklo_zeleno.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "staklo_plavo",
+      "path": "../../artifacts/scene-assets/sibenik/ply/staklo_plavo.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "staklo_zuto",
+      "path": "../../artifacts/scene-assets/sibenik/ply/staklo_zuto.ply",
+      "smooth": false,
+      "closed": false
+    }
+  ],
+  "objects": [
+    {
+      "id": "sprljci",
+      "mesh": "sprljci",
+      "material": "sprljci",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "staklo",
+      "mesh": "staklo",
+      "material": "staklo",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "kamen_zid",
+      "mesh": "kamen_zid",
+      "material": "kamen_zid",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "stupovi",
+      "mesh": "stupovi",
+      "material": "stupovi",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "pod",
+      "mesh": "pod",
+      "material": "pod",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "pod_tepih",
+      "mesh": "pod_tepih",
+      "material": "pod_tepih",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "pod_rub",
+      "mesh": "pod_rub",
+      "material": "pod_rub",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "kamen_zid_prozor",
+      "mesh": "kamen_zid_prozor",
+      "material": "kamen_zid_prozor",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "zid_vani",
+      "mesh": "zid_vani",
+      "material": "zid_vani",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "kamen_zid_parapet",
+      "mesh": "kamen_zid_parapet",
+      "material": "kamen_zid_parapet",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "staklo_crveno",
+      "mesh": "staklo_crveno",
+      "material": "staklo_crveno",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "rozeta",
+      "mesh": "rozeta",
+      "material": "rozeta",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "staklo_zeleno",
+      "mesh": "staklo_zeleno",
+      "material": "staklo_zeleno",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "staklo_plavo",
+      "mesh": "staklo_plavo",
+      "material": "staklo_plavo",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "staklo_zuto",
+      "mesh": "staklo_zuto",
+      "material": "staklo_zuto",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "sun",
+      "kind": "directional",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "direction": [
+        0.35,
+        1,
+        0.28
+      ],
+      "colour": [
+        1,
+        0.95,
+        0.85
+      ],
+      "intensity": 3,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "sky",
+      "kind": "environment",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "direction": [
+        0,
+        1,
+        0
+      ],
+      "colour": [
+        0.45,
+        0.55,
+        0.75
+      ],
+      "intensity": 0.5,
+      "size": [
+        1000000,
+        1000000
+      ]
+    }
+  ],
+  "subjects": [
+    "sprljci",
+    "staklo",
+    "kamen_zid",
+    "stupovi",
+    "pod",
+    "pod_tepih",
+    "pod_rub",
+    "kamen_zid_prozor",
+    "zid_vani",
+    "kamen_zid_parapet",
+    "staklo_crveno",
+    "rozeta",
+    "staklo_zeleno",
+    "staklo_plavo",
+    "staklo_zuto"
+  ]
+}

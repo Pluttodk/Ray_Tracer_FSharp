@@ -1,0 +1,44 @@
+name: Headless renderer
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore locked dependencies
+        run: dotnet restore RayTracer.sln --locked-mode
+      - name: Build Release
+        run: dotnet build RayTracer.sln -c Release --no-restore -p:ContinuousIntegrationBuild=true
+      - name: Retained and regression suites
+        run: dotnet UnitTests/bin/Release/net10.0/TDD.dll
+      - name: Frozen baseline audit and portability probe
+        run: |
+          dotnet fsi benchmarks/legacy/prepare-port.fsx -- --check
+          dotnet fsi benchmarks/legacy/proof.fsx
+      - name: Benchmark contracts
+        run: |
+          dotnet fsi scripts/benchmark-tests.fsx
+          dotnet fsi scripts/benchmark-builder-tests.fsx
+          dotnet fsi --define:LEGACY scripts/benchmark-builder-tests.fsx
+          dotnet fsi scripts/benchmark-worker-tests.fsx
+      - name: Offline scene assets
+        run: |
+          dotnet run --project SceneAssets -c Release --no-build -- generate
+          dotnet run --project SceneAssets -c Release --no-build -- verify
+          dotnet fsi SceneAssets/CheckLegacyPly.fsx
+      - name: Offline image smoke
+        run: dotnet run --project TracerTest -c Release --no-build -- --smoke

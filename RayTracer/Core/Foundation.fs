@@ -1,7 +1,6 @@
 ﻿namespace Tracer.Basics
 open System
 open Tracer.Basics.Sampling
-open System.Numerics
 
 exception LightException
 
@@ -37,8 +36,22 @@ and BlankMaterial() =
     default this.IsRecursive = false
       
 //- HITPOINT
-and HitPoint(ray: Ray, time: float, normal: Vector, material: Material, shape: Shape, u: float, v:float, didHit: bool) = 
-    
+and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vector,
+             material: Material, shape: Shape, u: float, v: float,
+             barycentricBeta: float, barycentricGamma: float, didHit: bool) =
+    do
+        if didHit && (not geometricNormal.IsFinite || geometricNormal.IsZero) then
+            invalidArg "geometricNormal" "A surface hit requires a finite, nonzero geometric normal."
+    let geometric = geometricNormal.Normalise
+    let shading =
+        let n =
+            if shadingNormal.IsFinite && not shadingNormal.IsZero then shadingNormal.Normalise
+            else geometric
+        if n * geometric < 0. then -n else n
+    let frontFace = ray.GetDirection * geometric < 0.
+    let normal = if ray.GetDirection * shading > 0. then -shading else shading
+    let point = if didHit then ray.PointAtTime time else ray.GetOrigin
+
     // Ray that hit
     member this.Ray: Ray = ray
 
@@ -46,19 +59,47 @@ and HitPoint(ray: Ray, time: float, normal: Vector, material: Material, shape: S
     member this.Time: float = time
 
     // Point at which the ray hit
-    member this.Point: Point = ray.PointAtTime time
+    member this.Point: Point = point
+
+    // Offset along the geometric normal on the outgoing ray's side, then round away from the surface.
+    member this.OffsetPoint(outgoing: Vector): Point =
+        let n = if outgoing * geometric >= 0. then geometric else -geometric
+        let origin = ray.GetOrigin
+        let axisError p o = max (abs p) (abs o)
+        let errorScale =
+            max (axisError point.X origin.X)
+                (max (axisError point.Y origin.Y) (axisError point.Z origin.Z))
+        let distance = 128. * 2.2204460492503131e-16 * errorScale
+        let move value axisNormal =
+            let shifted = value + distance * axisNormal
+            if axisNormal > 0. then Math.BitIncrement shifted
+            elif axisNormal < 0. then Math.BitDecrement shifted
+            else value
+        Point(move point.X n.X, move point.Y n.Y, move point.Z n.Z)
+
+    member this.SpawnRay(outgoing: Vector) =
+        if not outgoing.IsFinite || outgoing.IsZero then
+            invalidArg (nameof outgoing) "A spawned ray requires a finite, nonzero direction."
+        let direction = outgoing.Normalise
+        Ray(this.OffsetPoint direction, direction)
 
     // Point at which the ray hit, a little above the surface (for reflected rays)
-    member this.EscapedPoint: Point = this.Point + normal * 0.000001
+    member this.EscapedPoint: Point = this.OffsetPoint(if frontFace then geometric else -geometric)
 
     // Point at which the ray hit, a little below the surface (for refracted rays)
-    member this.InnerEscapedPoint: Point = this.Point - normal * 0.000001
+    member this.InnerEscapedPoint: Point = this.OffsetPoint(if frontFace then -geometric else geometric)
 
     // True if this point hit an appropriate shape
     member this.DidHit = didHit
 
     // Normal at the point where the ray did hit
-    member this.Normal = if ray.GetDirection * normal > 0. then -normal else normal
+    member this.Normal = normal
+    member this.GeometricNormal = geometric
+    member this.ShadingNormal = shading
+    member this.FrontFace = frontFace
+    member this.BarycentricAlpha = 1. - barycentricBeta - barycentricGamma
+    member this.BarycentricBeta = barycentricBeta
+    member this.BarycentricGamma = barycentricGamma
 
     // Material at the point where the ray did hit
     member this.Material = material
@@ -75,13 +116,19 @@ and HitPoint(ray: Ray, time: float, normal: Vector, material: Material, shape: S
     // Shape at which the ray hit
     member this.Shape = shape
 
+    member this.WithShape(newShape: Shape) =
+        HitPoint(ray, time, geometric, shading, material, newShape, u, v,
+                 barycentricBeta, barycentricGamma, didHit)
+
     // Constructors for rays that hit
+    new(ray: Ray, time:float, normal:Vector, material:Material, shape:Shape, u:float, v:float, didHit:bool) =
+        HitPoint(ray, time, normal, normal, material, shape, u, v, 0., 0., didHit)
     new(ray: Ray, time:float, normal: Vector, material: Material, shape: Shape) = HitPoint(ray, time, normal, material, shape, 0., 0., true)
     new(ray: Ray, time:float, normal:Vector, material:Material, shape:Shape, u:float, v:float) = HitPoint(ray, time, normal, material, shape, u, v, true)
 
     // Constructors for rays that did not hit (to be refactored to Some(...) and None)
-    new(ray: Ray) = HitPoint(ray, -0., new Vector(0.,0.,0.), Material.None, Shape.None, 0., 0., false)
-    new(point: Point) = HitPoint(Ray.None, -0., point.ToVector, Material.None, Shape.None, 0., 0., false)
+    new(ray: Ray) = HitPoint(ray, -0., Vector.Zero, Material.None, Shape.None, 0., 0., false)
+    new(point: Point) = HitPoint(Ray(point, Vector.Zero), -0., Vector.Zero, Material.None, Shape.None, 0., 0., false)
 
 //- LIGHT
 and [<AbstractClass>] Light(colour: Colour, intensity: float) =
@@ -120,11 +167,22 @@ and AmbientLight(colour: Colour, intensity: float) =
 and [<AbstractClass>] Shape() =
     abstract member isInside: Point -> bool
     abstract member getBoundingBox: unit -> BBox
+    abstract member Bounds: BBox option
+    default this.Bounds = Some(this.getBoundingBox())
+    abstract member IsOpaque: bool
+    default _.IsOpaque = false
     abstract member hitFunction: Ray -> HitPoint
     static member None = BlankShape() :> Shape
 
 and BlankShape() = 
     inherit Shape()
+    override _.Bounds = Some BBox.Empty
+    override _.IsOpaque = true
     override this.isInside (p:Point) = failwith "cannot be inside a blank shape"
     override this.getBoundingBox () = failwith "cannot get bounding box for a blank shape"
     default this.hitFunction r = HitPoint(r)
+
+/// Native intersection over the open ray-parameter interval (minimum, maximum).
+/// Implementations retain the original ray and can select an exit after an excluded entry.
+type IIntervalShape =
+    abstract member HitWithin: Ray * minimum: float * maximum: float -> HitPoint

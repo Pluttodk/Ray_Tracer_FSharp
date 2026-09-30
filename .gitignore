@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.vs/
+*.user
+result/
+artifacts/
+.benchmark-cache/
+.tools/
+RayTracer.Gpu/validation/
+ply/dragon.ply

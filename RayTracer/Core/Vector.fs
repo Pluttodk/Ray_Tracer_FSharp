@@ -1,12 +1,12 @@
 namespace Tracer.Basics
 
 type Vector(x:float, y:float, z:float) = 
+    static let zero = Vector(0.,0.,0.)
     
     // Private fields
     let x = x
     let y = y
     let z = z
-    let magnitude = sqrt (x*x + y*y + z*z)
 
     // Public fields
     member this.X = x
@@ -27,20 +27,34 @@ type Vector(x:float, y:float, z:float) =
     member this.GetCoord = x,y,z
     member this.MultScalar s = new Vector(x*s,y*s,z*s) 
     member this.Invert = new Vector(-x,-y,-z)
-    member this.Magnitude = magnitude
+    member this.IsFinite = System.Double.IsFinite x && System.Double.IsFinite y && System.Double.IsFinite z
+    member this.IsZero = x = 0. && y = 0. && z = 0.
+    member this.MagnitudeSquared = x*x + y*y + z*z
+    member this.Magnitude =
+        let scale = max (abs x) (max (abs y) (abs z))
+        if scale = 0. then 0.
+        elif System.Double.IsInfinity scale then infinity
+        else
+            let sx, sy, sz = x / scale, y / scale, z / scale
+            scale * sqrt (sx*sx + sy*sy + sz*sz)
     member this.DotProduct (o: Vector) = x*o.X + y*o.Y + z*o.Z
     member this.CrossProduct (o: Vector) = 
         new Vector(y*o.Z - z*o.Y, z*o.X - x * o.Z, x * o.Y - y * o.X)
     member this.AngleBetween (a: Vector) (b: Vector) =
-        (a.Magnitude * b.Magnitude) / (a.DotProduct b)
+        if not a.IsFinite || not b.IsFinite || a = Vector.Zero || b = Vector.Zero then
+            invalidArg "vector" "An angle requires two finite, nonzero vectors."
+        System.Math.Acos(max -1. (min 1. (a.Normalise.DotProduct b.Normalise)))
         
-    member this.Normalise = 
-      match this.Magnitude with
-      | 0.        -> this
-      | length    -> new Vector (x / length, y / length, z / length)
+    member this.Normalise: Vector =
+        let scale = max (abs x) (max (abs y) (abs z))
+        if scale = 0. then this
+        else
+            let sx, sy, sz = x / scale, y / scale, z / scale
+            let length = sqrt (sx*sx + sy*sy + sz*sz)
+            Vector(sx / length, sy / length, sz / length)
     member this.Round (d:int) = new Vector(System.Math.Round(x,d),System.Math.Round(y,d),System.Math.Round(z,d))
-    static member Zero = Vector(0.,0.,0.)
-    static member DivideByInt(a: Vector, s: int) = a / float(s)
+    static member Zero = zero
+    static member DivideByInt(a: Vector, s: int): Vector = a.MultScalar (1. / float s)
 
     // Operators
     static member ( ~- ) (v: Vector) = new Vector(-v.X,-v.Y,-v.Z)
@@ -55,5 +69,5 @@ type Vector(x:float, y:float, z:float) =
     static member ( ** ) (e:int, v:Vector) = new Vector(pown v.X e, pown v.Y e, pown v.Z e)
     static member ( ** ) (v:Vector, e:int) = new Vector(pown v.X e, pown v.Y e, pown v.Z e)
     static member ( % ) (u:Vector, v:Vector) = u.CrossProduct v
-    static member ( / ) (v:Vector, f:float) = v.MultScalar (1.0/f)
+    static member ( / ) (v:Vector, f:float): Vector = v.MultScalar (1.0/f)
     static member ( / ) (u:Vector, v:Vector) = new Vector(u.X/v.X,u.Y/v.Y,u.Z/v.Z)

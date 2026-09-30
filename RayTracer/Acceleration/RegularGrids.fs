@@ -1,189 +1,171 @@
-﻿namespace Tracer.Basics
+namespace Tracer.Basics
 
 module RegularGrids =
+    open System
+    open AccelerationCommon
 
-    // Used for debug, will print to console etc. 
     let debugBuildCounts = false
+    type RGStructure = int list[,,] * int * int * int * BBox
+    let mutable gridSize = (0, 0, 0)
 
-    // Type of the BVHTree, with Nodes and Leafs.
-    type RGStructure = int list[,,]*int*int*int*BBox  
+    let clamp (value: float, maximum: int) =
+        if Double.IsNaN value || value <= 0. || maximum <= 0 then 0.
+        elif value >= float maximum then float maximum
+        else floor value
 
-    let clamp (x:float,b:int) : float =
-        match x with
-        | x when x<0. -> 0.
-        | x when x>float(b) -> float(b)
-        | _ -> System.Math.Floor(x)
+    let calcEdgeLength wx wy wz n =
+        if wx <= 0. || wy <= 0. || wz <= 0. || n <= 0. then 0.
+        else exp ((log wx + log wy + log wz - log n) / 3.)
 
-    let calcEdgeLength (wx:float) (wy:float) (wz:float) (n:float) : float = System.Math.Pow (((wx*wy*wz)/n),(1./3.))
+    let calcAxisCell m w s =
+        if w <= 0. || s <= 0. || not (Double.IsFinite s) then 1.
+        else floor (m * w / s) + 1.
 
-    let calcAxisCell (m:float) (w:float) (s:float) : float = System.Math.Floor ((m*w)/s)+1.
+    let calcAxisCells wx wy wz m n =
+        let widths = [| wx; wy; wz |]
+        let maximum = widths |> Array.fold (fun acc w -> if Double.IsFinite w then max acc w else acc) 0.
+        let normalized = widths |> Array.map (fun w -> if w > 0. && maximum > 0. && Double.IsFinite w then w / maximum else 0.)
+        let active = normalized |> Array.filter (fun w -> w > 0.)
+        let cells = [| 1; 1; 1 |]
+        if n > 0 && active.Length > 0 then
+            let multiplier = if Double.IsFinite m && m > 0. then m else 2.
+            let target = min 262144. (max 1. (float n * pown multiplier active.Length))
+            let density = (log target - Array.sumBy log active) / float active.Length
+            for axis = 0 to 2 do
+                if normalized.[axis] > 0. then
+                    cells.[axis] <- max 1 (int (min 128. (floor (exp (log normalized.[axis] + density)) + 1.)))
+            let budget = min 262144L (max 8L (int64 n * 8L))
+            while int64 cells.[0] * int64 cells.[1] * int64 cells.[2] > budget do
+                let axis = if cells.[0] >= cells.[1] && cells.[0] >= cells.[2] then 0 elif cells.[1] >= cells.[2] then 1 else 2
+                cells.[axis] <- max 1 ((cells.[axis] + 1) / 2)
+        cells.[0], cells.[1], cells.[2]
 
-    let calcAxisCells (wx:float) (wy:float) (wz:float) (m:float) (n:int) : int*int*int= 
-        let s =  calcEdgeLength wx wy wz (float(n))
-        let nx = int(calcAxisCell m wx s)
-        let ny = int(calcAxisCell m wy s)
-        let nz = int(calcAxisCell m wz s)
-        (nx, ny, nz)
+    let findOuterBoundingBoxLowHighPoints boxes = BVH.findOuterBoundingBoxLowHighPoints boxes
+    let convertShapesToBBoxes shapes = BVH.convertShapesToBBoxes shapes
+    let calcBbox n w = if w > 0. && Double.IsFinite w then float n / w else 0.
 
-    // Function for getting combined outer low and high from a array og bounding boxes.
-    let findOuterBoundingBoxLowHighPoints (boxes:array<BBox>) : Point*Point = 
-        if boxes.Length = 0 then failwith "findOuterBoundingBoxLowHighPoints -> Empty array"
-        let first = boxes.[0]
-        let lowX = Array.fold (fun acc (box:BBox) -> if box.lowPoint.X < acc then box.lowPoint.X else acc) first.lowPoint.X boxes
-        let lowY = Array.fold (fun acc (box:BBox) -> if box.lowPoint.Y < acc then box.lowPoint.Y else acc) first.lowPoint.Y boxes
-        let lowZ = Array.fold (fun acc (box:BBox) -> if box.lowPoint.Z < acc then box.lowPoint.Z else acc) first.lowPoint.Z boxes
-        let highX = Array.fold (fun acc (box:BBox) -> if box.highPoint.X > acc then box.highPoint.X else acc) first.highPoint.X boxes
-        let highY = Array.fold (fun acc (box:BBox) -> if box.highPoint.Y > acc then box.highPoint.Y else acc) first.highPoint.Y boxes
-        let highZ = Array.fold (fun acc (box:BBox) -> if box.highPoint.Z > acc then box.highPoint.Z else acc) first.highPoint.Z boxes
-        Point(lowX, lowY, lowZ), Point(highX, highY, highZ)
-    
-    // Function for converting a list of shapes to an array of their bounding boxes.
-    let convertShapesToBBoxes (shapes:array<Shape>) : array<BBox> =
-        let bboxArr : BBox[] = Array.zeroCreate (shapes.Length)
-        for i in 0..bboxArr.Length-1 do
-            bboxArr.[i] <- shapes.[i].getBoundingBox()
-        bboxArr
+    let private scaledCell coordinate low high count =
+        let width = high * 0.5 - low * 0.5
+        if count <= 1 || width <= 0. then 0.
+        else (coordinate * 0.5 - low * 0.5) / width * float count
 
- // ######################### BUILD REGULAR GRID #########################
-    let calcBbox n w : float = float(n)/w
-    
-    let mutable gridSize = (0,0,0)
+    let private singleCell indices (bounds: Bounds) : RGStructure =
+        let grid = Array3D.create 1 1 1 (Array.toList indices)
+        grid, 1, 1, 1, bounds.ToBBox()
 
-    // Function performs recursive searh in the grid, with a maximum distance from the ray origin.
-    let buildStructure (shapes:array<Shape>) : RGStructure =
-        if shapes.Length = 0 then failwith "build-> Cannont build with empty shape array" // Shapes needed for build.
-
-        let boxes = convertShapesToBBoxes shapes // Return bounding boxes from shapes.
-        let lowPoint, highPoint = findOuterBoundingBoxLowHighPoints boxes // lo/high point of outer bounding box.
-        let box = BBox (lowPoint, highPoint)
-
-        if shapes.Length < 10 then
-            // If only a fex shapes, put all in a single box
-            let grid = Array3D.zeroCreate<int list> 1 1 1
-            grid.[0,0,0] <- []
-            for i in 0..shapes.Length-1 do 
-                grid.[0,0,0] <- i::grid.[0,0,0]
-            if debugBuildCounts then gridSize <- (1, 1, 1) // Debug grid size
-            (grid, 1, 1, 1, box)
+    let internal buildBounded (boxes: Bounds array) (indices: int array) : RGStructure =
+        let bounds = if indices.Length = 0 then ofBBox (BBox(Point.Zero, Point.Zero)) else rangeBounds boxes indices 0 indices.Length
+        let wx, wy, wz = bounds.MaxX - bounds.MinX, bounds.MaxY - bounds.MinY, bounds.MaxZ - bounds.MinZ
+        if indices.Length < 10 || not (Double.IsFinite wx && Double.IsFinite wy && Double.IsFinite wz) then singleCell indices bounds
         else
-            // Vector from low to high of the outer bounding box.
-            let w = Vector(highPoint.X-lowPoint.X, highPoint.Y-lowPoint.Y, highPoint.Z-lowPoint.Z)
-            let m = 2.0 // m a constant to ajust the size of the grid structure.
-            let n = shapes.Length // Number of shapes.
-            let nx, ny, nz = calcAxisCells w.X w.Y w.Z m n
+            let nx, ny, nz = calcAxisCells wx wy wz 2. indices.Length
+            let ranges =
+                indices |> Array.map (fun index ->
+                    let box = boxes.[index]
+                    let low value minimum maximum count = int (clamp(Math.BitDecrement(scaledCell value minimum maximum count), count - 1))
+                    let high value minimum maximum count = int (clamp(Math.BitIncrement(scaledCell value minimum maximum count), count - 1))
+                    struct (low box.MinX bounds.MinX bounds.MaxX nx, low box.MinY bounds.MinY bounds.MaxY ny, low box.MinZ bounds.MinZ bounds.MaxZ nz,
+                            high box.MaxX bounds.MinX bounds.MaxX nx, high box.MaxY bounds.MinY bounds.MaxY ny, high box.MaxZ bounds.MinZ bounds.MaxZ nz))
+            let references =
+                ranges |> Array.sumBy (fun struct (lx, ly, lz, hx, hy, hz) -> int64 (hx - lx + 1) * int64 (hy - ly + 1) * int64 (hz - lz + 1))
+            let budget = min 16777216L (max (int64 indices.Length * 32L) (int64 nx * int64 ny * int64 nz * 4L))
+            if references > budget then singleCell indices bounds
+            else
+                let grid = Array3D.create nx ny nz []
+                for position = 0 to indices.Length - 1 do
+                    let struct (lx, ly, lz, hx, hy, hz) = ranges.[position]
+                    for z = lz to hz do
+                        for y = ly to hy do
+                            for x = lx to hx do
+                                grid.[x, y, z] <- indices.[position] :: grid.[x, y, z]
+                if debugBuildCounts then gridSize <- nx, ny, nz
+                grid, nx, ny, nz, bounds.ToBBox()
 
-            let bbx = calcBbox nx w.X
-            let bby = calcBbox ny w.Y
-            let bbz = calcBbox nz w.Z
+    let buildStructure (shapes: Shape array) =
+        let boxes = cacheBounds shapes
+        let finite, fallback = partitionBounds boxes
+        if fallback.Length > 0 then singleCell [| 0 .. shapes.Length - 1 |] unbounded
+        else buildBounded boxes finite
 
-            // Create grid of size x,y,z fill with empty list
-            let grid = Array3D.create<int list> nx ny nz []
-            if debugBuildCounts then gridSize <- (nx, ny, nz) // Debug grid size
+    let build shapes = buildStructure shapes
 
-            // Fill shapes in grid
-            for i in 0..shapes.Length-1 do 
-                let bb = shapes.[i].getBoundingBox()
-                let ixMin = int(clamp((bb.lowPoint.X-lowPoint.X)*bbx, nx-1))
-                let iyMin = int(clamp((bb.lowPoint.Y-lowPoint.Y)*bby, ny-1))
-                let izMin = int(clamp((bb.lowPoint.Z-lowPoint.Z)*bbz, nz-1))
+    let calcIxIyIz (point: Point) (box: BBox) nx ny nz =
+        int (clamp(scaledCell point.X box.lowPoint.X box.highPoint.X nx, nx - 1)),
+        int (clamp(scaledCell point.Y box.lowPoint.Y box.highPoint.Y ny, ny - 1)),
+        int (clamp(scaledCell point.Z box.lowPoint.Z box.highPoint.Z nz, nz - 1))
 
-                let ixMax = int(clamp((bb.highPoint.X-lowPoint.X)*bbx, nx-1))
-                let iyMax = int(clamp((bb.highPoint.Y-lowPoint.Y)*bby, ny-1))
-                let izMax = int(clamp((bb.highPoint.Z-lowPoint.Z)*bbz, nz-1))
+    let calcNextStepStop direction start index delta count =
+        if direction < 0. then start + float (count - index) * delta, -1, -1
+        elif direction > 0. then start + float (index + 1) * delta, 1, count
+        else infinity, 0, -1
 
-                for iz=izMin to izMax do
-                    for iy=iyMin to iyMax do
-                        for ix=ixMin to ixMax do
-                            grid.[ix,iy,iz] <- i::grid.[ix,iy,iz]
+    let closestHit indices ray shapes =
+        let result = indices |> List.fold (fun acc index -> consider shapes index ray 0. infinity acc) (noCandidate infinity)
+        if result.Found then Some result.Hit else None
 
-            (grid, nx, ny, nz, box)
-    
-    let build (shapes:array<Shape>) : RGStructure = 
-        let structure = buildStructure shapes
-        if debugBuildCounts then 
-            printfn "totalShapes: %i" shapes.Length
-            let x,y,z = gridSize
-            printfn "Grid size x, y, z: %i %i %i" x y z
-
-        structure
-        
-  // ######################### TRAVERSAL REGULAR GRID #########################
-    let calcIxIyIz (p:Point) (bbox:BBox) (nx:int) (ny:int) (nz:int) : int*int*int = 
-        let ix = clamp(((p.X-bbox.lowPoint.X) / (bbox.highPoint.X-bbox.lowPoint.X))*float nx, nx-1)
-        let iy = clamp(((p.Y-bbox.lowPoint.Y) / (bbox.highPoint.Y-bbox.lowPoint.Y))*float ny, ny-1)
-        let iz = clamp(((p.Z-bbox.lowPoint.Z) / (bbox.highPoint.Z-bbox.lowPoint.Z))*float nz, nz-1)
-        (int ix, int iy, int iz)
-    
-    let calcNextStepStop (dA:float) (tA:float) (iA:int) (dtA:float) (nA:int) : float*int*int =
-        match dA.CompareTo 0.0 with
-        | -1 -> tA+(float nA-float iA)*dtA, -1, -1
-        | 0 -> infinity, -1, -1
-        | 1 -> tA+(float iA+1.)*dtA, 1, nA
-        | _ -> failwith "nextStepStop -> float compareTo out of range (-1,0,1)"
-
-    // Functions finds closest hit of a ray in structure.
-    let closestHit (intIndexes:int list) (ray:Ray) (shapes:array<Shape>) : HitPoint option =
-        match intIndexes with
-        | [] -> None
-        | shapesRef ->
-                        let mutable closestHit = None
-                        let mutable closestDist = infinity
-                        for shapeRef in shapesRef do
-                            let hitPoint = shapes.[shapeRef].hitFunction ray
-                            let dist = hitPoint.Time
-                            if hitPoint.DidHit && dist<closestDist then
-                                closestDist <- dist
-                                closestHit <- Some hitPoint
-                        closestHit
-
-    //Function for search of the grid.
-    let searchStructure (structure:RGStructure) (shapes:Shape array) (ray:Ray): HitPoint option =
-        let grid, nx, ny, nz, bbox = structure
-        match bbox.intersectRG ray with
-        | Some (t,t',tx,ty,tz,tx',ty',tz') ->
-                
-                let mutable p = ray.GetOrigin
-                let d = ray.GetDirection
-
-                if not (bbox.isInside p) then
-                    p <- (p + (t * d))
-                                                
-                let ix, iy, iz = calcIxIyIz p bbox nx ny nz
-
-                let dtx : float = (tx'-tx)/float nx
-                let dty : float = (ty'-ty)/float ny
-                let dtz : float = (tz'-tz)/float nz
-
-                let txNext, ixStep, ixStop = calcNextStepStop d.X tx ix dtx nx
-                let tyNext, iyStep, iyStop = calcNextStepStop d.Y ty iy dty ny
-                let tzNext, izStep, izStop = calcNextStepStop d.Z tz iz dtz nz
-
-                let rec loop ix iy iz txNext tyNext tzNext =
-                    let checkForHit = closestHit grid.[ix,iy,iz] ray shapes
-                    if txNext<tyNext && txNext<tzNext then
-                        match checkForHit with
-                        | Some hitPoint when hitPoint.Time<txNext -> Some hitPoint
-                        | _ ->  
-                                if (ix+ixStep) = ixStop then None
-                                else loop (ix+ixStep) iy iz (txNext+dtx) tyNext tzNext
+    let internal query (structure: RGStructure) ray data shapes minimum maximum initial stopAtFirst =
+        let grid, nx, ny, nz, box = structure
+        let bounds = ofBBox box
+        let mutable result = initial
+        let mutable stopped = false
+        let visit indices =
+            let mutable remaining = indices
+            while not stopped && not (List.isEmpty remaining) do
+                result <- consider shapes (List.head remaining) ray minimum maximum result
+                stopped <- stopAtFirst && result.Found
+                remaining <- List.tail remaining
+        if minimum < maximum then
+            match intersect bounds data minimum result.Distance with
+            | ValueNone -> ()
+            | ValueSome(struct (entry, exit)) ->
+                if nx = 1 && ny = 1 && nz = 1 then visit grid.[0, 0, 0]
+                else
+                    let x = Math.FusedMultiplyAdd(entry, data.DX, data.X)
+                    let y = Math.FusedMultiplyAdd(entry, data.DY, data.Y)
+                    let z = Math.FusedMultiplyAdd(entry, data.DZ, data.Z)
+                    if not (Double.IsFinite x && Double.IsFinite y && Double.IsFinite z) then
+                        for x = 0 to nx - 1 do
+                            for y = 0 to ny - 1 do
+                                for z = 0 to nz - 1 do
+                                    if not stopped then visit grid.[x, y, z]
                     else
-                        if tyNext<tzNext then
-                            match checkForHit with
-                            | Some hitPoint when hitPoint.Time<tyNext -> Some hitPoint
-                            | _ ->  
-                                    if (iy+iyStep) = iyStop then None
-                                    else loop ix (iy+iyStep) iz txNext (tyNext+dty) tzNext
-                        else
-                            match checkForHit with
-                            | Some hitPoint when hitPoint.Time<tzNext -> Some hitPoint
-                            | _ ->  
-                                    if (iz+izStep) = izStop then None
-                                    else loop ix iy (iz+izStep) txNext tyNext (tzNext+dtz)
-                loop ix iy iz txNext tyNext tzNext                   
-        | None -> None
+                        let firstX, firstY, firstZ = calcIxIyIz (Point(x, y, z)) box nx ny nz
+                        let axisStep low high count index origin direction =
+                            if direction = 0. || high = low then infinity, infinity, 0
+                            else
+                                let width = (high - low) / float count
+                                let boundary =
+                                    if direction > 0. then
+                                        if index + 1 = count then high else low + float (index + 1) * width
+                                    elif index = 0 then low
+                                    else low + float index * width
+                                max entry (boundaryTime boundary origin direction), width / abs direction, (if direction > 0. then 1 else -1)
+                        let tx, dx, sx = axisStep bounds.MinX bounds.MaxX nx firstX data.X data.DX
+                        let ty, dy, sy = axisStep bounds.MinY bounds.MaxY ny firstY data.Y data.DY
+                        let tz, dz, sz = axisStep bounds.MinZ bounds.MaxZ nz firstZ data.Z data.DZ
+                        let mutable ix, iy, iz = firstX, firstY, firstZ
+                        let mutable nextX, nextY, nextZ = tx, ty, tz
+                        while not stopped && ix >= 0 && ix < nx && iy >= 0 && iy < ny && iz >= 0 && iz < nz do
+                            visit grid.[ix, iy, iz]
+                            let next = min nextX (min nextY nextZ)
+                            if next > result.Distance || next > exit || next >= maximum || Double.IsPositiveInfinity next then stopped <- true
+                            elif nextX <= nextY && nextX <= nextZ then
+                                ix <- ix + sx
+                                nextX <- nextX + dx
+                            elif nextY <= nextZ then
+                                iy <- iy + sy
+                                nextY <- nextY + dy
+                            else
+                                iz <- iz + sz
+                                nextZ <- nextZ + dz
+        result
 
-    //Function for traversal of the structure.
-    let traverse (structure:RGStructure) (ray:Ray) (shapes:array<Shape>) = 
+    let searchStructure structure shapes ray =
+        let data = validateQuery ray 0. infinity
+        let result = query structure ray data shapes 0. infinity (noCandidate infinity) false
+        if result.Found then Some result.Hit else None
+
+    let traverse structure (ray: Ray) shapes =
         match searchStructure structure shapes ray with
-        | Some r -> r
+        | Some hit -> hit
         | None -> HitPoint ray

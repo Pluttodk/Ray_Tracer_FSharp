@@ -1,0 +1,2793 @@
+{
+  "schemaVersion": 1,
+  "id": "roman-bust",
+  "title": "An imagined orator \u2014 stone, laurel and drapery",
+  "description": "An original procedural classical/Roman-style bust, not a scan or a portrait of a historical person: modeled eye sockets, lids, irises, nasal bridge and nostrils, lips, ears with helix, individually instanced spiral curls, bronze laurel leaves and thick folded toga on a moulded plinth. All subject parts are individually closed solids.",
+  "camera": {
+    "position": [
+      3.85,
+      3.08,
+      9.65
+    ],
+    "target": [
+      0,
+      2.24,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewDistance": 1,
+    "viewWidth": 0.6114613629173208,
+    "viewHeight": 0.6114613629173208,
+    "lensRadius": 0,
+    "focusDistance": 10.423559852564766
+  },
+  "ambientColour": [
+    0.9,
+    0.94,
+    1
+  ],
+  "ambientIntensity": 0.31,
+  "maxBounces": 4,
+  "materials": [
+    {
+      "id": "warm-floor",
+      "kind": "matte",
+      "colour": [
+        0.53,
+        0.43,
+        0.34
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "marble",
+      "kind": "phong",
+      "colour": [
+        0.79,
+        0.74,
+        0.63
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/marble-veins.png"
+    },
+    {
+      "id": "marble-shade",
+      "kind": "phong",
+      "colour": [
+        0.43,
+        0.4,
+        0.34
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "marble-eye",
+      "kind": "phong",
+      "colour": [
+        0.69,
+        0.68,
+        0.61
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "marble-incision",
+      "kind": "matte",
+      "colour": [
+        0.18,
+        0.2,
+        0.19
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "hair-stone",
+      "kind": "phong",
+      "colour": [
+        0.37,
+        0.31,
+        0.22
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/marble-veins.png"
+    },
+    {
+      "id": "antique-bronze",
+      "kind": "glossy",
+      "colour": [
+        0.4,
+        0.25,
+        0.1
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0.28,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "toga",
+      "kind": "matte",
+      "colour": [
+        0.46,
+        0.53,
+        0.52
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/marble-veins.png"
+    },
+    {
+      "id": "bust-wall",
+      "kind": "matte",
+      "colour": [
+        0.12,
+        0.2,
+        0.22
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "dark-pedestal",
+      "kind": "phong",
+      "colour": [
+        0.105,
+        0.13,
+        0.13
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "reflection-card",
+      "kind": "emissive",
+      "colour": [
+        0.82,
+        0.92,
+        1
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 1.1,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "sphere",
+      "path": "../../artifacts/scene-assets/meshes/sphere.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "small-sphere",
+      "path": "../../artifacts/scene-assets/meshes/small-sphere.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-cylinder",
+      "path": "../../artifacts/scene-assets/meshes/rounded-cylinder.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "moulded-pedestal",
+      "path": "../../artifacts/scene-assets/meshes/moulded-pedestal.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "disc",
+      "path": "../../artifacts/scene-assets/meshes/disc.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "ring",
+      "path": "../../artifacts/scene-assets/meshes/ring.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "sculpted-curl",
+      "path": "../../artifacts/scene-assets/meshes/sculpted-curl.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "eyelid",
+      "path": "../../artifacts/scene-assets/meshes/eyelid.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-box",
+      "path": "../../artifacts/scene-assets/meshes/rounded-box.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "classical-head",
+      "path": "../../artifacts/scene-assets/meshes/classical-head.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "classical-nose",
+      "path": "../../artifacts/scene-assets/meshes/classical-nose.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "classical-shoulders",
+      "path": "../../artifacts/scene-assets/meshes/classical-shoulders.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "toga-drape",
+      "path": "../../artifacts/scene-assets/meshes/toga-drape.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "leaf",
+      "path": "../../artifacts/scene-assets/meshes/leaf.ply",
+      "smooth": true,
+      "closed": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "studio-floor",
+      "mesh": "rounded-box",
+      "material": "warm-floor",
+      "transform": [
+        12,
+        0,
+        0,
+        0,
+        0,
+        0.12,
+        0,
+        -0.16,
+        0,
+        0,
+        10,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "studio-backdrop",
+      "mesh": "rounded-box",
+      "material": "bust-wall",
+      "transform": [
+        14,
+        0,
+        0,
+        0,
+        0,
+        5.2,
+        0,
+        5,
+        0,
+        0,
+        0.12,
+        -8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-reflection-card",
+      "mesh": "rounded-box",
+      "material": "reflection-card",
+      "transform": [
+        0.025,
+        0,
+        0,
+        -6.5,
+        0,
+        2.15,
+        0,
+        3.1,
+        0,
+        0,
+        1.45,
+        2.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-reflection-card",
+      "mesh": "rounded-box",
+      "material": "reflection-card",
+      "transform": [
+        0.025,
+        0,
+        0,
+        6.5,
+        0,
+        1.65,
+        0,
+        3.5,
+        0,
+        0,
+        1.2,
+        2.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "plinth-bottom",
+      "mesh": "rounded-box",
+      "material": "dark-pedestal",
+      "transform": [
+        0.91,
+        0,
+        0,
+        0,
+        0,
+        0.15,
+        0,
+        0.11,
+        0,
+        0,
+        0.68,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "plinth-bronze-reveal",
+      "mesh": "rounded-box",
+      "material": "antique-bronze",
+      "transform": [
+        0.83,
+        0,
+        0,
+        0,
+        0,
+        0.032,
+        0,
+        0.28,
+        0,
+        0,
+        0.6,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "moulded-plinth",
+      "mesh": "moulded-pedestal",
+      "material": "dark-pedestal",
+      "transform": [
+        0.74,
+        0,
+        0,
+        0,
+        0,
+        0.6,
+        0,
+        0.9,
+        0,
+        0,
+        0.54,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "plinth-cap",
+      "mesh": "rounded-box",
+      "material": "marble",
+      "transform": [
+        0.77,
+        0,
+        0,
+        0,
+        0,
+        0.095,
+        0,
+        1.54,
+        0,
+        0,
+        0.56,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "plinth-inscription-panel",
+      "mesh": "rounded-box",
+      "material": "antique-bronze",
+      "transform": [
+        0.27,
+        0,
+        0,
+        0,
+        0,
+        0.11,
+        0,
+        0.97,
+        0,
+        0,
+        0.012,
+        0.381,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "abstract-inscription-0",
+      "mesh": "rounded-box",
+      "material": "dark-pedestal",
+      "transform": [
+        0.009,
+        0,
+        0,
+        -0.16,
+        0,
+        0.04,
+        0,
+        0.97,
+        0,
+        0,
+        0.006,
+        0.397,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "abstract-inscription-1",
+      "mesh": "rounded-box",
+      "material": "dark-pedestal",
+      "transform": [
+        0.009,
+        0,
+        0,
+        -0.08,
+        0,
+        0.047,
+        0,
+        0.97,
+        0,
+        0,
+        0.006,
+        0.397,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "abstract-inscription-2",
+      "mesh": "rounded-box",
+      "material": "dark-pedestal",
+      "transform": [
+        0.009,
+        0,
+        0,
+        0,
+        0,
+        0.054,
+        0,
+        0.97,
+        0,
+        0,
+        0.006,
+        0.397,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "abstract-inscription-3",
+      "mesh": "rounded-box",
+      "material": "dark-pedestal",
+      "transform": [
+        0.009,
+        0,
+        0,
+        0.07999999999999999,
+        0,
+        0.04,
+        0,
+        0.97,
+        0,
+        0,
+        0.006,
+        0.397,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "abstract-inscription-4",
+      "mesh": "rounded-box",
+      "material": "dark-pedestal",
+      "transform": [
+        0.009,
+        0,
+        0,
+        0.16,
+        0,
+        0.047,
+        0,
+        0.97,
+        0,
+        0,
+        0.006,
+        0.397,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "sculpted-shoulders",
+      "mesh": "classical-shoulders",
+      "material": "marble",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.61,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "neck",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.29,
+        0,
+        0,
+        0,
+        0,
+        0.52,
+        0,
+        2.82,
+        0,
+        0,
+        0.275,
+        -0.015,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "head",
+      "mesh": "classical-head",
+      "material": "marble",
+      "transform": [
+        0.66,
+        0,
+        0,
+        0,
+        0,
+        0.86,
+        0,
+        3.55,
+        0,
+        0,
+        0.66,
+        0.01,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "nose",
+      "mesh": "classical-nose",
+      "material": "marble",
+      "transform": [
+        0.66,
+        0,
+        0,
+        0,
+        0,
+        0.86,
+        0,
+        3.55,
+        0,
+        0,
+        0.66,
+        0.01,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "chin-plane",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.18,
+        0,
+        0,
+        0,
+        0,
+        0.105,
+        0,
+        2.95,
+        0,
+        0,
+        0.105,
+        0.38,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-ear",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.12,
+        0,
+        0,
+        -0.545,
+        0,
+        0.225,
+        0,
+        3.49,
+        0,
+        0,
+        0.11,
+        0.015,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-ear-concha",
+      "mesh": "small-sphere",
+      "material": "marble-shade",
+      "transform": [
+        0.059,
+        0,
+        0,
+        -0.567,
+        0,
+        0.122,
+        0,
+        3.49,
+        0,
+        0,
+        0.018,
+        0.101,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-ear-helix",
+      "mesh": "ring",
+      "material": "marble",
+      "transform": [
+        0.075,
+        0,
+        0,
+        -0.564,
+        0,
+        1.8369701987210297E-17,
+        -0.161,
+        3.51,
+        0,
+        0.3,
+        9.858406733136193E-18,
+        0.103,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-ear-lobe",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.08,
+        0,
+        0,
+        -0.547,
+        0,
+        0.074,
+        0,
+        3.33,
+        0,
+        0,
+        0.074,
+        0.047,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-eye",
+      "mesh": "small-sphere",
+      "material": "marble-eye",
+      "transform": [
+        0.115,
+        0,
+        0,
+        -0.235,
+        0,
+        0.061,
+        0,
+        3.64,
+        0,
+        0,
+        0.059,
+        0.462,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-iris",
+      "mesh": "small-sphere",
+      "material": "marble-shade",
+      "transform": [
+        0.037,
+        0,
+        0,
+        -0.224,
+        0,
+        0.041,
+        0,
+        3.638,
+        0,
+        0,
+        0.01,
+        0.516,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-pupil-incision",
+      "mesh": "small-sphere",
+      "material": "marble-incision",
+      "transform": [
+        0.014,
+        0,
+        0,
+        -0.222,
+        0,
+        0.02,
+        0,
+        3.639,
+        0,
+        0,
+        0.006,
+        0.525,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-upper-lid",
+      "mesh": "eyelid",
+      "material": "marble",
+      "transform": [
+        0.12383006230956715,
+        -0.003872860761977843,
+        0,
+        -0.235,
+        0.0064896585741250346,
+        0.07389858557183845,
+        0,
+        3.642,
+        0,
+        0,
+        0.091,
+        0.506,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-lower-lid",
+      "mesh": "eyelid",
+      "material": "marble",
+      "transform": [
+        -0.121832803240058,
+        0.002145774205960686,
+        0,
+        -0.235,
+        -0.006384986661639115,
+        -0.040943810924937526,
+        0,
+        3.636,
+        0,
+        0,
+        0.082,
+        0.501,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-carved-brow",
+      "mesh": "rounded-cylinder",
+      "material": "marble-shade",
+      "transform": [
+        -0.0022874118562007818,
+        -0.14100000000000001,
+        -0.008693970435684014,
+        -0.241,
+        0.02389074605365249,
+        -0.013500000000000068,
+        -0.0008324014246931544,
+        3.7685,
+        0,
+        -0.036500000000000005,
+        0.033892801388076814,
+        0.4515,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-nostril",
+      "mesh": "small-sphere",
+      "material": "marble-shade",
+      "transform": [
+        0.03,
+        0,
+        0,
+        -0.068,
+        0,
+        0.016,
+        0,
+        3.325,
+        0,
+        0,
+        0.022,
+        0.665,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-upper-lip",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.08736481932684209,
+        0.005151842875166709,
+        0,
+        -0.063,
+        -0.016982000588512486,
+        0.026503933953086926,
+        0,
+        3.142,
+        0,
+        0,
+        0.043,
+        0.503,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-ear",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.12,
+        0,
+        0,
+        0.545,
+        0,
+        0.225,
+        0,
+        3.49,
+        0,
+        0,
+        0.11,
+        0.015,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-ear-concha",
+      "mesh": "small-sphere",
+      "material": "marble-shade",
+      "transform": [
+        0.059,
+        0,
+        0,
+        0.567,
+        0,
+        0.122,
+        0,
+        3.49,
+        0,
+        0,
+        0.018,
+        0.101,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-ear-helix",
+      "mesh": "ring",
+      "material": "marble",
+      "transform": [
+        0.075,
+        0,
+        0,
+        0.564,
+        0,
+        1.8369701987210297E-17,
+        -0.161,
+        3.51,
+        0,
+        0.3,
+        9.858406733136193E-18,
+        0.103,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-ear-lobe",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.08,
+        0,
+        0,
+        0.547,
+        0,
+        0.074,
+        0,
+        3.33,
+        0,
+        0,
+        0.074,
+        0.047,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-eye",
+      "mesh": "small-sphere",
+      "material": "marble-eye",
+      "transform": [
+        0.115,
+        0,
+        0,
+        0.235,
+        0,
+        0.061,
+        0,
+        3.64,
+        0,
+        0,
+        0.059,
+        0.462,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-iris",
+      "mesh": "small-sphere",
+      "material": "marble-shade",
+      "transform": [
+        0.037,
+        0,
+        0,
+        0.224,
+        0,
+        0.041,
+        0,
+        3.638,
+        0,
+        0,
+        0.01,
+        0.516,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-pupil-incision",
+      "mesh": "small-sphere",
+      "material": "marble-incision",
+      "transform": [
+        0.014,
+        0,
+        0,
+        0.222,
+        0,
+        0.02,
+        0,
+        3.639,
+        0,
+        0,
+        0.006,
+        0.525,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-upper-lid",
+      "mesh": "eyelid",
+      "material": "marble",
+      "transform": [
+        0.12383006230956715,
+        0.003872860761977843,
+        0,
+        0.235,
+        -0.0064896585741250346,
+        0.07389858557183845,
+        0,
+        3.642,
+        0,
+        0,
+        0.091,
+        0.506,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-lower-lid",
+      "mesh": "eyelid",
+      "material": "marble",
+      "transform": [
+        -0.121832803240058,
+        -0.002145774205960696,
+        0,
+        0.235,
+        0.006384986661639144,
+        -0.040943810924937526,
+        0,
+        3.636,
+        0,
+        0,
+        0.082,
+        0.501,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-carved-brow",
+      "mesh": "rounded-cylinder",
+      "material": "marble-shade",
+      "transform": [
+        -0.0022874118562007818,
+        0.14100000000000001,
+        0.008693970435684014,
+        0.241,
+        -0.02389074605365249,
+        -0.013500000000000068,
+        -0.0008324014246931544,
+        3.7685,
+        0,
+        -0.036500000000000005,
+        0.033892801388076814,
+        0.4515,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-nostril",
+      "mesh": "small-sphere",
+      "material": "marble-shade",
+      "transform": [
+        0.03,
+        0,
+        0,
+        0.068,
+        0,
+        0.016,
+        0,
+        3.325,
+        0,
+        0,
+        0.022,
+        0.665,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-upper-lip",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.08736481932684209,
+        -0.005151842875166709,
+        0,
+        0.063,
+        0.016982000588512486,
+        0.026503933953086926,
+        0,
+        3.142,
+        0,
+        0,
+        0.043,
+        0.503,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "mouth-incision",
+      "mesh": "small-sphere",
+      "material": "marble-shade",
+      "transform": [
+        0.151,
+        0,
+        0,
+        0,
+        0,
+        0.01,
+        0,
+        3.122,
+        0,
+        0,
+        0.01,
+        0.536,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "lower-lip",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.133,
+        0,
+        0,
+        0,
+        0,
+        0.036,
+        0,
+        3.102,
+        0,
+        0,
+        0.038,
+        0.513,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "hair-cap",
+      "mesh": "sphere",
+      "material": "hair-stone",
+      "transform": [
+        0.553,
+        0,
+        0,
+        0,
+        0,
+        0.372,
+        0,
+        4.079,
+        0,
+        0,
+        0.524,
+        -0.073,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-0",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        -0.041598074453368585,
+        0.02145756554026192,
+        -0.10913503666683627,
+        -0.47883489023244946,
+        0,
+        0.10857438368145243,
+        0.024949402898131117,
+        4.0552468503976575,
+        0.10506474290537242,
+        0.008495651198002496,
+        -0.04320961775756676,
+        -0.2666716177936898,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-1",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        -0.0032209751316362553,
+        -0.07850607848313139,
+        -0.08476520197708486,
+        -0.5142942103986056,
+        -0.004959866754524732,
+        0.07846232734981533,
+        -0.08471790345458094,
+        4.037878477593362,
+        0.11284513742726685,
+        0.001207819543986854,
+        -0.0061430748037373945,
+        -0.08509317483969271,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-2",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.02873236148845839,
+        -0.014331321760036783,
+        -0.1150172164523082,
+        -0.496028721900794,
+        0.00989334545549677,
+        0.10989584381168095,
+        -0.013216599139921965,
+        4.020209409866161,
+        0.10883737004813539,
+        -0.0062061847804366545,
+        0.03156519327895051,
+        0.09962889685377777,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-3",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.01536577121682086,
+        -0.10073156927333898,
+        -0.047694276341572965,
+        -0.4259464957513993,
+        0.06162874222549893,
+        0.04478706851895226,
+        -0.08816130326300557,
+        4.004085414218133,
+        0.09346010489302548,
+        -0.012971871307147132,
+        0.06597606089500978,
+        0.2681979422649751,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-4",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.07092717792989786,
+        -0.055849905576554316,
+        -0.07128272047857959,
+        -0.3113685441541231,
+        0.055414384645313654,
+        0.09414814211332284,
+        -0.02403091819529728,
+        3.991190854508669,
+        0.06831969997944835,
+        -0.01838247490681095,
+        0.0934948593873675,
+        0.4030047028639128,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-5",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.10709783033108318,
+        0.007361005992103129,
+        -0.03743871397459428,
+        -0.16426404428850605,
+        0,
+        0.10857438368145243,
+        0.024949402898131117,
+        3.982872737449473,
+        0.03604240195068191,
+        -0.021872786721791507,
+        0.1112468875562604,
+        0.48996683575551175,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-6",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.06154421095669808,
+        -0.09105814002644808,
+        -0.020924329898474817,
+        1.1435297153639113E-16,
+        0.0947697741778329,
+        0.059133847555617576,
+        0.013588418718639276,
+        3.98,
+        -2.509104035652854E-17,
+        -0.023078197680771285,
+        0.11737771208805668,
+        0.5199999999999999,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-7",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.10126298798442308,
+        -0.042308329617125086,
+        0.027276268453176048,
+        0.16426404428850613,
+        0.034867642967256446,
+        0.10026258746926352,
+        0.03577897690425243,
+        3.982872737449473,
+        -0.03604240195068193,
+        -0.021872786721791507,
+        0.1112468875562604,
+        0.48996683575551175,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-8",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.02177487712673957,
+        -0.10872481068342427,
+        -0.00703995827647328,
+        0.3113685441541231,
+        0.08733426201001276,
+        0.012727928274233096,
+        0.07489426049839797,
+        3.991190854508669,
+        -0.06831969997944835,
+        -0.01838247490681095,
+        0.0934948593873675,
+        0.4030047028639128,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-9",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.05005083531733086,
+        -0.08188624334461206,
+        0.06114034828266963,
+        0.4259464957513993,
+        0.039103998228085364,
+        0.07380632564826534,
+        0.0794293220457774,
+        4.004085414218133,
+        -0.09346010489302548,
+        -0.012971871307147135,
+        0.06597606089500979,
+        0.2681979422649752,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-10",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.030387939729525026,
+        -0.02222805611527543,
+        0.11305381845956917,
+        0.496028721900794,
+        0,
+        0.10857438368145243,
+        0.024949402898131117,
+        4.020209409866161,
+        -0.10883737004813539,
+        -0.0062061847804366545,
+        0.03156519327895051,
+        0.09962889685377777,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-11",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        -0.0032209751316362415,
+        -0.10361020156976476,
+        0.042916542180135187,
+        0.5142942103986056,
+        -0.004959866754524711,
+        0.03980536776141982,
+        0.11189474089185944,
+        4.037878477593362,
+        -0.11284513742726685,
+        0.0012078195439868488,
+        -0.006143074803737368,
+        -0.08509317483969259,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-0-12",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        -0.03933175210482346,
+        -0.05563688852195113,
+        0.09506647336085364,
+        0.4788348902324494,
+        -0.013543008328754628,
+        0.09567319659297406,
+        0.059121016364530404,
+        4.0552468503976575,
+        -0.10506474290537239,
+        0.008495651198002512,
+        -0.04320961775756683,
+        -0.26667161779369003,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-0",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        -0.036547203283242985,
+        0.03160055528820385,
+        -0.10718358283205567,
+        -0.39980388893194807,
+        -0.012584211278931272,
+        0.10339017195234323,
+        0.04123008980932072,
+        4.200246850397657,
+        0.09762653101826642,
+        0.025157051678248582,
+        -0.03481033274186284,
+        -0.2353810308154922,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-1",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.0003192000198199764,
+        -0.06833972910266625,
+        -0.09455948420474895,
+        -0.4299660490076409,
+        0.001280241353478224,
+        0.08746395821147328,
+        -0.07387213265402365,
+        4.179308867806415,
+        0.1049917096414007,
+        -0.0008587433585480344,
+        0.0011882609469999325,
+        -0.04884264045715725,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-2",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.03238269910535205,
+        -0.0042956277164574175,
+        -0.11405605108032828,
+        -0.3956996943673243,
+        0.025300137358503484,
+        0.10764388780830793,
+        0.00464392185562964,
+        4.158474448323954,
+        0.0966243439734164,
+        -0.026745859493275112,
+        0.03700879897754519,
+        0.13677309675022914,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-3",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.07471124610697497,
+        0.04801799139187164,
+        -0.0664434878667518,
+        -0.3021394870135051,
+        0,
+        0.08746919365034614,
+        0.07387937703907897,
+        4.140865537753489,
+        0.07377824682887918,
+        -0.0486252266303036,
+        0.06728373182589098,
+        0.2936524818325499,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-4",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.05290248151069518,
+        -0.05922254652578177,
+        -0.08151975471821452,
+        -0.16330501107437445,
+        0.08146267777716824,
+        0.06940557780503463,
+        0.010118918579955059,
+        4.129120753624105,
+        0.039876805029789124,
+        -0.06321831817243241,
+        0.08747649442824273,
+        0.39828783134888446,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-5",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.09927945043792828,
+        -0.028477183948598838,
+        -0.02405277243505738,
+        0,
+        0.03418465621800145,
+        0.0827037473890961,
+        0.06985432334415483,
+        4.125,
+        0,
+        -0.06833842376114806,
+        0.09456129043280664,
+        0.435,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-6",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.023498625302611008,
+        -0.09114970585003762,
+        -0.06299684759035254,
+        0.16330501107437453,
+        0.09424783832801513,
+        -0.004021861621279704,
+        0.052718688491117764,
+        4.129120753624105,
+        -0.03987680502978913,
+        -0.06321831817243241,
+        0.08747649442824273,
+        0.3982878313488844,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-7",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.058873265347654614,
+        -0.09169010639170767,
+        0.00687349668211825,
+        0.3021394870135051,
+        0.04599683600163855,
+        0.039363837783287114,
+        0.09912443934238666,
+        4.140865537753489,
+        -0.07377824682887918,
+        -0.0486252266303036,
+        0.06728373182589098,
+        0.2936524818325499,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-8",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.041094235017906246,
+        -0.06288719394379297,
+        0.08701831098428225,
+        0.3956996943673243,
+        0,
+        0.08746919365034614,
+        0.07387937703907897,
+        4.158474448323954,
+        -0.0966243439734164,
+        -0.026745859493275112,
+        0.03700879897754519,
+        0.13677309675022914,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-9",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.0007186153627830955,
+        -0.1105746727713592,
+        -0.010462755492971888,
+        0.4299660490076409,
+        0.0011065706196085943,
+        -0.009669762217913316,
+        0.1195371021207061,
+        4.179308867806415,
+        -0.1049917096414007,
+        -0.0008587433585480344,
+        0.0011882609469999325,
+        -0.04884264045715714,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-1-10",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        -0.036547203283242985,
+        -0.08855492318540152,
+        0.05907803796194091,
+        0.39980388893194807,
+        -0.012584211278931272,
+        0.062017322825848965,
+        0.09847855687898893,
+        4.200246850397657,
+        -0.09762653101826642,
+        0.025157051678248582,
+        -0.03481033274186284,
+        -0.2353810308154922,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-2-0",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        -0.02813835229967247,
+        0.04313844999736686,
+        -0.10494431434551763,
+        -0.3207728876314467,
+        -0.02198409020531633,
+        0.09545285862909444,
+        0.05487883758053594,
+        4.345246850397658,
+        0.09018831913116039,
+        0.0367263653436981,
+        -0.0193650218785918,
+        -0.20409044383729455,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-2-1",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.01732001879546774,
+        0.09816285623931413,
+        -0.05175916105364237,
+        -0.3394557080665272,
+        0,
+        0.0486591972935876,
+        0.10785528555590004,
+        4.315179370786075,
+        0.09544117009406708,
+        -0.01781393201074561,
+        0.009392902888796992,
+        0.017315542393447854,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-2-2",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.03546746906426376,
+        -0.0005380869123507241,
+        -0.11168905851176984,
+        -0.2556931164771999,
+        0.05461511296723734,
+        0.08851352278830384,
+        0.026044698430682557,
+        4.28807568993307,
+        0.07189052840083593,
+        -0.06697810646830184,
+        0.0353161137784051,
+        0.21689719231103155,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-2-3",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.08818757542378317,
+        0.010068742645817965,
+        -0.04877636250736181,
+        -0.09476409036682455,
+        0.030365417367473592,
+        0.05492991951170309,
+        0.09727493209210249,
+        4.272115513427272,
+        0.026643816711831834,
+        -0.09592874628582461,
+        0.05058116296633838,
+        0.3344221283991803,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-2-4",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.022563814149645273,
+        -0.05384334584033366,
+        -0.10115591171024522,
+        0.09476409036682455,
+        0.0904985155792435,
+        -0.014817885974325668,
+        0.040112684764819655,
+        4.272115513427272,
+        -0.026643816711831834,
+        -0.09592874628582461,
+        0.05058116296633838,
+        0.3344221283991803,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-2-5",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.051316092363968106,
+        -0.08822359947563989,
+        -0.0356799333414243,
+        0.2556931164771999,
+        0.040092525372459394,
+        -0.007178422492630012,
+        0.10899410288791896,
+        4.28807568993307,
+        -0.07189052840083592,
+        -0.06697810646830187,
+        0.035316113778405114,
+        0.21689719231103166,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-2-6",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        0.01732001879546772,
+        -0.09816285623931413,
+        0.05175916105364238,
+        0.33945570806652725,
+        0,
+        0.0486591972935876,
+        0.10785528555590004,
+        4.315179370786075,
+        -0.0954411700940671,
+        -0.01781393201074559,
+        0.00939290288879698,
+        0.017315542393447687,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "curl-2-7",
+      "mesh": "sculpted-curl",
+      "material": "hair-stone",
+      "transform": [
+        -0.019448015110533578,
+        -0.09132986803350161,
+        -0.06381650669909522,
+        0.3207728876314467,
+        -0.029947317084447242,
+        -0.051293559962478655,
+        0.09976196369541848,
+        4.345246850397658,
+        -0.09018831913116039,
+        0.0367263653436981,
+        -0.0193650218785918,
+        -0.20409044383729455,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-laurel-0",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.09005662745868374,
+        -0.08726317835704699,
+        -0.04370390905781498,
+        -0.49,
+        0.06786253636008964,
+        0.11580214895685745,
+        -0.03293325767584067,
+        3.94,
+        0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-laurel-1",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.09430223154186645,
+        -0.07950251828038749,
+        -0.045764273741491716,
+        -0.445,
+        0.06182725221680848,
+        0.12126149259792512,
+        -0.03000437263118315,
+        4.025,
+        0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.23500000000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-laurel-2",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.0981440189920449,
+        -0.07140141621500272,
+        -0.04762866877914826,
+        -0.4,
+        0.055527214287642505,
+        0.12620157591128545,
+        -0.026947004256563815,
+        4.11,
+        0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.27,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-laurel-3",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.1015655386855555,
+        -0.06299456232364047,
+        -0.04928911054500623,
+        -0.355,
+        0.04898940030220382,
+        0.13060124470177523,
+        -0.02377424467273852,
+        4.195,
+        0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.30500000000000005,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-laurel-4",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.1045521391497894,
+        -0.05431795604530724,
+        -0.050738488772508576,
+        -0.31,
+        0.04224180618368155,
+        0.13444165891218418,
+        -0.02049968012333612,
+        4.28,
+        0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.34,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-laurel-0",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.09005662745868374,
+        0.08726317835704699,
+        0.04370390905781498,
+        0.49,
+        -0.06786253636008964,
+        0.11580214895685745,
+        -0.03293325767584067,
+        3.94,
+        -0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-laurel-1",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.09430223154186645,
+        0.07950251828038749,
+        0.045764273741491716,
+        0.445,
+        -0.06182725221680848,
+        0.12126149259792512,
+        -0.03000437263118315,
+        4.025,
+        -0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.23500000000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-laurel-2",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.0981440189920449,
+        0.07140141621500272,
+        0.04762866877914826,
+        0.4,
+        -0.055527214287642505,
+        0.12620157591128545,
+        -0.026947004256563815,
+        4.11,
+        -0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.27,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-laurel-3",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.1015655386855555,
+        0.06299456232364047,
+        0.04928911054500623,
+        0.355,
+        -0.04898940030220382,
+        0.13060124470177523,
+        -0.02377424467273852,
+        4.195,
+        -0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.30500000000000005,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-laurel-4",
+      "mesh": "leaf",
+      "material": "antique-bronze",
+      "transform": [
+        0.1045521391497894,
+        0.05431795604530724,
+        0.050738488772508576,
+        0.31,
+        -0.04224180618368155,
+        0.13444165891218418,
+        -0.02049968012333612,
+        4.28,
+        -0.04104241719908024,
+        0,
+        0.15035081932574534,
+        0.34,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "draped-toga",
+      "mesh": "toga-drape",
+      "material": "toga",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2.16,
+        0,
+        0,
+        1,
+        0.02,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "toga-shoulder-fold",
+      "mesh": "rounded-cylinder",
+      "material": "toga",
+      "transform": [
+        0.15743154728509123,
+        0.16598928545922875,
+        -0.023970305870813235,
+        -0.74,
+        -0.08726573164434066,
+        0.2994525978318292,
+        -0.043243576499410054,
+        2.54,
+        0,
+        0.11124611797498106,
+        0.15216904260722458,
+        0.28,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "toga-clasp",
+      "mesh": "disc",
+      "material": "antique-bronze",
+      "transform": [
+        0.087,
+        0,
+        0,
+        -0.64,
+        0,
+        0.007993483318692976,
+        -0.08362976754663373,
+        2.69,
+        0,
+        0.02787658918221125,
+        0.023980449956078925,
+        0.4,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "clasp-center",
+      "mesh": "small-sphere",
+      "material": "marble",
+      "transform": [
+        0.032,
+        0,
+        0,
+        -0.64,
+        0,
+        0.03,
+        0,
+        2.702,
+        0,
+        0,
+        0.019,
+        0.432,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "sculpture-key",
+      "kind": "point",
+      "position": [
+        -3.6,
+        6.7,
+        5.4
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1,
+        0.89,
+        0.72
+      ],
+      "intensity": 2.4,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "sculpture-fill",
+      "kind": "point",
+      "position": [
+        3.6,
+        3.9,
+        3
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.63,
+        0.82,
+        1
+      ],
+      "intensity": 0.95,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "sculpture-rim",
+      "kind": "point",
+      "position": [
+        1.1,
+        5.4,
+        -2.2
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.75,
+        0.9,
+        1
+      ],
+      "intensity": 1.65,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "frontal-lift",
+      "kind": "directional",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "direction": [
+        0,
+        0.3,
+        1
+      ],
+      "colour": [
+        1,
+        0.98,
+        0.91
+      ],
+      "intensity": 0.18,
+      "size": [
+        1,
+        1
+      ]
+    }
+  ],
+  "subjects": [
+    "sculpted-shoulders",
+    "neck",
+    "head",
+    "nose",
+    "chin-plane",
+    "left-ear",
+    "left-ear-concha",
+    "left-ear-helix",
+    "left-ear-lobe",
+    "left-eye",
+    "left-iris",
+    "left-pupil-incision",
+    "left-upper-lid",
+    "left-lower-lid",
+    "left-carved-brow",
+    "left-nostril",
+    "left-upper-lip",
+    "right-ear",
+    "right-ear-concha",
+    "right-ear-helix",
+    "right-ear-lobe",
+    "right-eye",
+    "right-iris",
+    "right-pupil-incision",
+    "right-upper-lid",
+    "right-lower-lid",
+    "right-carved-brow",
+    "right-nostril",
+    "right-upper-lip",
+    "mouth-incision",
+    "lower-lip",
+    "hair-cap",
+    "curl-0-0",
+    "curl-0-1",
+    "curl-0-2",
+    "curl-0-3",
+    "curl-0-4",
+    "curl-0-5",
+    "curl-0-6",
+    "curl-0-7",
+    "curl-0-8",
+    "curl-0-9",
+    "curl-0-10",
+    "curl-0-11",
+    "curl-0-12",
+    "curl-1-0",
+    "curl-1-1",
+    "curl-1-2",
+    "curl-1-3",
+    "curl-1-4",
+    "curl-1-5",
+    "curl-1-6",
+    "curl-1-7",
+    "curl-1-8",
+    "curl-1-9",
+    "curl-1-10",
+    "curl-2-0",
+    "curl-2-1",
+    "curl-2-2",
+    "curl-2-3",
+    "curl-2-4",
+    "curl-2-5",
+    "curl-2-6",
+    "curl-2-7",
+    "left-laurel-0",
+    "left-laurel-1",
+    "left-laurel-2",
+    "left-laurel-3",
+    "left-laurel-4",
+    "right-laurel-0",
+    "right-laurel-1",
+    "right-laurel-2",
+    "right-laurel-3",
+    "right-laurel-4",
+    "draped-toga",
+    "toga-shoulder-fold",
+    "toga-clasp",
+    "clasp-center"
+  ]
+}

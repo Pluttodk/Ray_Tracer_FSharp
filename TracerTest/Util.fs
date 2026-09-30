@@ -4,7 +4,8 @@ open System.IO
 open Tracer.API
 open System
 open System.Drawing
-open System.Threading
+open System.Globalization
+open Tracer.Imaging
 
 type Render = 
   { scene : scene;
@@ -23,38 +24,60 @@ module Util =
 
   let degrees_to_radians (d : float) = d * Math.PI / 180.0
 
-  let private source_path = "../../.."
-  let private result_path = source_path + "/result"
-  let private timings = result_path + "/runtime.csv"
+  let private configuredPath variable fallback =
+    match Environment.GetEnvironmentVariable variable with
+    | null | "" -> Path.GetFullPath fallback
+    | value -> Path.GetFullPath value
 
-  let mutable private timings_wr = null
+  let private source_path =
+    configuredPath "RAYTRACER_ASSET_ROOT" (Path.Combine(__SOURCE_DIRECTORY__, ".."))
+  let private result_path =
+    configuredPath "RAYTRACER_OUTPUT_ROOT" (Path.Combine(source_path, "result"))
+  let private timings = Path.Combine(result_path, "runtime.csv")
+
+  let resolveAssetPath (file: string) =
+    if Path.IsPathRooted file then Path.GetFullPath file
+    else
+      let rec withoutParentPrefix (path: string) =
+        if path.StartsWith("../", StringComparison.Ordinal) then withoutParentPrefix (path.Substring 3)
+        elif path.StartsWith("./", StringComparison.Ordinal) then withoutParentPrefix (path.Substring 2)
+        else path
+      let relative = withoutParentPrefix (file.Replace('\\', '/'))
+      let sourceRelative = Path.GetFullPath(Path.Combine(source_path, relative))
+      if File.Exists sourceRelative then sourceRelative
+      elif File.Exists file then Path.GetFullPath file
+      else raise (FileNotFoundException("Texture asset was not found. Set RAYTRACER_ASSET_ROOT to the asset directory.", sourceRelative))
+
+  let mutable private timings_wr: StreamWriter option = None
+
+  let private writeTiming fields =
+    match timings_wr with
+    | None -> ()
+    | Some writer ->
+      let escaped = fields |> List.map (fun (value: string) -> "\"" + value.Replace("\"", "\"\"") + "\"")
+      writer.WriteLine(String.concat "," escaped)
+      writer.Flush()
+
+  let private seconds (value: float) = value.ToString("R", CultureInfo.InvariantCulture)
 
   let init () = 
+    timings_wr |> Option.iter (fun writer -> writer.Dispose())
     Directory.CreateDirectory result_path |> ignore
-    timings_wr <- new StreamWriter(timings, false)
-    timings_wr.WriteLine("test name, construction, rendering, total")
+    timings_wr <- Some (new StreamWriter(timings, false))
+    writeTiming ["test name"; "construction"; "rendering"; "total"]
 
 
-  let finalize () = timings_wr.Close()
+  let finalize () =
+    timings_wr |> Option.iter (fun writer -> writer.Dispose())
+    timings_wr <- None
 
   let render (renderIt : unit -> Render) : unit =
     let render = renderIt ()
     renderToScreen render.scene render.camera
 
-  let mutable private timeout = -1
-
   let setTimeout (seconds : int) : unit =
-    timeout <- seconds
-
-  let private runWithTimout (work : unit -> unit) (failure : unit -> unit) (success : unit -> unit) : unit =
-    if timeout < 0
-    then work (); success ()
-    else
-    let th = new Thread(new ThreadStart(work))
-    th.Start()
-    if th.Join(new TimeSpan(0, 0, timeout))
-    then success ()
-    else th.Abort(); failure ()
+    if seconds >= 0 then
+      raise (NotSupportedException("In-process example timeouts are unsafe. Use the benchmark CLI's process-isolated timeout option."))
 
   let renderTarget (toScreen : bool) (tgt : Target) : unit =
     try 
@@ -68,29 +91,21 @@ module Util =
         let timeRender = stopWatch.Elapsed.TotalMilliseconds / 1000.0
         printfn "Image rendered in %f seconds" timeRender
       else 
-        let path = if tgt.group = "" then result_path else result_path + "/" + tgt.group
+        let path = if tgt.group = "" then result_path else Path.Combine(result_path, tgt.group)
         Directory.CreateDirectory path |> ignore
         let stopWatch = System.Diagnostics.Stopwatch.StartNew()
-        let s = path + "/" + tgt.name + ".png"
+        let s = Path.Combine(path, tgt.name + ".png")
         printf "Rendering file %s" s;
-        runWithTimout 
-          (fun () -> renderToFile render.scene render.camera s) 
-          (fun () -> 
-            stopWatch.Stop();
-            printfn " timeout!"
-            timings_wr.WriteLine("{0}/{1}, {2}, timeout ({3}), timeout", tgt.group, tgt.name, timeConstruct, timeout)
-            timings_wr.Flush())
-          (fun () ->
-            stopWatch.Stop();
-            let timeRender = stopWatch.Elapsed.TotalMilliseconds / 1000.0
-            printfn " in %f seconds" timeRender;
-            timings_wr.WriteLine("{0}/{1}, {2}, {3}, {4}", tgt.group, tgt.name, timeConstruct, timeRender, timeConstruct+timeRender)
-            timings_wr.Flush())
+        renderToFile render.scene render.camera s
+        stopWatch.Stop()
+        let timeRender = stopWatch.Elapsed.TotalSeconds
+        printfn " in %f seconds" timeRender
+        writeTiming [tgt.group + "/" + tgt.name; seconds timeConstruct; seconds timeRender; seconds (timeConstruct + timeRender)]
     with | e -> 
-      printfn "rendering of %s/%s failed: %s" tgt.group tgt.name (e.ToString())
+      eprintfn "rendering of %s/%s failed: %s" tgt.group tgt.name (e.ToString())
       if not toScreen then
-        timings_wr.WriteLine("{0}/{1}, crashed, {2}", tgt.group, tgt.name, e.ToString())
-        timings_wr.Flush()    
+        writeTiming [tgt.group + "/" + tgt.name; "crashed"; e.ToString(); "crashed"]
+      reraise()
 
   let renderGroups (toScreen : bool) (targets : Target list) (groups : string list) : unit =
     for group in groups do
@@ -115,29 +130,36 @@ module Util =
 
 
 
+  let private loadTexturePixels file =
+    use image = RgbImage.Load(resolveAssetPath file)
+    let width, height = image.Width, image.Height
+    let pixels = Array.copy image.Pixels
+    let getPixel x y =
+      if x < 0 || x >= width || y < 0 || y >= height then
+        invalidArg "coordinates" "Texture coordinates lie outside the image."
+      let offset = (y * width + x) * 3
+      Color.FromArgb(int pixels.[offset], int pixels.[offset + 1], int pixels.[offset + 2])
+    width - 1, height - 1, getPixel
+
   let mkReflectiveTextureFromFile kr (tr : float -> float -> float * float) (file : string) =
-    let img = new Bitmap(file)
-    let width = img.Width - 1
-    let height = img.Height - 1
+    let width, height, getPixel = loadTexturePixels file
     let widthf = float width
     let heightf = float height
     let texture x y =
       let (x', y') = tr x y
       let x'', y'' = int (widthf * x'), int (heightf * y')
-      let c = fromColor (lock img (fun () -> img.GetPixel(x'',y'')))
+      let c = fromColor (getPixel x'' y'')
       mkMatteReflective c (1.0 - kr) c kr
     mkTexture texture
 
   let mkTextureFromFile (tr : float -> float -> float * float) (file : string) =
-    let img = new Bitmap(file)
-    let width = img.Width - 1
-    let height = img.Height - 1
+    let width, height, getPixel = loadTexturePixels file
     let widthf = float width
     let heightf = float height
     let texture x y =
       let (x', y') = tr x y
       let x'', y'' = int (widthf * x'), int (heightf * y')
-      let c = lock img (fun () -> img.GetPixel(x'',y''))
+      let c = getPixel x'' y''
       mkMatte (fromColor c) 1.0
     mkTexture texture
 

@@ -4,7 +4,7 @@ open Tracer.Basics
 open Assert
 open BVH
 
-let allTest = 
+let allTest () =
     // Used for debug, will print to console etc. 
     let debug = false
 

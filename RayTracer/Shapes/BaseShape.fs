@@ -13,8 +13,8 @@ type BaseRectangle(bottomLeft:Point, topLeft:Point, bottomRight:Point)=
     member this.bottomLeft = bottomLeft
     member this.topLeft = topLeft
     member this.bottomRight = bottomRight
-    member this.width = bottomRight.X - bottomLeft.X
-    member this.height = topLeft.Y - bottomLeft.Y
+    member this.width = (bottomRight - bottomLeft).Magnitude
+    member this.height = (topLeft - bottomLeft).Magnitude
     override this.toShape (mat:Texture) = new Rectangle(bottomLeft, topLeft, bottomRight, mat) :> Shape
 
                     

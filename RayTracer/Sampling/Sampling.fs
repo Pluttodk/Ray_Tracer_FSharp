@@ -3,62 +3,74 @@
 open System
 open System.Drawing
 open System.Threading
+open Tracer.Imaging
 
 let mutable rand = new Random()
 
 let setRandomSeed seed = rand <- new Random(seed)
 
 type Sampler(samples : (float*float)[][]) =
+    do
+        if isNull samples || samples.Length = 0 || isNull samples.[0] || samples.[0].Length = 0 then
+            invalidArg (nameof samples) "A sampler requires at least one nonempty sample set."
+        let count = samples.[0].Length
+        if samples |> Array.exists (fun set -> isNull set || set.Length <> count) then
+            invalidArg (nameof samples) "All sample sets must have the same length."
+        if samples |> Array.exists (Array.exists (fun (x, y) ->
+            not (Double.IsFinite x && Double.IsFinite y) || x < 0. || x > 1. || y < 0. || y > 1.)) then
+            invalidArg (nameof samples) "Sample coordinates must be finite and in [0,1]."
+    let samples = samples |> Array.map Array.copy
     let sampleSetCount = samples.Length
-    let mutable sampleIndices = Array.create 40 0 // Set an intial thread indexing array of 40.
-    let mutable currentSet = Array.create 40 0
-    let mutable currentSample: (float * float) = (0., 0.)
     let sampleCount = samples.[0].Length
-    let mutex = new Mutex()
+    let state = new ThreadLocal<struct (int64 * int64 * (float * float))>(fun () -> struct (0L, 0L, (0., 0.)))
 
     member this.NextSet() =
-        let threadIndex = Thread.CurrentThread.GetHashCode()
+        let struct (sampleIndex, setIndex, current) = state.Value
+        state.Value <- struct (sampleIndex, setIndex + 1L, current)
+        samples.[int (setIndex % int64 sampleSetCount)]
 
-        if threadIndex >= currentSet.Length then
-            // If threads happen to have a hash code larger than the length of our indexing aray, 
-            // we expand the array using Mutex for safety.
-            mutex.WaitOne() |> ignore
-            currentSet <- Array.append currentSet (Array.create (threadIndex*2-currentSet.Length) 0)
-            mutex.ReleaseMutex()
-
-        // Use the thread's hash code as index in an array where we keep track of the current sample set for each thread.
-        let setIndex = currentSet.[threadIndex]
-        // We perform modulo here in order to avoid OutOfIndex exceptions when running with several threads.
-        let samples = samples.[setIndex % this.SetCount]
-        currentSet.[threadIndex] <- setIndex + 1
-        samples
-
-    member this.Next() = 
-        let threadIndex = Thread.CurrentThread.GetHashCode()
-        if threadIndex >= sampleIndices.Length then
-            // If threads happen to have a hash code larger than the length of our indexing aray, 
-            // we expand the array using Mutex for safety.
-            mutex.WaitOne() |> ignore
-            sampleIndices <- Array.append sampleIndices (Array.create (threadIndex*2-sampleIndices.Length) 0)
-            mutex.ReleaseMutex()
-
-        // Use the thread's hash code as index in an array where we keep track of the current sample for each thread.
-        let currentSampleIndex = sampleIndices.[threadIndex]
-        // We perform modulo here in order to avoid OutOfIndex exceptions when running with several threads.
-        let setIndex = (currentSampleIndex / sampleCount) % sampleSetCount
-        let sampleIndex = currentSampleIndex % sampleCount
-        let sample = samples.[setIndex].[sampleIndex]
-        sampleIndices.[threadIndex] <- currentSampleIndex + 1
-        currentSample <- sample
+    member this.Next() =
+        let struct (index, setIndex, _) = state.Value
+        let sample = samples.[int ((index / int64 sampleCount) % int64 sampleSetCount)].[int (index % int64 sampleCount)]
+        state.Value <- struct (index + 1L, setIndex, sample)
         sample
 
-    member this.Current = 
-        currentSample
+    member this.Current =
+        let struct (_, _, current) = state.Value
+        current
+
+    member this.SampleSetAt(key: uint64) =
+        samples.[int (key % uint64 sampleSetCount)]
+
+    member this.SampleAt(key: uint64, index: int) =
+        if index < 0 then invalidArg (nameof index) "Sample index must be nonnegative."
+        samples.[int (key % uint64 sampleSetCount)].[index % sampleCount]
 
     member this.SampleCount = sampleCount
     member this.SetCount = sampleSetCount
 
+let mixKey (key: uint64) =
+    let mutable value = key + 0x9e3779b97f4a7c15UL
+    value <- (value ^^^ (value >>> 30)) * 0xbf58476d1ce4e5b9UL
+    value <- (value ^^^ (value >>> 27)) * 0x94d049bb133111ebUL
+    value ^^^ (value >>> 31)
+
+let sampleKey (seed: int) (pixel: int) (sample: int) =
+    let address = (uint64 (uint32 pixel) <<< 32) ||| uint64 (uint32 sample)
+    mixKey (uint64 (uint32 seed) ^^^ mixKey address)
+
+let sample2D (key: uint64) (dimension: int) =
+    let toUnit (bits: uint64) = float (bits >>> 11) * (1. / 9007199254740992.)
+    toUnit (mixKey (key ^^^ uint64 (dimension * 2))),
+    toUnit (mixKey (key ^^^ uint64 (dimension * 2 + 1)))
+
+let private validateCounts samples sets =
+    if samples <= 0 then invalidArg (nameof samples) "Sample count must be positive."
+    if sets <= 0 then invalidArg (nameof sets) "Sample set count must be positive."
+
 let regular (ni:int) =
+    validateCounts ni 1
+    if int64 ni * int64 ni > int64 Int32.MaxValue then invalidArg (nameof ni) "The sample grid is too large."
     let n = float ni
     let samples = Array.create (ni*ni) (0.0, 0.0)
     let rec innerX x = 
@@ -79,23 +91,23 @@ let regular (ni:int) =
 // This method is called after every sample method is finished.
 // It shuffles the sample sets and the samples within each set.
 let createSampler (set:(float * float)[][]) =
-    let rand = new Random() // We create a new Random here, for help with testing.
     for i in 0..set.Length-1 do
         let samples = set.[i]
         for j in 1..samples.Length-1 do
-            let r = rand.Next(j)
+            let r = rand.Next(j + 1)
             let temp = samples.[r]
             samples.[r] <- samples.[j]
             samples.[j] <- temp
         set.[i] <- samples
     for i in 1..set.Length-1 do
-            let r = rand.Next(i)
+            let r = rand.Next(i + 1)
             let temp = set.[r]
             set.[r] <- set.[i]
             set.[i] <- temp
     new Sampler(set)
 
 let random n sn =
+    validateCounts n sn
     let sets = Array.create sn [|(0.0, 0.0)|]
     let rec loop k =
         let samples = Array.create n (0.0, 0.0)
@@ -114,6 +126,8 @@ let random n sn =
 let getJitteredValue (cell:int) (max:int) = (rand.NextDouble()/float max) + ((1.0/float max) * float cell)
 
 let jittered n sn =
+    validateCounts n sn
+    if int64 n * int64 n > int64 Int32.MaxValue then invalidArg (nameof n) "The sample grid is too large."
     let sets = Array.create sn [|(0.0, 0.0)|]
     let pn = int (float n**2.0)
     let rec loop k =
@@ -135,64 +149,18 @@ let jittered n sn =
     loop (sn-1)
     createSampler sets
 
-// Returns the grid that a sample point lies within (for jittered/nRooks).
-let getGridCell (v:float) max = int(v*(float max))
-
-// After shuffling a sample point in nRooks, we check that no other samples lie within these spots.
-let illegalSpots = [|(2, 1);(-2, 1);(2, -1);(-2, -1);(1, 2);(1, -2);(-1, 2);(-1, -2)|]
-
-// Returns an array of valid spots that a 'rook' can move to in nRooks sampling.
-let rec getLegalSpots i (samples:(float * float) array) =
-    let n = samples.Length
-    
-    let mutable result = [||]
-    for j in 0..i-1 do
-        let xVal, _ = samples.[j]
-        let xGrid = getGridCell xVal n
-        let checkValidity k =
-            if k < n && k > 0 then
-                let (x2, y2) = samples.[k]
-                let xGrid2 = getGridCell x2 n
-                let yGrid2 = getGridCell y2 n
-                not (Array.exists (fun (xi, yi) ->
-                    xGrid2 = (xGrid+xi) && yGrid2 = (i+yi)) illegalSpots)
-            else true
-        result <- if checkValidity (i-1) && checkValidity (i-2) && checkValidity (i+1) && checkValidity (i+2) then Array.append result [|j|] else result
-    result
-
-// Initial diagonal shuffling for nRooks.
-let shuffleDiagonals (samples:(float * float) []) =
-    let n = samples.Length
-    
-    for i in n-1..-1..0 do
-        let shufX = rand.Next(i)
-        let _, replY = samples.[shufX]
-        let  _, currentY = samples.[i]
-        samples.[shufX] <- (getJitteredValue shufX n, currentY)
-        samples.[i] <- (getJitteredValue i n, replY)
-    for i in n-1..-1..0 do
-        let legalSpots = getLegalSpots i samples
-        if not (Array.isEmpty legalSpots) then
-            let shufY = legalSpots.[rand.Next(legalSpots.Length)]
-            let replX, _ = samples.[shufY]
-            let currentX, _ = samples.[i]
-            samples.[shufY] <- (currentX, getJitteredValue shufY n)
-            samples.[i] <- (replX, getJitteredValue i n)
-    samples
-
 let nRooks n sn =
-    let sets = Array.create sn [|(0.0, 0.0)|]
-    let rec loop k =
-        let samples = Array.create n (0.0,0.0)
-        let rec placeDiagonals = function
-            | 0 -> samples.[0] <- (getJitteredValue 0 n, getJitteredValue 0 n)
-            | c -> 
-                samples.[c] <- (getJitteredValue c n, getJitteredValue c n)
-                (placeDiagonals (c-1))
-        placeDiagonals (n-1)
-        sets.[k] <- shuffleDiagonals samples
-        if k > 0 then loop (k-1)
-    loop (sn-1)
+    validateCounts n sn
+    let sets =
+        Array.init sn (fun _ ->
+            let samples = Array.init n (fun i -> getJitteredValue i n, getJitteredValue i n)
+            for i = n - 1 downto 1 do
+                let j = rand.Next(i + 1)
+                let x, y = samples.[i]
+                let otherX, otherY = samples.[j]
+                samples.[i] <- x, otherY
+                samples.[j] <- otherX, y
+            samples)
     createSampler sets
 
 (*
@@ -257,6 +225,8 @@ let shuffleMulti (samples:(float * float) []) n =
     shuffleMulti to perform the multiJittered shuffling.
 *)
 let multiJittered n sn =
+    validateCounts n sn
+    if int64 n * int64 n > int64 Int32.MaxValue then invalidArg (nameof n) "The sample grid is too large."
     let sets = Array.create sn [|(0.0, 0.0)|]
     let ns = int (float (n)**2.0)
     let rec loop k = 
@@ -273,27 +243,29 @@ let multiJittered n sn =
     createSampler sets
 
 let mapToDisc (x, y) =
+    if not (Double.IsFinite x && Double.IsFinite y) || x < 0. || x > 1. || y < 0. || y > 1. then
+        invalidArg "sample" "Disk samples must be finite and in [0,1]."
     let x, y = (2.0*x-1.0, 2.0*y-1.0)
-    let PI_QUART = Math.PI/4.0
-    let (r, theta) = 
-        match (x > -y, x > y) with
-            | true, true    -> (x, PI_QUART * (y/x))
-            | true, false   -> (y, PI_QUART * (2.0-x/y))
-            | false, false  -> (-x, PI_QUART * (4.0+y/x))
-            | false, true   -> (-y, PI_QUART * (6.0-x/y))
-    (r * Math.Cos(theta), r*Math.Sin(theta))
+    if x = 0. && y = 0. then 0., 0.
+    else
+        let r, theta =
+            if abs x > abs y then x, (Math.PI / 4.) * (y / x)
+            else y, (Math.PI / 2.) - (Math.PI / 4.) * (x / y)
+        r * Math.Cos theta, r * Math.Sin theta
     
 let mapToHemisphere (x, y) e =
-    let E_VAL = 1.0/(e+1.0)
+    if not (Double.IsFinite x && Double.IsFinite y && Double.IsFinite e) || x < 0. || x > 1. || y < 0. || y > 1. || e < 0. then
+        invalidArg "sample" "Hemisphere samples must be in [0,1] with a finite nonnegative exponent."
     let phi = 2.0*Math.PI*x
-    let theta = Math.Acos((1.0-y)**E_VAL)
-    (Math.Sin(theta) * Math.Cos(phi), Math.Sin(theta) * Math.Sin(phi), Math.Cos(theta))
+    let cosine = (1.0 - y) ** (1.0 / (e + 1.0))
+    let sine = sqrt (max 0. (1. - cosine * cosine))
+    sine * Math.Cos phi, sine * Math.Sin phi, cosine
 
 // A series of helper methods to visualize the sampling as points on square/disc/sphere.
-let drawSamples (sampler:Sampler) sampleMethod fileName =
+let drawSamples (sampler:Sampler) sampleMethod (fileName:string) =
     let size = 400
     let dotSize = 4
-    let img = new Bitmap(size, size)
+    use img = new RgbImage(size, size)
     for i in [0..size-1] do
             for j in [0..size-1] do
                 img.SetPixel(i, j, Color.White)
@@ -316,9 +288,9 @@ let drawSamples (sampler:Sampler) sampleMethod fileName =
         for i in [x-(dotSize/2)..x+(dotSize/2)] do
             for j in [y-(dotSize/2)..y+(dotSize/2)] do
                 if i >= 0 && j >= 0 && i < size && j < size then img.SetPixel(i, j, Color.Red)
-    img.Save(fileName)  
+    img.SavePng(fileName)
 
-let drawCircle (img:Bitmap) size = 
+let drawCircle (img:RgbImage) size =
     let SIZE_HALVED = float size/2.0
     for i in 1..int 360 do
         let theta = float i
@@ -328,10 +300,10 @@ let drawCircle (img:Bitmap) size =
             for j in [y-1..y+1] do
                 img.SetPixel(i, j, Color.Black)
 
-let drawDiscSamples (sampler:Sampler) fileName =
+let drawDiscSamples (sampler:Sampler) (fileName:string) =
     let size = 400
     let dotSize = 4
-    let img = new Bitmap(size, size)
+    use img = new RgbImage(size, size)
     for i in 0..size-1 do
             for j in [0..size-1] do
                 img.SetPixel(i, j, Color.White)
@@ -344,12 +316,12 @@ let drawDiscSamples (sampler:Sampler) fileName =
         for i in [x-(dotSize/2)..x+(dotSize/2)] do
             for j in [y-(dotSize/2)..y+(dotSize/2)] do
                 if i >= 0 && j >= 0 && i < size && j < size then img.SetPixel(i, j, Color.Red)
-    img.Save(fileName)  
+    img.SavePng(fileName)
 
-let drawSphereSamples (sampler:Sampler) e fileName above =
+let drawSphereSamples (sampler:Sampler) e (fileName:string) above =
     let size = 400
     let dotSize = 4
-    let img = new Bitmap(size, size)
+    use img = new RgbImage(size, size)
     for i in 0..size-1 do
             for j in [0..size-1] do
                 img.SetPixel(i, j, Color.White)
@@ -363,7 +335,7 @@ let drawSphereSamples (sampler:Sampler) e fileName above =
         for i in [x-(dotSize/2)..x+(dotSize/2)] do
             for j in [y-(dotSize/2)..y+(dotSize/2)] do
                 if i >= 0 && j >= 0 && i < size && j < size then img.SetPixel(i, j, Color.Red)
-    img.Save(fileName)
+    img.SavePng(fileName)
 
 let main argsv =
     if Array.isEmpty argsv then 

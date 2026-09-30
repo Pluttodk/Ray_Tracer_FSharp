@@ -1,225 +1,237 @@
-﻿namespace Tracer
+namespace Tracer
 
 module PolyToUnipoly =
+  open System
   open Tracer.ExprToPoly
-  
+
   type poly = ExprToPoly.poly
   type simpleExpr = ExprToPoly.simpleExpr
-
-  (*
-      Similar to simpleExpr, atomGroup and atom from ExprToPoly,
-      with the difference that exponents contain an integer instead of a string variable
-
-      The integers are mapped as follows:
-          ox -> 0
-          oy -> 1
-          oz -> 2
-          dx -> 3
-          dy -> 4
-          dx -> 5
-  *)
   type iAtom = IANum of float | IAExponent of int * int
   type iAG = iAtom list
   type simpleIntExpr = SIE of iAG list
-
-  (*
-      Univariate polynomial type, i.e. only one variable, t, which is implicitly present in all map elements of a poly
-  *)
   type unipoly = UP of (int * float) list
 
-  (*
-      Turns a simpleExpr into an simpleIntExpr
-  *)
-  let seToSIE (SE se) =
-    let asubst (a:atom) : iAtom =
-      match a with
-      | ANum c         -> IANum c
-      | AExponent(e,x) ->
-          match e with
-          | "ox" -> IAExponent(0,x)
-          | "oy" -> IAExponent(1,x)
-          | "oz" -> IAExponent(2,x)
-          | "dx" -> IAExponent(3,x)
-          | "dy" -> IAExponent(4,x)
-          | "dz" -> IAExponent(5,x)
-          | _    -> failwith "SEtoSIE: unmatched clause"
-    let agtrav ag = List.foldBack (fun a acc -> asubst a :: acc) ag []
-    SIE (List.foldBack (fun ag acc -> agtrav ag :: acc) se [])
+  let seToSIE (SE groups) =
+    let atom = function
+      | ANum value -> IANum value
+      | AExponent(variable, exponent) ->
+          let index =
+            match variable with
+            | "ox" -> 0 | "oy" -> 1 | "oz" -> 2
+            | "dx" -> 3 | "dy" -> 4 | "dz" -> 5
+            | _ -> invalidArg "variable" ("Unbound polynomial variable '" + variable + "'.")
+          IAExponent(index, exponent)
+      | _ -> invalidArg "expression" "Radicals must be eliminated before polynomial evaluation."
+    SIE(List.map (List.map atom) groups)
 
-  (*
-      Solves a simpleIntExpr, with an array of ray values, where index positions match the first int of
-      an IAExponent tuple
-  *)
-  let solveSIE (SIE sie) (valArr:float array) =
-    let iasolver = function
-    | IANum c         -> c
-    | IAExponent(e,x) -> pown (valArr.[e]) x
-    let iagsolver iag = List.fold (fun acc ia -> acc * iasolver ia) 1.0 iag
-    List.fold (fun acc iag -> acc + iagsolver iag) 0.0 sie
+  let solveSIE (SIE groups) (values: float array) =
+    let atom = function
+      | IANum value -> value
+      | IAExponent(index, exponent) -> pown values.[index] exponent
+    groups |> List.sumBy (fun group -> group |> List.fold (fun value term -> value * atom term) 1.)
 
-  (*
-      Takes a poly list ((int * simpleIntExpr) list) and converts it to
-      a new list of int*float (unipoly).
-      Requires an array with all the ray float values (based on origin point and direction vector)
+  let private canonical terms =
+    let mutable coefficients = Map.empty
+    for degree, value in terms do
+      if degree < 0 then invalidArg "polynomial" "Polynomial exponents must be nonnegative."
+      if not (Double.IsFinite value) then invalidArg "polynomial" "Polynomial coefficients must be finite."
+      let coefficient = value + defaultArg (Map.tryFind degree coefficients) 0.
+      if not (Double.IsFinite coefficient) then invalidArg "polynomial" "Polynomial arithmetic overflowed."
+      coefficients <- Map.add degree coefficient coefficients
+    coefficients |> Map.toList |> List.rev |> List.filter (fun (_, value) -> value <> 0.)
 
-      The list order is kept
-  *)
-  let toUnipoly (lis: (int*simpleIntExpr) list) valArr : unipoly =
-    UP (List.foldBack (fun (n, (SIE sie)) acc -> (n, solveSIE (SIE sie) valArr)::acc) lis [])
-  
-  (*
-      Solves an unipoly for a given t float value
-  *)
-  let solveUnipoly (UP up:unipoly) t =
-    List.fold (fun acc (n,c) -> if n > 0 then (acc + (pown t n) * c)
-                                else (acc + c)) 0.0 up
+  let toUnipoly terms values =
+    UP(terms |> List.map (fun (degree, expression) -> degree, solveSIE expression values) |> canonical)
 
-  (*
-      Returns the derivative unipoly of the given unipoly
-  *)
-  let unipolyDerivative (UP up:unipoly) : unipoly =
-    UP (List.foldBack (fun (n,c) acc -> 
-                     if n = 0 then acc
-                     else (n-1, float n * c) :: acc) up [])
+  let solveUnipoly (UP terms) value =
+    match canonical terms with
+    | [] -> 0.
+    | (degree, coefficient)::rest ->
+        let result, remaining =
+          rest |> List.fold (fun (result, previous) (degree, coefficient) ->
+            result * pown value (previous-degree) + coefficient, degree) (coefficient, degree)
+        result * pown value remaining
 
-  (*
-      Returns the first element of a unipoly.
-      If done correctly, this will be the term with the highest degree
-  *)
-  let getFirstTerm (UP up:unipoly) = up.[0]
+  let unipolyDerivative (UP terms) =
+    UP(canonical terms |> List.choose (fun (degree, coefficient) ->
+      if degree = 0 then None else Some(degree-1, float degree * coefficient)))
 
-  (*
-      Multiplies an unipoly with a term (of a constant and an exponent)
-  *)
-  let multUnipoly (UP up:unipoly) (exp, con) : unipoly =
-    UP (List.foldBack (fun (n,c) acc -> (n + exp, c * con)::acc) up [])
+  let getFirstTerm (UP terms) =
+    match canonical terms with
+    | [] -> 0, 0.
+    | term::_ -> term
 
-  (*
-      Negates an unipoly
-  *)
-  let negateUnipoly (UP up:unipoly) = UP (List.foldBack (fun (n,c) acc -> (n, -c)::acc) up [])
+  let multUnipoly (UP terms) (exponent, coefficient) =
+    UP(terms |> List.map (fun (degree, value) -> degree+exponent, value*coefficient) |> canonical)
 
-  (*
-      Very small number. Considered as good as zero.
-  *)
-  let epsilon = 10.**(-20.)
+  let negateUnipoly (UP terms) = UP(terms |> List.map (fun (degree, value) -> degree, -value) |> canonical)
+  let epsilon = 1e-20
 
-  (*
-      Subtracts an unipoly, up2, from another unipoly, up1. I.e up1 - up2
-  *)
-  let subtractUnipoly (UP up1:unipoly) (UP up2:unipoly) : unipoly =
-    let rec inner res (sub:(int*float) list) = function
-    | []        ->  if not sub.IsEmpty then 
-                      let (UP rest) = negateUnipoly (UP sub)
-                      res @ rest
-                    else res
-    | (n,c)::cr ->  if sub.IsEmpty then
-                      if abs c < epsilon then inner res sub cr
-                      else inner (res @ [(n, c)]) sub cr
-                    else 
-                      let sn,sc = sub.[0]
-                      if sn = n then
-                        let v = c - sc
-                        if abs v < epsilon then inner res sub.Tail cr
-                        else inner (res @ [(n, v)]) sub.Tail cr
-                      else if sn < n then inner (res @ [(n,c)]) sub cr
-                      else inner (res @ [(sn, -sc)]) sub.Tail ((n,c)::cr)
-    UP (inner [] up2 up1)
-  
-  (*
-      Returns the degree of a univariate polynomial
-  *)
-  let getDegree (UP up:unipoly) =
-    let (degree,_) = up.[0]
-    degree
-  
-  let isEmpty (UP up:unipoly) = up.IsEmpty
+  let subtractUnipoly (UP first) (UP second) =
+    UP(canonical (first @ List.map (fun (degree, value) -> degree, -value) second))
 
-  (*
-      Subtraction and multiplication operators for unipoly
-  *)
+  let getDegree (UP terms) =
+    match canonical terms with [] -> -1 | (degree, _)::_ -> degree
+
+  let isEmpty (UP terms) = List.isEmpty (canonical terms)
+
   type unipoly with
-    static member ( - ) (up1, up2)    = subtractUnipoly up1 up2
-    static member ( * ) (up1, (n, c)) = multUnipoly up1 (n, c)
+    static member (-) (first, second) = subtractUnipoly first second
+    static member (*) (polynomial, term) = multUnipoly polynomial term
 
-  (*
-      Exercises polynomial long division on two unipolies.
-      up1 is the dividend, up2 is the divisor.
+  let unipolyLongDiv (UP dividend) (UP divisor) =
+    let divisor = canonical divisor
+    match divisor with
+    | [] -> invalidArg "divisor" "Cannot divide by the zero polynomial."
+    | (divisorDegree, divisorCoefficient)::_ ->
+        let rec remainder terms =
+          match terms with
+          | [] -> UP []
+          | (degree, _)::_ when degree < divisorDegree -> UP terms
+          | (degree, coefficient)::_ ->
+              let multiple = multUnipoly (UP divisor) (degree-divisorDegree, coefficient/divisorCoefficient)
+              let (UP reduced) = subtractUnipoly (UP terms) multiple
+              // The leading term cancels algebraically; remove only its floating-point roundoff.
+              remainder (reduced |> List.filter (fun (power, _) -> power < degree))
+        remainder (canonical dividend)
 
-      It is assumed that up2 is of a lower degree than up1
+  type unipoly with
+    static member (%) (first, second) = unipolyLongDiv first second
 
-      Only the remainder of the operation is returned,
-      in other words the quotient is not collected (it is commented out of the running code)
+  let sturmSeq (UP terms) (UP derivativeTerms) =
+    let polynomial, derivative = UP(canonical terms), UP(canonical derivativeTerms)
+    if isEmpty polynomial then []
+    elif isEmpty derivative then [polynomial]
+    else
+      let rec build previous current result =
+        let remainder = negateUnipoly (unipolyLongDiv previous current)
+        if isEmpty remainder then result
+        else build current remainder (remainder::result)
+      build polynomial derivative [derivative; polynomial]
 
-      Logic is inspired from https://rosettacode.org/wiki/Polynomial_long_division#OCaml
+  let countSignChanges sequence value =
+    let mutable previous, changes = 0, 0
+    for polynomial in sequence do
+      let result = solveUnipoly polynomial value
+      if Double.IsNaN result then invalidArg "interval" "Polynomial evaluation is not finite at this interval."
+      let sign = if result > 0. then 1 elif result < 0. then -1 else 0
+      if sign <> 0 then
+        if previous <> 0 && previous <> sign then changes <- changes + 1
+        previous <- sign
+    changes
 
-      Potential for an endless loop, if no epsilon is used in subtractUnipoly, or if the epsilon is two big
-  *)
-  let unipolyLongDiv up1 up2 : unipoly = // * unipoly =
-    // s is the smaller, f the larger, q is quotient.
-    let rec inner (f:unipoly) (s:unipoly) = //(UP q:unipoly) =
-      if getDegree f - getDegree s < 0 then f//(UP q, f) // the difference between the degrees of f and s
-      else
-        let (fExp, fConst) = getFirstTerm f // dividend's highest degree term
-        let (sExp, sConst) = getFirstTerm s // divisor's highest degree term
-        let k = fExp - sExp, fConst / sConst // division of the two terms
-        let ks = s * k // k multiplied into the divisor poly
-        //let q' = UP (q @ [k]) // k added to the current quotient
-        let f' = f - ks
-        if isEmpty f' then f//(UP q, f)
-        else inner f' s //q'
-    inner up1 up2 //(UP [])
+  let getInterval sequence low high maxDepth =
+    if not (Double.IsFinite low && Double.IsFinite high) || low > high then
+      invalidArg "interval" "Root-isolation bounds must be finite and ordered."
+    match List.tryLast sequence with
+    | None -> None
+    | Some polynomial ->
+        let roots a b = countSignChanges sequence a - countSignChanges sequence b
+        let rec search a b depth =
+          if solveUnipoly polynomial a = 0. then Some(a,a,a)
+          elif roots a b <= 0 then
+            if solveUnipoly polynomial b = 0. then Some(b,b,b) else None
+          else
+            let midpoint = a/2. + b/2.
+            if depth >= maxDepth || midpoint = a || midpoint = b then Some(a,b,midpoint)
+            elif roots a midpoint > 0 || solveUnipoly polynomial midpoint = 0. then search a midpoint (depth+1)
+            else search midpoint b (depth+1)
+        search low high 0
 
-  (*
-      Modulo operator for unipoly, returns the remainder of polynomial long division on two unipolies
-  *)
-  type unipoly with 
-    static member ( % ) (up1, up2) = unipolyLongDiv up1 up2
-
-  (*
-      Generates a Sturm sequence chain for a unipoly, up, and its derivate, up'
-  *)
-  let sturmSeq up up' : unipoly list =
-    let rec inner (uplist: unipoly list) = 
-      match getDegree uplist.[0] with
-      | 0 -> uplist
-      | _ -> inner ((negateUnipoly (uplist.[1] % uplist.[0])) :: uplist)
-    inner [up';up] // p0 will always be the last element in the list
-  
-  (*
-      Counts sign changes in a unipoly list, for a given value inserted in the variable's place
-  *)
-  let countSignChanges uplist x =
-    let rec inner fmr cnt = function
-    | []        -> cnt
-    | up::rest  ->
-        let rs = solveUnipoly up x
-        if (rs > 0.0 && fmr > 0.0) || (rs < 0.0 && fmr < 0.0)
-          then inner rs cnt rest
-        else inner rs (cnt + 1) rest
-    inner 0.0 0 uplist
-
-  (*
-      Finds the smallest interval where the smallest root lives.
-      
-      Uses binary search to recursively split the search space in halves, and checks
-      the number of real roots that lives in the current space.
-      
-      Runs for maxDepth or when no roots exists in the space
-  *)
-  let getInterval uplist intvallo intvalhi maxdepth =
-    let roots g1 g2 =  
-      let s1 = countSignChanges uplist g1
-      let s2 = countSignChanges uplist g2
-      s1 - s2
-    let rec search lo hi currentdepth =
-      let mid = (lo + hi) / 2.
-      if currentdepth >= maxdepth then Some (lo, hi, mid)
-      else
-        let lodiff = roots lo mid
-        if lodiff > 0 then search lo mid (currentdepth + 1)
+  let rootBound (UP terms) =
+    match canonical terms with
+    | [] | [(0, _)] -> 0.
+    | (degree, leading)::rest ->
+        let mutable logarithm = -infinity
+        for exponent, coefficient in rest do
+          logarithm <- max logarithm ((log (abs coefficient) - log (abs leading)) / float (degree-exponent))
+        if Double.IsNegativeInfinity logarithm then 0.
         else
-          let hidiff = roots mid hi
-          if hidiff > 0 then search mid hi (currentdepth + 1)
-          else None
-    search intvallo intvalhi 0
+          let bound = exp (log 2. + logarithm)
+          if not (Double.IsFinite bound) then
+            invalidArg "polynomial" "The finite root bound overflowed; provide an explicit finite ray interval."
+          Math.BitIncrement bound
+
+  let realRootsInInterval (UP terms) low high =
+    if not (Double.IsFinite low && Double.IsFinite high) || low > high then
+      invalidArg "interval" "Root-search bounds must be finite and ordered."
+    let terms = canonical terms
+    let machineEpsilon = 2.2204460492503131e-16
+    let normalize (coefficients: float array) =
+      let scale = coefficients |> Array.fold (fun maximum value -> max maximum (abs value)) 0.
+      if scale = 0. then coefficients else coefficients |> Array.map (fun value -> value/scale)
+    let evaluate (coefficients: float array) x =
+      let degree = coefficients.Length-1
+      let mutable value, magnitude = 0., 0.
+      if abs x > 1. then
+        let inverse = 1./x
+        for i = 0 to degree do
+          value <- value*inverse + coefficients.[i]
+          magnitude <- magnitude*abs inverse + abs coefficients.[i]
+        if x < 0. && degree % 2 = 1 then value <- -value
+      else
+        for i = degree downto 0 do
+          value <- value*x + coefficients.[i]
+          magnitude <- magnitude*abs x + abs coefficients.[i]
+      value, magnitude
+    let isRoot degree (value, magnitude) =
+      abs value <= 32. * machineEpsilon * float (degree+1) * magnitude
+    let distinct (roots: float array) =
+      let sorted = Array.sort roots
+      let result = ResizeArray<float>()
+      for root in sorted do
+        if result.Count = 0
+           || abs (root-result.[result.Count-1]) > 64.*machineEpsilon*max (abs root) (abs result.[result.Count-1]) then
+          result.Add root
+      result.ToArray()
+    let rec search (coefficients: float array) =
+      let degree = coefficients.Length-1
+      if degree <= 0 then [||]
+      elif degree = 1 then
+        let root = -coefficients.[0] / coefficients.[1]
+        if Double.IsFinite root && root >= low && root <= high then [|root|] else [||]
+      elif degree = 2 then
+        let a, b, c = coefficients.[2], coefficients.[1], coefficients.[0]
+        let discriminant = b*b - 4.*a*c
+        if discriminant < 0. then [||]
+        else
+          let roots =
+            if discriminant = 0. then [|-b/(2.*a)|]
+            else
+              let q = -0.5 * (b + Math.CopySign(sqrt discriminant, b))
+              [|q/a; c/q|]
+          roots |> Array.filter (fun root -> Double.IsFinite root && root >= low && root <= high) |> distinct
+      else
+        let derivative = Array.init degree (fun i -> float (i+1)*coefficients.[i+1]) |> normalize
+        let critical = search derivative |> Array.filter (fun root -> root > low && root < high)
+        let knots = Array.concat [ [|low|]; critical; [|high|] ] |> distinct
+        let results = ResizeArray<float>()
+        let values = knots |> Array.map (evaluate coefficients)
+        for i = 0 to knots.Length-1 do
+          if isRoot degree values.[i] then results.Add knots.[i]
+        for i = 0 to knots.Length-2 do
+          let valueA, valueB = fst values.[i], fst values.[i+1]
+          if not (isRoot degree values.[i] || isRoot degree values.[i+1])
+             && ((valueA < 0.) <> (valueB < 0.)) then
+            let mutable a, b, fa = knots.[i], knots.[i+1], valueA
+            let mutable root, finished, iterations = a/2. + b/2., false, 0
+            while not finished do
+              iterations <- iterations+1
+              let midpoint = a/2. + b/2.
+              let evaluation = evaluate coefficients midpoint
+              root <- midpoint
+              if isRoot degree evaluation || midpoint = a || midpoint = b
+                 || b-a <= 8.*machineEpsilon*max (abs a) (abs b) then finished <- true
+              elif iterations > 2200 then invalidOp "Polynomial root isolation failed to converge."
+              elif (fst evaluation < 0.) = (fa < 0.) then
+                a <- midpoint
+                fa <- fst evaluation
+              else b <- midpoint
+            results.Add root
+        results.ToArray() |> distinct
+    match terms with
+    | [] -> [||]
+    | (degree, _)::_ ->
+        let coefficients = Array.zeroCreate<float> (degree+1)
+        for degree, value in terms do coefficients.[degree] <- value
+        search (normalize coefficients)

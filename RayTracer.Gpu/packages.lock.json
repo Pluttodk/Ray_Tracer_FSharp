@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "FSharp.Core": {
+        "type": "Direct",
+        "requested": "[10.1.400, )",
+        "resolved": "10.1.400",
+        "contentHash": "mxCkXuBt4wyRMmHf4boZXm30zZZsjBt3+9ISzXB8wFvJJAACrPPh9vj85Kqtxj/2FvDxAQnnRnJpNcJSXElhgA=="
+      },
+      "ILGPU": {
+        "type": "Direct",
+        "requested": "[1.5.3, 1.5.3]",
+        "resolved": "1.5.3",
+        "contentHash": "VhAfQqnp/qTcQla5zcBPQIoUJox8T1EuZLuKrynFFE1BQvOOUCksiCb9IQAJa2MSJf6QDi5YIoG45K0I+GWcgg=="
+      },
+      "ILGPU.Algorithms": {
+        "type": "Direct",
+        "requested": "[1.5.3, 1.5.3]",
+        "resolved": "1.5.3",
+        "contentHash": "KySqYhghiJKkf77NTLcxebFzD2hz/hpO1Dxz/B0IpnowhwKD3i+PVaGa3E+TXahGHY6711HVOWpKr07wV6qEOg==",
+        "dependencies": {
+          "ILGPU": "1.5.3"
+        }
+      },
+      "FParsec": {
+        "type": "Transitive",
+        "resolved": "1.1.1",
+        "contentHash": "Wdjf/gCNLEwd+0nUCDh9jAIIcKGwfhRramySTnTcVVgNC6i4Vp5aJklUJJfvFkEZMYNZEDGcI8pCa36/TmwmSg==",
+        "dependencies": {
+          "FSharp.Core": "4.3.4"
+        }
+      },
+      "StbImageSharp": {
+        "type": "Transitive",
+        "resolved": "2.30.16",
+        "contentHash": "qg1i+NHihXVKLKYacGKrauhSQIGL31eBWcTC4Vc7jnGmBFj87LkRuCdXB5aDZisWMRnB6x2mcfwYXQxMWEG/lw=="
+      },
+      "StbImageWriteSharp": {
+        "type": "Transitive",
+        "resolved": "1.16.7",
+        "contentHash": "NF9kOxi0iS9VunklnRKgOpAWC2knCGKRjdy7RT6XAqYNyb7LQfyPHPdl4l1fJw7TFYKrGQzQOmK1XpBONC2MoA=="
+      },
+      "Basics": {
+        "type": "Project",
+        "dependencies": {
+          "FParsec": "[1.1.1, )",
+          "FSharp.Core": "[10.1.400, )",
+          "RayTracer.ImageIO": "[1.0.0, )"
+        }
+      },
+      "raytracer.imageio": {
+        "type": "Project",
+        "dependencies": {
+          "FSharp.Core": "[10.1.400, )",
+          "StbImageSharp": "[2.30.16, )",
+          "StbImageWriteSharp": "[1.16.7, )"
+        }
+      },
+      "sceneformat": {
+        "type": "Project",
+        "dependencies": {
+          "FSharp.Core": "[10.1.400, )"
+        }
+      }
+    }
+  }
+}

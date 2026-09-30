@@ -1,0 +1,1647 @@
+{
+  "schemaVersion": 1,
+  "id": "chair",
+  "title": "Arcback \u2014 walnut and woven teal",
+  "description": "Original bentwood chair: splayed tapered legs, visible brass join pins, bowed rails, five curved back slats, piped upholstered seat and a circular studio dais. Procedural original geometry; no borrowed furniture model. Visible emissive reflection cards are not indirect illumination.",
+  "camera": {
+    "position": [
+      4.15,
+      3,
+      6.15
+    ],
+    "target": [
+      0,
+      1.34,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewDistance": 1,
+    "viewWidth": 0.6114613629173208,
+    "viewHeight": 0.6114613629173208,
+    "lensRadius": 0,
+    "focusDistance": 7.6026705834200135
+  },
+  "ambientColour": [
+    0.9,
+    0.94,
+    1
+  ],
+  "ambientIntensity": 0.3,
+  "maxBounces": 4,
+  "materials": [
+    {
+      "id": "walnut",
+      "kind": "phong",
+      "colour": [
+        0.31,
+        0.105,
+        0.038
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/wood-grain.png"
+    },
+    {
+      "id": "walnut-endgrain",
+      "kind": "phong",
+      "colour": [
+        0.19,
+        0.057,
+        0.022
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/wood-endgrain.png"
+    },
+    {
+      "id": "brass",
+      "kind": "glossy",
+      "colour": [
+        0.62,
+        0.36,
+        0.1
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0.32,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "teal-fabric",
+      "kind": "matte",
+      "colour": [
+        0.035,
+        0.3,
+        0.31
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/woven-fabric.png"
+    },
+    {
+      "id": "teal-piping",
+      "kind": "phong",
+      "colour": [
+        0.075,
+        0.43,
+        0.43
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "warm-floor",
+      "kind": "matte",
+      "colour": [
+        0.53,
+        0.43,
+        0.34
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "blue-wall",
+      "kind": "matte",
+      "colour": [
+        0.065,
+        0.14,
+        0.22
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "slate-stage",
+      "kind": "matte",
+      "colour": [
+        0.22,
+        0.27,
+        0.29
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "reflection-card",
+      "kind": "emissive",
+      "colour": [
+        0.82,
+        0.92,
+        1
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 1.1,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "small-sphere",
+      "path": "../../artifacts/scene-assets/meshes/small-sphere.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-cylinder",
+      "path": "../../artifacts/scene-assets/meshes/rounded-cylinder.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "tapered-leg",
+      "path": "../../artifacts/scene-assets/meshes/tapered-leg.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "disc",
+      "path": "../../artifacts/scene-assets/meshes/disc.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "ring",
+      "path": "../../artifacts/scene-assets/meshes/ring.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "chair-curved-rail",
+      "path": "../../artifacts/scene-assets/meshes/chair-curved-rail.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "seat-piping",
+      "path": "../../artifacts/scene-assets/meshes/seat-piping.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "chair-curved-slat",
+      "path": "../../artifacts/scene-assets/meshes/chair-curved-slat.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-box",
+      "path": "../../artifacts/scene-assets/meshes/rounded-box.ply",
+      "smooth": true,
+      "closed": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "studio-floor",
+      "mesh": "rounded-box",
+      "material": "warm-floor",
+      "transform": [
+        12,
+        0,
+        0,
+        0,
+        0,
+        0.12,
+        0,
+        -0.16,
+        0,
+        0,
+        10,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "studio-backdrop",
+      "mesh": "rounded-box",
+      "material": "blue-wall",
+      "transform": [
+        14,
+        0,
+        0,
+        0,
+        0,
+        5.2,
+        0,
+        5,
+        0,
+        0,
+        0.12,
+        -8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-reflection-card",
+      "mesh": "rounded-box",
+      "material": "reflection-card",
+      "transform": [
+        0.025,
+        0,
+        0,
+        -6.5,
+        0,
+        2.15,
+        0,
+        3.1,
+        0,
+        0,
+        1.45,
+        2.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-reflection-card",
+      "mesh": "rounded-box",
+      "material": "reflection-card",
+      "transform": [
+        0.025,
+        0,
+        0,
+        6.5,
+        0,
+        1.65,
+        0,
+        3.5,
+        0,
+        0,
+        1.2,
+        2.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "presentation-disc",
+      "mesh": "disc",
+      "material": "slate-stage",
+      "transform": [
+        1.67,
+        0,
+        0,
+        0,
+        0,
+        0.045,
+        0,
+        0.005,
+        0,
+        0,
+        1.57,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "presentation-rim",
+      "mesh": "ring",
+      "material": "brass",
+      "transform": [
+        1.62,
+        0,
+        0,
+        0,
+        0,
+        0.17,
+        0,
+        0.005,
+        0,
+        0,
+        1.52,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "seat-frame",
+      "mesh": "rounded-box",
+      "material": "walnut",
+      "transform": [
+        0.755,
+        0,
+        0,
+        0,
+        0,
+        0.125,
+        0,
+        1.09,
+        0,
+        0,
+        0.68,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "seat-cushion",
+      "mesh": "rounded-box",
+      "material": "teal-fabric",
+      "transform": [
+        0.704,
+        0,
+        0,
+        0,
+        0,
+        0.155,
+        0,
+        1.29,
+        0,
+        0,
+        0.633,
+        0.015,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "upholstery-piping",
+      "mesh": "seat-piping",
+      "material": "teal-piping",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1.35,
+        0,
+        0,
+        1,
+        0.015,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-rear-leg",
+      "mesh": "tapered-leg",
+      "material": "walnut",
+      "transform": [
+        0.0886815455269903,
+        0.09000000000000002,
+        -0.0020182294364033612,
+        -0.7,
+        -0.015348729033517555,
+        0.52,
+        -0.011660881188108306,
+        0.5800000000000001,
+        0,
+        0.07,
+        0.08921855524418032,
+        -0.5800000000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-rear-foot",
+      "mesh": "rounded-cylinder",
+      "material": "walnut-endgrain",
+      "transform": [
+        0.07196747680689668,
+        0.00850000000000001,
+        -0.0015552644012014301,
+        -0.7815000000000001,
+        -0.012234471057172444,
+        0.05000000000000001,
+        -0.009148614124714287,
+        0.11,
+        0,
+        0.006500000000000007,
+        0.07240776209937325,
+        -0.6435,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-front-leg",
+      "mesh": "tapered-leg",
+      "material": "walnut",
+      "transform": [
+        0.0886815455269903,
+        0.09000000000000002,
+        0.0020182294364033612,
+        -0.7,
+        -0.015348729033517555,
+        0.52,
+        0.011660881188108306,
+        0.5800000000000001,
+        0,
+        -0.07,
+        0.08921855524418032,
+        0.5800000000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-front-foot",
+      "mesh": "rounded-cylinder",
+      "material": "walnut-endgrain",
+      "transform": [
+        0.07196747680689668,
+        0.00850000000000001,
+        0.0015552644012014301,
+        -0.7815000000000001,
+        -0.012234471057172444,
+        0.05000000000000001,
+        0.009148614124714287,
+        0.11,
+        0,
+        -0.006500000000000007,
+        0.07240776209937325,
+        0.6435,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-side-stretcher",
+      "mesh": "rounded-cylinder",
+      "material": "walnut",
+      "transform": [
+        0,
+        0,
+        0.048,
+        -0.7,
+        0.048,
+        0,
+        0,
+        0.55,
+        0,
+        0.58,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-back-post",
+      "mesh": "rounded-cylinder",
+      "material": "walnut",
+      "transform": [
+        0.07894653330715552,
+        -0.030000000000000027,
+        -0.0004057585087372346,
+        -0.65,
+        0.0029060073609995926,
+        0.815,
+        0.011023106154028196,
+        1.875,
+        -0,
+        -0.11499999999999999,
+        0.07822612409387042,
+        -0.615,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-front-join-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.024,
+        0,
+        0,
+        -0.615,
+        0,
+        3.6739403974420597E-19,
+        -0.024,
+        1.08,
+        0,
+        0.006,
+        1.4695761589768239E-18,
+        0.676,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-rear-leg",
+      "mesh": "tapered-leg",
+      "material": "walnut",
+      "transform": [
+        0.0886815455269903,
+        -0.09000000000000002,
+        0.0020182294364033612,
+        0.7,
+        0.015348729033517555,
+        0.52,
+        -0.011660881188108306,
+        0.5800000000000001,
+        -0,
+        0.07,
+        0.08921855524418032,
+        -0.5800000000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-rear-foot",
+      "mesh": "rounded-cylinder",
+      "material": "walnut-endgrain",
+      "transform": [
+        0.07196747680689668,
+        -0.00850000000000001,
+        0.0015552644012014301,
+        0.7815000000000001,
+        0.012234471057172444,
+        0.05000000000000001,
+        -0.009148614124714287,
+        0.11,
+        -0,
+        0.006500000000000007,
+        0.07240776209937325,
+        -0.6435,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-front-leg",
+      "mesh": "tapered-leg",
+      "material": "walnut",
+      "transform": [
+        0.0886815455269903,
+        -0.09000000000000002,
+        -0.0020182294364033612,
+        0.7,
+        0.015348729033517555,
+        0.52,
+        0.011660881188108306,
+        0.5800000000000001,
+        -0,
+        -0.07,
+        0.08921855524418032,
+        0.5800000000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-front-foot",
+      "mesh": "rounded-cylinder",
+      "material": "walnut-endgrain",
+      "transform": [
+        0.07196747680689668,
+        -0.00850000000000001,
+        -0.0015552644012014301,
+        0.7815000000000001,
+        0.012234471057172444,
+        0.05000000000000001,
+        0.009148614124714287,
+        0.11,
+        -0,
+        -0.006500000000000007,
+        0.07240776209937325,
+        0.6435,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-side-stretcher",
+      "mesh": "rounded-cylinder",
+      "material": "walnut",
+      "transform": [
+        0,
+        0,
+        0.048,
+        0.7,
+        0.048,
+        0,
+        0,
+        0.55,
+        0,
+        0.58,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-back-post",
+      "mesh": "rounded-cylinder",
+      "material": "walnut",
+      "transform": [
+        0.07894653330715552,
+        0.030000000000000027,
+        0.0004057585087372346,
+        0.65,
+        -0.0029060073609995926,
+        0.815,
+        0.011023106154028196,
+        1.875,
+        0,
+        -0.11499999999999999,
+        0.07822612409387042,
+        -0.615,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-front-join-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.024,
+        0,
+        0,
+        0.615,
+        0,
+        3.6739403974420597E-19,
+        -0.024,
+        1.08,
+        0,
+        0.006,
+        1.4695761589768239E-18,
+        0.676,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "front-apron",
+      "mesh": "rounded-cylinder",
+      "material": "walnut",
+      "transform": [
+        0,
+        0.64,
+        -0,
+        0,
+        -0.047,
+        0,
+        0,
+        0.94,
+        0,
+        0,
+        0.047,
+        0.54,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "rear-apron",
+      "mesh": "rounded-cylinder",
+      "material": "walnut",
+      "transform": [
+        0,
+        0.64,
+        -0,
+        0,
+        -0.047,
+        0,
+        0,
+        0.96,
+        0,
+        0,
+        0.047,
+        -0.54,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cross-stretcher",
+      "mesh": "rounded-cylinder",
+      "material": "walnut",
+      "transform": [
+        0,
+        0.64,
+        -0,
+        0,
+        -0.047,
+        0,
+        0,
+        0.48,
+        0,
+        0,
+        0.047,
+        -0.55,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "top-bentwood-rail",
+      "mesh": "chair-curved-rail",
+      "material": "walnut",
+      "transform": [
+        0.735,
+        0,
+        0,
+        0,
+        0,
+        0.9,
+        0,
+        2.64,
+        0,
+        0,
+        0.8,
+        -0.7,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "lower-bentwood-rail",
+      "mesh": "chair-curved-rail",
+      "material": "walnut",
+      "transform": [
+        0.675,
+        0,
+        0,
+        0,
+        0,
+        0.72,
+        0,
+        1.68,
+        0,
+        0,
+        0.66,
+        -0.575,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "back-slat-0",
+      "mesh": "chair-curved-slat",
+      "material": "walnut",
+      "transform": [
+        0.9945218953682733,
+        -0.012738815185578003,
+        0.10374932395329073,
+        -0.416,
+        0,
+        0.992546151641322,
+        0.12186934340514748,
+        2.17,
+        -0.10452846326765346,
+        -0.12120173039057425,
+        0.9871088799708131,
+        -0.656328,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-0-lower-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        -0.416,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        1.78,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.5465280000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-0-upper-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        -0.416,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        2.53,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.6365280000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "back-slat-1",
+      "mesh": "chair-curved-slat",
+      "material": "walnut",
+      "transform": [
+        0.9986295347545738,
+        -0.006378148623808093,
+        0.051945851961402514,
+        -0.208,
+        0,
+        0.992546151641322,
+        0.12186934340514748,
+        2.17,
+        -0.05233595624294383,
+        -0.12170232570552782,
+        0.991185901636016,
+        -0.677832,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-1-lower-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        -0.208,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        1.78,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.5680320000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-1-upper-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        -0.208,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        2.53,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.6580320000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "back-slat-2",
+      "mesh": "chair-curved-slat",
+      "material": "walnut",
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0.992546151641322,
+        0.12186934340514748,
+        2.17,
+        0,
+        -0.12186934340514748,
+        0.992546151641322,
+        -0.685,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-2-lower-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        0,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        1.78,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.5752000000000002,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-2-upper-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        0,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        2.53,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.6652000000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "back-slat-3",
+      "mesh": "chair-curved-slat",
+      "material": "walnut",
+      "transform": [
+        0.9986295347545738,
+        0.006378148623808093,
+        -0.051945851961402514,
+        0.208,
+        0,
+        0.992546151641322,
+        0.12186934340514748,
+        2.17,
+        0.05233595624294383,
+        -0.12170232570552782,
+        0.991185901636016,
+        -0.677832,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-3-lower-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        0.208,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        1.78,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.5680320000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-3-upper-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        0.208,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        2.53,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.6580320000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "back-slat-4",
+      "mesh": "chair-curved-slat",
+      "material": "walnut",
+      "transform": [
+        0.9945218953682733,
+        0.012738815185578003,
+        -0.10374932395329073,
+        0.416,
+        0,
+        0.992546151641322,
+        0.12186934340514748,
+        2.17,
+        0.10452846326765346,
+        -0.12120173039057425,
+        0.9871088799708131,
+        -0.656328,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-4-lower-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        0.416,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        1.78,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.5465280000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "slat-4-upper-pin",
+      "mesh": "disc",
+      "material": "brass",
+      "transform": [
+        0.016,
+        0,
+        0,
+        0.416,
+        0,
+        2.4492935982947063E-19,
+        -0.016,
+        2.53,
+        0,
+        0.004,
+        9.797174393178825E-19,
+        -0.6365280000000001,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cushion-tuft--0.27--0.24",
+      "mesh": "small-sphere",
+      "material": "teal-piping",
+      "transform": [
+        0.023,
+        0,
+        0,
+        -0.27,
+        0,
+        0.009,
+        0,
+        1.44,
+        0,
+        0,
+        0.023,
+        -0.24,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cushion-tuft--0.27-0.24",
+      "mesh": "small-sphere",
+      "material": "teal-piping",
+      "transform": [
+        0.023,
+        0,
+        0,
+        -0.27,
+        0,
+        0.009,
+        0,
+        1.44,
+        0,
+        0,
+        0.023,
+        0.24,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cushion-tuft-0.27--0.24",
+      "mesh": "small-sphere",
+      "material": "teal-piping",
+      "transform": [
+        0.023,
+        0,
+        0,
+        0.27,
+        0,
+        0.009,
+        0,
+        1.44,
+        0,
+        0,
+        0.023,
+        -0.24,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cushion-tuft-0.27-0.24",
+      "mesh": "small-sphere",
+      "material": "teal-piping",
+      "transform": [
+        0.023,
+        0,
+        0,
+        0.27,
+        0,
+        0.009,
+        0,
+        1.44,
+        0,
+        0,
+        0.023,
+        0.24,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "maker-inlay",
+      "mesh": "rounded-box",
+      "material": "brass",
+      "transform": [
+        0.064,
+        0,
+        0,
+        0,
+        0,
+        0.025,
+        0,
+        1.085,
+        0,
+        0,
+        0.006,
+        0.681,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "warm-key",
+      "kind": "point",
+      "position": [
+        -3.2,
+        5.8,
+        4.8
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1,
+        0.86,
+        0.68
+      ],
+      "intensity": 2.6,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "cool-fill",
+      "kind": "point",
+      "position": [
+        3.8,
+        3.4,
+        2
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.56,
+        0.76,
+        1
+      ],
+      "intensity": 0.95,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "back-rim",
+      "kind": "point",
+      "position": [
+        1,
+        4.6,
+        -2.4
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.83,
+        0.93,
+        1
+      ],
+      "intensity": 1.7,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "front-lift",
+      "kind": "directional",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "direction": [
+        0.1,
+        0.6,
+        1
+      ],
+      "colour": [
+        0.92,
+        0.96,
+        1
+      ],
+      "intensity": 0.22,
+      "size": [
+        1,
+        1
+      ]
+    }
+  ],
+  "subjects": [
+    "seat-frame",
+    "seat-cushion",
+    "upholstery-piping",
+    "left-rear-leg",
+    "left-rear-foot",
+    "left-front-leg",
+    "left-front-foot",
+    "left-side-stretcher",
+    "left-back-post",
+    "left-front-join-pin",
+    "right-rear-leg",
+    "right-rear-foot",
+    "right-front-leg",
+    "right-front-foot",
+    "right-side-stretcher",
+    "right-back-post",
+    "right-front-join-pin",
+    "front-apron",
+    "rear-apron",
+    "cross-stretcher",
+    "top-bentwood-rail",
+    "lower-bentwood-rail",
+    "back-slat-0",
+    "slat-0-lower-pin",
+    "slat-0-upper-pin",
+    "back-slat-1",
+    "slat-1-lower-pin",
+    "slat-1-upper-pin",
+    "back-slat-2",
+    "slat-2-lower-pin",
+    "slat-2-upper-pin",
+    "back-slat-3",
+    "slat-3-lower-pin",
+    "slat-3-upper-pin",
+    "back-slat-4",
+    "slat-4-lower-pin",
+    "slat-4-upper-pin",
+    "cushion-tuft--0.27--0.24",
+    "cushion-tuft--0.27-0.24",
+    "cushion-tuft-0.27--0.24",
+    "cushion-tuft-0.27-0.24",
+    "maker-inlay"
+  ]
+}

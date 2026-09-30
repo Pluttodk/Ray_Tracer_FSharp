@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>LegacyRayTracer</AssemblyName>
+    <RootNamespace>Basics</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <LegacyDotNetHost Condition="'$(DOTNET_HOST_PATH)' != ''">$(DOTNET_HOST_PATH)</LegacyDotNetHost>
+    <LegacyDotNetHost Condition="'$(LegacyDotNetHost)' == ''">dotnet</LegacyDotNetHost>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="adapted/Sampling/Sampling.fsi" Link="Sampling/Sampling.fsi" />
+    <Compile Include="adapted/Sampling/Sampling.fs" Link="Sampling/Sampling.fs" />
+    <Compile Include="adapted/Core/Vector.fs" Link="Core/Vector.fs" />
+    <Compile Include="original/RayTracer/Core/Colour.fs" Link="Core/Colour.fs" />
+    <Compile Include="original/RayTracer/Core/Point.fs" Link="Core/Point.fs" />
+    <Compile Include="original/RayTracer/Core/Ray.fs" Link="Core/Ray.fs" />
+    <Compile Include="original/RayTracer/Core/BBox.fs" Link="Core/BBox.fs" />
+    <Compile Include="adapted/Core/Foundation.fs" Link="Core/Foundation.fs" />
+    <Compile Include="original/RayTracer/Materials/Materials.fs" Link="Materials/Materials.fs" />
+    <Compile Include="original/RayTracer/Materials/Textures.fsi" Link="Materials/Textures.fsi" />
+    <Compile Include="original/RayTracer/Materials/Textures.fs" Link="Materials/Textures.fs" />
+    <Compile Include="adapted/Transformation/Transformation.fsi" Link="Transformation/Transformation.fsi" />
+    <Compile Include="adapted/Transformation/Transformation.fs" Link="Transformation/Transformation.fs" />
+    <Compile Include="original/RayTracer/Shapes/Shapes.fs" Link="Shapes/Shapes.fs" />
+    <Compile Include="original/RayTracer/Shapes/CSG.fs" Link="Shapes/CSG.fs" />
+    <Compile Include="original/RayTracer/Shapes/BaseShape.fs" Link="Shapes/BaseShape.fs" />
+    <Compile Include="original/RayTracer/Lights/GlobalLight.fs" Link="Lights/GlobalLight.fs" />
+    <Compile Include="original/RayTracer/Lights/BasicLight.fs" Link="Lights/BasicLight.fs" />
+    <Compile Include="original/RayTracer/Lights/AreaLight.fs" Link="Lights/AreaLight.fs" />
+    <Compile Include="original/RayTracer/Acceleration/KDTree.fs" Link="Acceleration/KDTree.fs" />
+    <Compile Include="original/RayTracer/Acceleration/BVH.fs" Link="Acceleration/BVH.fs" />
+    <Compile Include="adapted/Acceleration/RegularGrids.fs" Link="Acceleration/RegularGrids.fs" />
+    <Compile Include="original/RayTracer/Acceleration/Acceleration.fs" Link="Acceleration/Acceleration.fs" />
+    <Compile Include="original/RayTracer/Camera/Camera.fs" Link="Camera/Camera.fs" />
+    <Compile Include="original/RayTracer/Camera/PinholeCamera.fs" Link="Camera/PinholeCamera.fs" />
+    <Compile Include="original/RayTracer/Camera/ThinLensCamera.fs" Link="Camera/ThinLensCamera.fs" />
+    <Compile Include="original/RayTracer/TriangleMesh/PLYParser.fs" Link="TriangleMesh/PLYParser.fs" />
+    <Compile Include="original/RayTracer/TriangleMesh/TriangleMesh.fs" Link="TriangleMesh/TriangleMesh.fs" />
+    <Compile Include="original/RayTracer/ImplicitSurfaces/ExprParse.fsi" Link="ImplicitSurfaces/ExprParse.fsi" />
+    <Compile Include="original/RayTracer/ImplicitSurfaces/ExprParse.fs" Link="ImplicitSurfaces/ExprParse.fs" />
+    <Compile Include="original/RayTracer/ImplicitSurfaces/ExprToPoly.fsi" Link="ImplicitSurfaces/ExprToPoly.fsi" />
+    <Compile Include="original/RayTracer/ImplicitSurfaces/ExprToPoly.fs" Link="ImplicitSurfaces/ExprToPoly.fs" />
+    <Compile Include="original/RayTracer/ImplicitSurfaces/PolyToUnipoly.fsi" Link="ImplicitSurfaces/PolyToUnipoly.fsi" />
+    <Compile Include="original/RayTracer/ImplicitSurfaces/PolyToUnipoly.fs" Link="ImplicitSurfaces/PolyToUnipoly.fs" />
+    <Compile Include="original/RayTracer/ImplicitSurfaces/ImplicitSurfaces.fsi" Link="ImplicitSurfaces/ImplicitSurfaces.fsi" />
+    <Compile Include="original/RayTracer/ImplicitSurfaces/ImplicitSurfaces.fs" Link="ImplicitSurfaces/ImplicitSurfaces.fs" />
+    <Compile Include="original/RayTracer/Scene.fs" Link="Scene.fs" />
+    <Compile Include="adapted/Render.fs" Link="Render.fs" />
+    <Compile Include="original/RayTracer/API/API.fsi" Link="API/API.fsi" />
+    <Compile Include="original/RayTracer/API/API.fs" Link="API/API.fs" />
+    <Compile Include="original/RayTracer/AssemblyInfo.fs" Link="AssemblyInfo.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FParsec" Version="1.1.1" />
+    <ProjectReference Include="../../RayTracer.ImageIO/RayTracer.ImageIO.fsproj" />
+  </ItemGroup>
+  <Target Name="VerifyLegacyPortability" BeforeTargets="BeforeBuild">
+    <Exec Command="&quot;$(LegacyDotNetHost)&quot; fsi &quot;$(MSBuildProjectDirectory)/prepare-port.fsx&quot; -- --check" />
+  </Target>
+</Project>

@@ -1,0 +1,3243 @@
+{
+  "schemaVersion": 1,
+  "id": "sky-arena",
+  "title": "Aster at the suspended arena",
+  "description": "Original stylized martial-arts action composition: a teal-and-tangerine courier in a planted/bent-knee stance, open casting palm and raised fist, swept asymmetric short hair, boots, wraps and wind-swept scarf. Faceted floating islands, fragments, a broken masonry arc, ambient-only painted blue backdrop/opaque cloud staging and cyan/gold energy accents. No licensed character references. Emission is visible only; explicit point/directional lights, not GI, illuminate the scene.",
+  "camera": {
+    "position": [
+      3.6,
+      3.85,
+      9.9
+    ],
+    "target": [
+      0,
+      1.8,
+      -0.25
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewDistance": 1,
+    "viewWidth": 0.6886552265793304,
+    "viewHeight": 0.6886552265793304,
+    "lensRadius": 0,
+    "focusDistance": 10.962891954224487
+  },
+  "ambientColour": [
+    0.9,
+    0.94,
+    1
+  ],
+  "ambientIntensity": 0.37,
+  "maxBounces": 4,
+  "materials": [
+    {
+      "id": "sky",
+      "kind": "matte",
+      "colour": [
+        0.055,
+        0.24,
+        0.59
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 2.7,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "cloud",
+      "kind": "matte",
+      "colour": [
+        0.68,
+        0.77,
+        0.88
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "cloud-shadow",
+      "kind": "matte",
+      "colour": [
+        0.3,
+        0.34,
+        0.56
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "rock",
+      "kind": "matte",
+      "colour": [
+        0.16,
+        0.055,
+        0.3
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/basalt.png"
+    },
+    {
+      "id": "rock-top",
+      "kind": "matte",
+      "colour": [
+        0.2,
+        0.36,
+        0.57
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/basalt.png"
+    },
+    {
+      "id": "arena-stone",
+      "kind": "matte",
+      "colour": [
+        0.26,
+        0.27,
+        0.52
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/basalt.png"
+    },
+    {
+      "id": "arena-trim",
+      "kind": "phong",
+      "colour": [
+        0.86,
+        0.36,
+        0.08
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "hero-skin",
+      "kind": "matte",
+      "colour": [
+        0.67,
+        0.33,
+        0.17
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "hero-skin-shade",
+      "kind": "matte",
+      "colour": [
+        0.33,
+        0.12,
+        0.065
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "hero-teal",
+      "kind": "matte",
+      "colour": [
+        0.025,
+        0.49,
+        0.47
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/woven-fabric.png"
+    },
+    {
+      "id": "hero-orange",
+      "kind": "matte",
+      "colour": [
+        0.9,
+        0.22,
+        0.045
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/woven-fabric.png"
+    },
+    {
+      "id": "hero-purple",
+      "kind": "matte",
+      "colour": [
+        0.24,
+        0.055,
+        0.42
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/woven-fabric.png"
+    },
+    {
+      "id": "hero-hair",
+      "kind": "phong",
+      "colour": [
+        0.035,
+        0.045,
+        0.11
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "hero-wrap",
+      "kind": "matte",
+      "colour": [
+        0.85,
+        0.74,
+        0.51
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "hero-eye",
+      "kind": "phong",
+      "colour": [
+        0.85,
+        0.85,
+        0.75
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "hero-iris",
+      "kind": "phong",
+      "colour": [
+        0.045,
+        0.15,
+        0.14
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "energy-blue",
+      "kind": "emissive",
+      "colour": [
+        0.09,
+        0.65,
+        1
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 1.8,
+      "texture": ""
+    },
+    {
+      "id": "energy-gold",
+      "kind": "emissive",
+      "colour": [
+        1,
+        0.35,
+        0.055
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 1.5,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "sphere",
+      "path": "../../artifacts/scene-assets/meshes/sphere.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "small-sphere",
+      "path": "../../artifacts/scene-assets/meshes/small-sphere.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-cylinder",
+      "path": "../../artifacts/scene-assets/meshes/rounded-cylinder.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "tapered-leg",
+      "path": "../../artifacts/scene-assets/meshes/tapered-leg.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "disc",
+      "path": "../../artifacts/scene-assets/meshes/disc.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "ring",
+      "path": "../../artifacts/scene-assets/meshes/ring.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-box",
+      "path": "../../artifacts/scene-assets/meshes/rounded-box.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "sentinel-fin",
+      "path": "../../artifacts/scene-assets/meshes/sentinel-fin.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "swept-hair-lock",
+      "path": "../../artifacts/scene-assets/meshes/swept-hair-lock.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "hero-scarf",
+      "path": "../../artifacts/scene-assets/meshes/hero-scarf.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "tunic-panel",
+      "path": "../../artifacts/scene-assets/meshes/tunic-panel.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "floating-rock",
+      "path": "../../artifacts/scene-assets/meshes/floating-rock.ply",
+      "smooth": false,
+      "closed": true
+    },
+    {
+      "id": "octagonal-stone",
+      "path": "../../artifacts/scene-assets/meshes/octagonal-stone.ply",
+      "smooth": false,
+      "closed": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "sky-backdrop",
+      "mesh": "rounded-box",
+      "material": "sky",
+      "transform": [
+        18,
+        0,
+        0,
+        0,
+        0,
+        11,
+        0,
+        5,
+        0,
+        0,
+        0.12,
+        -6.2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cloud-deck",
+      "mesh": "rounded-box",
+      "material": "cloud-shadow",
+      "transform": [
+        18,
+        0,
+        0,
+        0,
+        0,
+        0.12,
+        0,
+        -2.25,
+        0,
+        0,
+        16,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cloud-0",
+      "mesh": "sphere",
+      "material": "cloud",
+      "transform": [
+        1.4,
+        0,
+        0,
+        -3,
+        0,
+        0.32,
+        0,
+        -1.26,
+        0,
+        0,
+        0.826,
+        -1.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cloud-1",
+      "mesh": "sphere",
+      "material": "cloud",
+      "transform": [
+        1.7,
+        0,
+        0,
+        -1.45,
+        0,
+        0.37,
+        0,
+        -1.44,
+        0,
+        0,
+        1.003,
+        -2.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cloud-2",
+      "mesh": "sphere",
+      "material": "cloud",
+      "transform": [
+        1.6,
+        0,
+        0,
+        0.8,
+        0,
+        0.42000000000000004,
+        0,
+        -1.48,
+        0,
+        0,
+        0.944,
+        -2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cloud-3",
+      "mesh": "sphere",
+      "material": "cloud",
+      "transform": [
+        1.45,
+        0,
+        0,
+        2.8,
+        0,
+        0.32,
+        0,
+        -1.28,
+        0,
+        0,
+        0.8554999999999999,
+        -2.8,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cloud-4",
+      "mesh": "sphere",
+      "material": "cloud",
+      "transform": [
+        1.2,
+        0,
+        0,
+        3.65,
+        0,
+        0.37,
+        0,
+        -0.9,
+        0,
+        0,
+        0.708,
+        -4,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cloud-5",
+      "mesh": "sphere",
+      "material": "cloud",
+      "transform": [
+        1.2,
+        0,
+        0,
+        -3.2,
+        0,
+        0.42000000000000004,
+        0,
+        0.35,
+        0,
+        0,
+        0.708,
+        -5,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "main-floating-island",
+      "mesh": "floating-rock",
+      "material": "rock",
+      "transform": [
+        1.2363734711836996,
+        0,
+        0.3275580140374443,
+        -0.5,
+        0,
+        1.05,
+        0,
+        0.15,
+        -0.40172209268743164,
+        0,
+        1.0081199072728628,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "main-arena-surface",
+      "mesh": "octagonal-stone",
+      "material": "rock-top",
+      "transform": [
+        1.2363734711836996,
+        0,
+        0.3275580140374443,
+        -0.5,
+        0,
+        0.085,
+        0,
+        1.18,
+        -0.40172209268743164,
+        0,
+        1.0081199072728628,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "island-energy-seam",
+      "mesh": "ring",
+      "material": "energy-gold",
+      "transform": [
+        1.15,
+        0,
+        0,
+        -0.5,
+        0,
+        0.22,
+        0,
+        1.04,
+        0,
+        0,
+        0.96,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "distant-floating-island",
+      "mesh": "floating-rock",
+      "material": "rock",
+      "transform": [
+        0.957325047590538,
+        0,
+        -0.32430683664609716,
+        2.4,
+        0,
+        0.86,
+        0,
+        0.66,
+        0.4063603736288447,
+        0,
+        0.7640190283655255,
+        -2.1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "distant-arena-surface",
+      "mesh": "octagonal-stone",
+      "material": "rock-top",
+      "transform": [
+        0.9665300961250625,
+        0,
+        -0.32430683664609716,
+        2.4,
+        0,
+        0.07,
+        0,
+        1.49,
+        0.41026768491373744,
+        0,
+        0.7640190283655255,
+        -2.1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "floating-fragment-0",
+      "mesh": "floating-rock",
+      "material": "rock",
+      "transform": [
+        0.22352934011792744,
+        0.08826617318534054,
+        0.13381296836802345,
+        -2.35,
+        -0.047512627967835584,
+        0.3275115410004445,
+        -0.04893648085707169,
+        0.65,
+        -0.17854182784444086,
+        0.023351085258070142,
+        0.1805527909999284,
+        0.25,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "floating-fragment-1",
+      "mesh": "floating-rock",
+      "material": "rock",
+      "transform": [
+        0.26873748982510937,
+        -0.17272692967050096,
+        -0.04400089751925242,
+        1.65,
+        0.08731810356036827,
+        0.4735212780029653,
+        -0.05870768950678638,
+        -0.26,
+        0.06523580575972085,
+        0.07773678051630561,
+        0.2598409671515926,
+        -0.4,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "floating-fragment-2",
+      "mesh": "floating-rock",
+      "material": "rock",
+      "transform": [
+        0.18169790363297675,
+        0.027381092079346834,
+        0.048794818347196144,
+        -1.65,
+        0,
+        0.23179596364169686,
+        -0.06742918681486416,
+        -0.77,
+        -0.05555062389731999,
+        0.08955951672468694,
+        0.15960065935938447,
+        0.58,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "floating-fragment-3",
+      "mesh": "floating-rock",
+      "material": "rock",
+      "transform": [
+        0.12131062763817696,
+        -0.12581066100604443,
+        0.09939430048875111,
+        2.12,
+        0.04177059888132477,
+        0.23375521865305796,
+        0.08283790626532479,
+        0.71,
+        -0.11153003492838623,
+        -0.04929680851417508,
+        0.13913538125124436,
+        0.82,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "ruined-pylon-base",
+      "mesh": "octagonal-stone",
+      "material": "arena-stone",
+      "transform": [
+        0.37,
+        0,
+        0,
+        2.57,
+        0,
+        0.1,
+        0,
+        1.61,
+        0,
+        0,
+        0.34,
+        -2.2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "ruined-pylon",
+      "mesh": "octagonal-stone",
+      "material": "arena-stone",
+      "transform": [
+        0.22,
+        0,
+        0,
+        2.57,
+        0,
+        0.84,
+        0,
+        2.48,
+        0,
+        0,
+        0.22,
+        -2.2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "pylon-orange-cap",
+      "mesh": "octagonal-stone",
+      "material": "arena-trim",
+      "transform": [
+        0.34,
+        0,
+        0,
+        2.57,
+        0,
+        0.07,
+        0,
+        3.36,
+        0,
+        0,
+        0.31,
+        -2.2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "pylon-glowing-cap",
+      "mesh": "octagonal-stone",
+      "material": "energy-blue",
+      "transform": [
+        0.19,
+        0,
+        0,
+        2.57,
+        0,
+        0.025,
+        0,
+        3.46,
+        0,
+        0,
+        0.18,
+        -2.2,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "broken-arch-block-0",
+      "mesh": "rounded-box",
+      "material": "arena-trim",
+      "transform": [
+        0.16216594200651657,
+        -0.3233246532964663,
+        0,
+        1.6233671683276965,
+        0.2404208960409621,
+        0.21808523235359126,
+        0,
+        2.760475561995751,
+        0,
+        0,
+        0.29,
+        -3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "broken-arch-block-1",
+      "mesh": "rounded-box",
+      "material": "arena-stone",
+      "transform": [
+        0.2316042979137149,
+        -0.23470785902929883,
+        0,
+        1.0962108537127522,
+        0.17452635671409397,
+        0.3114678489184442,
+        0,
+        3.4500702689362033,
+        0,
+        0,
+        0.29,
+        -3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "broken-arch-block-2",
+      "mesh": "rounded-box",
+      "material": "arena-stone",
+      "transform": [
+        0.2758063897255945,
+        -0.12051662780622949,
+        0,
+        0.4169194269498781,
+        0.08961492836873473,
+        0.3709120413551099,
+        0,
+        3.889042766930042,
+        0,
+        0,
+        0.29,
+        -3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "broken-arch-block-3",
+      "mesh": "rounded-box",
+      "material": "arena-trim",
+      "transform": [
+        0.28995583159535343,
+        0.00680643851054057,
+        0,
+        -0.34048958293449766,
+        -0.005061197866812218,
+        0.3899406011109926,
+        0,
+        4.029561362050407,
+        0,
+        0,
+        0.29,
+        -3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "broken-arch-block-4",
+      "mesh": "rounded-box",
+      "material": "arena-stone",
+      "transform": [
+        0.2725108600279134,
+        0.1333878558970108,
+        0,
+        -1.0934867325155513,
+        -0.09918584156444392,
+        0.3664801221065043,
+        0,
+        3.856314747863416,
+        0,
+        0,
+        0.29,
+        -3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "broken-arch-block-5",
+      "mesh": "rounded-box",
+      "material": "arena-stone",
+      "transform": [
+        0.22537232882252153,
+        0.2454349525094366,
+        0,
+        -1.7600233072356224,
+        -0.18250291340445282,
+        0.30308692496821865,
+        0,
+        3.3881803689960766,
+        0,
+        0,
+        0.29,
+        -3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "broken-arch-block-6",
+      "mesh": "rounded-box",
+      "material": "arena-trim",
+      "transform": [
+        0.1536765866276294,
+        0.3307387575010061,
+        0,
+        -2.267471583082908,
+        -0.24593394788536352,
+        0.2066685130509499,
+        0,
+        2.67616748099163,
+        0,
+        0,
+        0.29,
+        -3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "pelvis",
+      "mesh": "small-sphere",
+      "material": "hero-purple",
+      "transform": [
+        0.29,
+        0,
+        0,
+        -0.08,
+        0,
+        0.23,
+        0,
+        2.46,
+        0,
+        0,
+        0.235,
+        0.13,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "tunic-body",
+      "mesh": "rounded-box",
+      "material": "hero-teal",
+      "transform": [
+        0.30207189067867546,
+        0.09979761159252447,
+        -0.019607771551522764,
+        0.035,
+        -0.06420736245982205,
+        0.46951084835222673,
+        0.004167760503002953,
+        2.94,
+        0.02701828025177403,
+        0,
+        0.2291247805611015,
+        0.13,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "orange-wrap-front",
+      "mesh": "tunic-panel",
+      "material": "hero-orange",
+      "transform": [
+        0.2630948725265883,
+        0.07692732560257094,
+        -0.030690425037166066,
+        0,
+        -0.05592254149726436,
+        0.3619146122715081,
+        0.006523451222091578,
+        2.97,
+        0.023532050541867706,
+        0,
+        0.35863009131302837,
+        0.365,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-tunic-tail",
+      "mesh": "tunic-panel",
+      "material": "hero-teal",
+      "transform": [
+        0.18654162308035346,
+        0.056031674737441965,
+        -0.08848172431666011,
+        -0.24,
+        -0.04651005032974991,
+        0.2622212641846459,
+        -0.015619090281986662,
+        2.37,
+        0.05512747116339983,
+        0.03163004956562079,
+        0.2862289791071367,
+        0.3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-tunic-tail",
+      "mesh": "tunic-panel",
+      "material": "hero-teal",
+      "transform": [
+        0.1668025798914472,
+        -0.06629635361315307,
+        0.07136246844049905,
+        0.17,
+        0.0541974435891941,
+        0.2283540807989397,
+        -0.017786800752972735,
+        2.37,
+        -0.0404911897818957,
+        0.032545464815717046,
+        0.2701685174424527,
+        0.29,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "waist-belt",
+      "mesh": "disc",
+      "material": "hero-wrap",
+      "transform": [
+        0.3156799359263695,
+        0.006541135745123075,
+        -0.021576887262615144,
+        -0.07,
+        -0.044365921693889414,
+        0.046542599230853805,
+        0.0030324337461673304,
+        2.54,
+        0.027889837679250615,
+        0,
+        0.2490486745229364,
+        0.13,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "belt-clasp",
+      "mesh": "octagonal-stone",
+      "material": "arena-trim",
+      "transform": [
+        0.065,
+        0,
+        0,
+        -0.13,
+        0,
+        1.285879139104721E-18,
+        -0.071,
+        2.55,
+        0,
+        0.021,
+        4.3474961369731035E-18,
+        0.393,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "neck",
+      "mesh": "rounded-cylinder",
+      "material": "hero-skin",
+      "transform": [
+        0.09831456364474968,
+        0.045,
+        -0.004081727099225395,
+        0.16499999999999998,
+        -0.03686796136678116,
+        0.1199999999999999,
+        -0.010884605597934378,
+        3.41,
+        0,
+        0.015,
+        0.09932202608115115,
+        0.14500000000000002,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "neck-scarf",
+      "mesh": "ring",
+      "material": "hero-orange",
+      "transform": [
+        0.18650916485505617,
+        0.14119865657864317,
+        0,
+        0.155,
+        -0.03625370912154351,
+        0.7264041157512713,
+        0,
+        3.38,
+        0,
+        0,
+        0.16,
+        0.16,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "streaming-scarf",
+      "mesh": "hero-scarf",
+      "material": "hero-orange",
+      "transform": [
+        -0.8415481852474712,
+        -0.24266851491987174,
+        0,
+        0.02,
+        0.2572871001560086,
+        -0.7937329474493193,
+        0,
+        3.37,
+        0,
+        0,
+        0.82,
+        -0.105,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-upper-sleeve",
+      "mesh": "rounded-cylinder",
+      "material": "hero-orange",
+      "transform": [
+        -0.04472199920899536,
+        -0.29000000000000004,
+        0.030873978630351913,
+        -0.58,
+        0.15258093847774898,
+        -0.08499999999999996,
+        0.009049269598551417,
+        3.145,
+        0,
+        0.06499999999999999,
+        0.1495791033642912,
+        0.235,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-elbow",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.121,
+        0,
+        0,
+        -0.87,
+        0,
+        0.122,
+        0,
+        3.06,
+        0,
+        0,
+        0.116,
+        0.3,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-forearm",
+      "mesh": "tapered-leg",
+      "material": "hero-skin",
+      "transform": [
+        -0.04874644391753239,
+        0.24500000000000005,
+        0.032892008943390075,
+        -1.115,
+        -0.09186829815227267,
+        -0.1299999999999999,
+        -0.01745290270465594,
+        3.19,
+        0,
+        -0.11000000000000001,
+        0.09388563220668944,
+        0.41000000000000003,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-wrist-wrap",
+      "mesh": "rounded-cylinder",
+      "material": "hero-wrap",
+      "transform": [
+        -0.05296488617962644,
+        0.06615000000000004,
+        0.03419466276293029,
+        -1.29385,
+        -0.0998184393385271,
+        -0.03509999999999991,
+        -0.018144106772167032,
+        3.2849,
+        0,
+        -0.029700000000000004,
+        0.0976038750663603,
+        0.4903,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-upper-sleeve",
+      "mesh": "rounded-cylinder",
+      "material": "hero-orange",
+      "transform": [
+        0.08637695322700663,
+        0.255,
+        0.025890454964466722,
+        0.655,
+        -0.133491654987192,
+        0.16500000000000006,
+        0.01675264732994906,
+        3.425,
+        0,
+        -0.0625,
+        0.14986004520608978,
+        0.0475,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-elbow",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.121,
+        0,
+        0,
+        0.91,
+        0,
+        0.122,
+        0,
+        3.59,
+        0,
+        0,
+        0.116,
+        -0.015,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-forearm",
+      "mesh": "tapered-leg",
+      "material": "hero-skin",
+      "transform": [
+        -0.07968392048508242,
+        0.13,
+        0.028178971079965722,
+        0.78,
+        -0.06683167524555299,
+        -0.15500000000000003,
+        -0.03359800397995914,
+        3.745,
+        0,
+        -0.0975,
+        0.09098417289527398,
+        0.08249999999999999,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-wrist-wrap",
+      "mesh": "rounded-cylinder",
+      "material": "hero-wrap",
+      "transform": [
+        -0.08657964437321453,
+        0.035099999999999965,
+        0.02929496993461787,
+        0.6851,
+        -0.07261518560334124,
+        -0.04184999999999994,
+        -0.034928617998967446,
+        3.85815,
+        0,
+        -0.026325,
+        0.09458750647528479,
+        0.153675,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "open-palm",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.11876090949353811,
+        0.040673664307580015,
+        0,
+        -1.465,
+        -0.05287576359985402,
+        0.0913545457642601,
+        0,
+        3.407,
+        0,
+        0,
+        0.055,
+        0.558,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "open-hand-finger-0",
+      "mesh": "rounded-cylinder",
+      "material": "hero-skin",
+      "transform": [
+        0.019120452192522328,
+        -0.03500000000000003,
+        0.0007669728446274844,
+        -1.545,
+        0.01088155815834607,
+        0.06149999999999989,
+        -0.0013476808555597187,
+        3.5084999999999997,
+        -0,
+        0.004999999999999949,
+        0.02194528443577713,
+        0.565,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "open-hand-finger-1",
+      "mesh": "rounded-cylinder",
+      "material": "hero-skin",
+      "transform": [
+        0.020402310581737217,
+        -0.02500000000000002,
+        0.0006141533411464438,
+        -1.4900000000000002,
+        0.008230778998754226,
+        0.06196956140125142,
+        -0.0015223525273583291,
+        3.518969561401251,
+        -0,
+        0.004999999999999949,
+        0.021938670389428903,
+        0.565,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "open-hand-finger-2",
+      "mesh": "rounded-cylinder",
+      "material": "hero-skin",
+      "transform": [
+        0.021285462557866147,
+        -0.015000000000000126,
+        0.0004669675981282743,
+        -1.435,
+        0.005561392244544358,
+        0.0574104332743668,
+        -0.001787254142242293,
+        3.524410433274367,
+        -0,
+        0.004999999999999949,
+        0.021922309729892425,
+        0.565,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "open-hand-finger-3",
+      "mesh": "rounded-cylinder",
+      "material": "hero-skin",
+      "transform": [
+        0.021878701328075935,
+        -0.0050000000000000044,
+        0.0002406092116349488,
+        -1.38,
+        0.002307038837308173,
+        0.0474172800523891,
+        -0.002281806874255783,
+        3.524417280052389,
+        -0,
+        0.004999999999999949,
+        0.021880024328045783,
+        0.565,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "open-hand-thumb",
+      "mesh": "rounded-cylinder",
+      "material": "hero-skin",
+      "transform": [
+        0.009065797220613474,
+        -0.07000000000000006,
+        0.005044111540093117,
+        -1.55,
+        0.03173029027214717,
+        0.020000000000000018,
+        -0.0014411747257408907,
+        3.38,
+        -0,
+        0.012500000000000011,
+        0.030552904185706883,
+        0.5774999999999999,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "raised-fist",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.1033190877221781,
+        0.048601100100180435,
+        0,
+        0.592,
+        -0.048178481838439736,
+        0.10422539550921475,
+        0,
+        3.991,
+        0,
+        0,
+        0.085,
+        0.23,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "fist-knuckle-0",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.029,
+        0,
+        0,
+        0.52,
+        0,
+        0.035,
+        0,
+        4.054,
+        0,
+        0,
+        0.034,
+        0.263,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "fist-knuckle-1",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.029,
+        0,
+        0,
+        0.561,
+        0,
+        0.035,
+        0,
+        4.054,
+        0,
+        0,
+        0.034,
+        0.263,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "fist-knuckle-2",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.029,
+        0,
+        0,
+        0.602,
+        0,
+        0.035,
+        0,
+        4.054,
+        0,
+        0,
+        0.034,
+        0.263,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "fist-knuckle-3",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.029,
+        0,
+        0,
+        0.643,
+        0,
+        0.035,
+        0,
+        4.054,
+        0,
+        0,
+        0.034,
+        0.263,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "planted-thigh",
+      "mesh": "rounded-cylinder",
+      "material": "hero-purple",
+      "transform": [
+        -0.09632627523638156,
+        -0.29,
+        0.025358690377281615,
+        -0.53,
+        0.11887072263213037,
+        -0.23500000000000013,
+        0.020549283581590288,
+        2.1950000000000003,
+        0,
+        0.085,
+        0.14333061001276926,
+        0.175,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "planted-knee",
+      "mesh": "small-sphere",
+      "material": "hero-purple",
+      "transform": [
+        0.146,
+        0,
+        0,
+        -0.82,
+        0,
+        0.145,
+        0,
+        1.96,
+        0,
+        0,
+        0.141,
+        0.26,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "planted-shin",
+      "mesh": "tapered-leg",
+      "material": "hero-purple",
+      "transform": [
+        0.11909482134244224,
+        -0.05999999999999999,
+        0,
+        -0.76,
+        0.02646551585387605,
+        0.27,
+        0,
+        1.69,
+        -0,
+        0,
+        0.112,
+        0.26,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "planted-kneepad",
+      "mesh": "small-sphere",
+      "material": "hero-orange",
+      "transform": [
+        0.1,
+        0,
+        0,
+        -0.82,
+        0,
+        0.119,
+        0,
+        1.96,
+        0,
+        0,
+        0.032,
+        0.385,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "planted-boot-cuff",
+      "mesh": "rounded-cylinder",
+      "material": "hero-wrap",
+      "transform": [
+        0.135,
+        0,
+        0,
+        -0.7,
+        0,
+        0.125,
+        0,
+        1.448,
+        0,
+        0,
+        0.12,
+        0.26,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "planted-boot",
+      "mesh": "rounded-box",
+      "material": "hero-wrap",
+      "transform": [
+        0.15165035472738372,
+        0,
+        -0.06599885650114279,
+        -0.76,
+        0,
+        0.097,
+        0,
+        1.345,
+        0.04063459008109575,
+        0,
+        0.24631108570371243,
+        0.4,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "planted-boot-sole",
+      "mesh": "rounded-box",
+      "material": "hero-hair",
+      "transform": [
+        0.15358220637996187,
+        0,
+        -0.06651649459134783,
+        -0.76,
+        0,
+        0.026,
+        0,
+        1.268,
+        0.0411522281713008,
+        0,
+        0.24824293735629055,
+        0.4,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "raised-thigh",
+      "mesh": "rounded-cylinder",
+      "material": "hero-purple",
+      "transform": [
+        -0.02197931279823828,
+        0.31000000000000005,
+        -0.053916724945135594,
+        0.44,
+        -0.1514130437211973,
+        -0.04499999999999993,
+        0.00782662136300354,
+        2.375,
+        0,
+        0.125,
+        0.13653106155461756,
+        0.185,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "raised-knee",
+      "mesh": "small-sphere",
+      "material": "hero-purple",
+      "transform": [
+        0.146,
+        0,
+        0,
+        0.75,
+        0,
+        0.145,
+        0,
+        2.33,
+        0,
+        0,
+        0.141,
+        0.31,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "raised-shin",
+      "mesh": "tapered-leg",
+      "material": "hero-purple",
+      "transform": [
+        0.09960270801983755,
+        -0.14500000000000002,
+        0.017367879166083594,
+        0.895,
+        0.07045069591647045,
+        0.20500000000000007,
+        -0.024554587786531985,
+        2.125,
+        -0,
+        0.06999999999999999,
+        0.10788618536173115,
+        0.24,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "raised-kneepad",
+      "mesh": "small-sphere",
+      "material": "hero-orange",
+      "transform": [
+        0.1,
+        0,
+        0,
+        0.75,
+        0,
+        0.119,
+        0,
+        2.33,
+        0,
+        0,
+        0.032,
+        0.435,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "raised-boot-cuff",
+      "mesh": "rounded-cylinder",
+      "material": "hero-wrap",
+      "transform": [
+        0.135,
+        0,
+        0,
+        1.04,
+        0,
+        0.125,
+        0,
+        1.948,
+        0,
+        0,
+        0.12,
+        0.17,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "raised-boot",
+      "mesh": "rounded-box",
+      "material": "hero-wrap",
+      "transform": [
+        0.13015889889114154,
+        0,
+        0.14259419038504045,
+        1.17,
+        0,
+        0.097,
+        0,
+        1.85,
+        -0.08779328584490727,
+        0,
+        0.2114045810015356,
+        0.33,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "raised-boot-sole",
+      "mesh": "rounded-box",
+      "material": "hero-hair",
+      "transform": [
+        0.13181697403625162,
+        0,
+        0.14371257619198197,
+        1.17,
+        0,
+        0.026,
+        0,
+        1.7730000000000001,
+        -0.08891167165184875,
+        0,
+        0.2130626561466457,
+        0.33,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "hero-head",
+      "mesh": "sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.26738649161481776,
+        0.0643026314418956,
+        -0.06758097353091597,
+        0.205,
+        -0.051974668899338244,
+        0.33080836082186277,
+        0.013136410526767414,
+        3.737,
+        0.07298697071891085,
+        0,
+        0.2569362697928922,
+        0.19,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "hero-jaw",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.19153216775245813,
+        0.033200765195518796,
+        -0.049796506812253866,
+        0.15026706574671012,
+        -0.037230081977540165,
+        0.17080312991989352,
+        0.00967946038814441,
+        3.5693635830630064,
+        0.052281447110709194,
+        0,
+        0.1893214619526574,
+        0.2711377694082817,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "hero-nose",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.061631638138167216,
+        0.012402584699475413,
+        -0.019562913390528305,
+        0.12438389362070805,
+        -0.011979976873960943,
+        0.06380576692409816,
+        0.003802645152485304,
+        3.6966407654569493,
+        0.016823237931663848,
+        0,
+        0.07437628862425825,
+        0.45659552805578285,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-hero-ear",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.057838921945049235,
+        0.01793604556539521,
+        -0.013973509564663075,
+        -0.06052701681565595,
+        -0.01124274752787104,
+        0.09227295524408041,
+        0.002716175108918074,
+        3.7692576064088943,
+        0.015787961751253764,
+        0,
+        0.053125920445898756,
+        0.13093351060248065,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-hero-ear-inset",
+      "mesh": "small-sphere",
+      "material": "hero-skin-shade",
+      "transform": [
+        0.026549013351825877,
+        0.009922067759580329,
+        -0.0025406381026660137,
+        -0.083464546486787,
+        -0.0051606054226293295,
+        0.05104461353927853,
+        0.0004938500198032862,
+        3.775753643907135,
+        0.007246933262870581,
+        0,
+        0.009659258262890684,
+        0.17322619589683663,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-hero-eye",
+      "mesh": "small-sphere",
+      "material": "hero-eye",
+      "transform": [
+        0.05860062705975887,
+        0.008204786801191426,
+        -0.015152080129425177,
+        0.05070037204991093,
+        -0.011390808003540078,
+        0.04220996888824955,
+        0.002945266019637147,
+        3.8057040437890715,
+        0.030417363482549635,
+        0,
+        0.030294221822404516,
+        0.398509901878768,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-hero-iris",
+      "mesh": "small-sphere",
+      "material": "hero-iris",
+      "transform": [
+        0.022756297158707896,
+        0.005724269861296344,
+        -0.0015243828615996082,
+        0.04396338197530231,
+        -0.0044233760765394255,
+        0.02944881550342992,
+        0.00029631001188197174,
+        3.8080322986973867,
+        0.006211657082460498,
+        0,
+        0.00579555495773441,
+        0.4287124215388317,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left-hero-brow",
+      "mesh": "rounded-box",
+      "material": "hero-hair",
+      "transform": [
+        0.06365733178098715,
+        0.005725390937298732,
+        -0.006929934777974215,
+        0.06341545399664614,
+        -0.024144331448712794,
+        0.015992064973280522,
+        0.0018174837039244356,
+        3.867411634011732,
+        0.03146101348367571,
+        0.0006882997206682157,
+        0.015416638964410909,
+        0.3997346467501596,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-hero-ear",
+      "mesh": "small-sphere",
+      "material": "hero-skin",
+      "transform": [
+        0.057838921945049235,
+        0.01793604556539521,
+        -0.013973509564663075,
+        0.4571787435449487,
+        -0.01124274752787104,
+        0.09227295524408041,
+        0.002716175108918074,
+        3.6686258006676224,
+        0.015787961751253764,
+        0,
+        0.053125920445898756,
+        0.272248709228457,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-hero-ear-inset",
+      "mesh": "small-sphere",
+      "material": "hero-skin-shade",
+      "transform": [
+        0.026549013351825877,
+        0.009922067759580329,
+        -0.0025406381026660137,
+        0.4569975110325254,
+        -0.0051606054226293295,
+        0.05104461353927853,
+        0.0004938500198032862,
+        3.6706984620893235,
+        0.007246933262870581,
+        0,
+        0.009659258262890684,
+        0.32075305160527345,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-hero-eye",
+      "mesh": "small-sphere",
+      "material": "hero-eye",
+      "transform": [
+        0.06567888713308849,
+        0.008204786801191426,
+        -0.0017467295088732402,
+        0.249817972188605,
+        -0.01276668238475106,
+        0.04220996888824955,
+        0.0003395298219147553,
+        3.7669995031193517,
+        0.003506509068277236,
+        0,
+        0.03395340418165552,
+        0.4528619013502973,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-hero-iris",
+      "mesh": "small-sphere",
+      "material": "hero-iris",
+      "transform": [
+        0.022756297158707896,
+        0.005724269861296344,
+        -0.0015243828615996082,
+        0.22222104305184748,
+        -0.0044233760765394255,
+        0.02944881550342992,
+        0.00029631001188197174,
+        3.7733825194311614,
+        0.006211657082460498,
+        0,
+        0.00579555495773441,
+        0.4773704020181056,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right-hero-brow",
+      "mesh": "rounded-box",
+      "material": "hero-hair",
+      "transform": [
+        0.07468433365602628,
+        0.0006822429431801546,
+        -0.0014007713254980017,
+        0.26063669603878126,
+        -0.0027465642455606985,
+        0.016972353639404556,
+        0.0007427232027591344,
+        3.8290757080150573,
+        0.006301324559197611,
+        -0.0006882997206682157,
+        0.01692590328277182,
+        0.4535690081314839,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "hero-mouth",
+      "mesh": "small-sphere",
+      "material": "hero-skin-shade",
+      "transform": [
+        0.07237938559977321,
+        0.002727221587528934,
+        -0.0017784466718662095,
+        0.10955882404269573,
+        -0.02099451414354642,
+        0.009618283528448372,
+        0.00034569501386230034,
+        3.5986695142639453,
+        0.02011106451871136,
+        0.00022557566113149834,
+        0.006761480784023478,
+        0.44114071483515777,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "cropped-hair-base",
+      "mesh": "sphere",
+      "material": "hero-hair",
+      "transform": [
+        0.2854018935321282,
+        0.038161799075308964,
+        -0.07266224973624798,
+        0.2554844161485923,
+        -0.05547650829326529,
+        0.1963254366895328,
+        0.014124110566373985,
+        3.932967595963353,
+        0.07790453257585873,
+        0,
+        0.2762547863186735,
+        0.1446014861644138,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "swept-lock-0",
+      "mesh": "swept-hair-lock",
+      "material": "hero-hair",
+      "transform": [
+        0.4182147524587265,
+        -0.07981824177334096,
+        -0.1641743371419587,
+        0.0297959874271147,
+        0.06173281073799818,
+        0.47275091421505816,
+        -0.04703801571566939,
+        4.00230489988092,
+        0.1813435438725973,
+        0.023143495609765474,
+        0.3946317423897005,
+        0.2866791812001704,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "swept-lock-1",
+      "mesh": "swept-hair-lock",
+      "material": "hero-hair",
+      "transform": [
+        0.416611864302624,
+        -0.09492373524200078,
+        -0.10557977570302716,
+        0.09034308409939532,
+        0.07926255378541294,
+        0.47008889270158793,
+        -0.03910571468686773,
+        3.9991079419178126,
+        0.11345925299289843,
+        0.020147393039833317,
+        0.41499837835987724,
+        0.27895675372126294,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "swept-lock-2",
+      "mesh": "swept-hair-lock",
+      "material": "hero-hair",
+      "transform": [
+        0.40451582936634617,
+        -0.10962095509940961,
+        -0.04575184722848406,
+        0.14941399739179273,
+        0.0932771488727143,
+        0.46704325862702256,
+        -0.025298428572770464,
+        3.9883166788194186,
+        0.04889087123619925,
+        0.01593238130805793,
+        0.42680997878087373,
+        0.27123432624235555,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "swept-lock-3",
+      "mesh": "swept-hair-lock",
+      "material": "hero-hair",
+      "transform": [
+        0.3832943848123644,
+        -0.12408949309788786,
+        0.013743934913321598,
+        0.2068897401161198,
+        0.102846458607086,
+        0.4635647866655125,
+        -0.006020984416215052,
+        3.9693189745689006,
+        -0.010817602474304494,
+        0.010463568534068941,
+        0.4297381202543685,
+        0.26351189876344816,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "swept-lock-4",
+      "mesh": "swept-hair-lock",
+      "material": "hero-hair",
+      "transform": [
+        0.3545532882937513,
+        -0.13850161267064504,
+        0.07139367515483794,
+        0.2641179175479674,
+        0.1073757506715351,
+        0.45956865316153517,
+        0.01807232486769063,
+        3.9490476572987423,
+        -0.06433050542170803,
+        0.0037358156971730935,
+        0.4236464731610098,
+        0.25578947128454077,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "swept-lock-5",
+      "mesh": "swept-hair-lock",
+      "material": "hero-hair",
+      "transform": [
+        0.32005344116522694,
+        -0.15301451944388464,
+        0.12578550475180866,
+        0.3226737453511261,
+        0.10662044620612639,
+        0.4549381334064492,
+        0.04610161901814275,
+        3.935606509078117,
+        -0.11055711306425786,
+        -0.004225116804645976,
+        0.4085983939251827,
+        0.24806704380563332,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "side-lock",
+      "mesh": "swept-hair-lock",
+      "material": "hero-hair",
+      "transform": [
+        -0.18827832700194908,
+        0.286554937678128,
+        0.006712319309071277,
+        -0.038334178963149806,
+        -0.2570716174836369,
+        -0.1627328995769919,
+        0.1876224017418563,
+        3.954425060988151,
+        0.1447945270571157,
+        0.08369152339125416,
+        0.3418373577216372,
+        0.2008083394945171,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "palm-energy-core",
+      "mesh": "sphere",
+      "material": "energy-blue",
+      "transform": [
+        0.135,
+        0,
+        0,
+        -1.83,
+        0,
+        0.135,
+        0,
+        3.72,
+        0,
+        0,
+        0.135,
+        0.66,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "palm-energy-orbit",
+      "mesh": "ring",
+      "material": "energy-blue",
+      "transform": [
+        0.312174592110274,
+        0.047727275547613975,
+        -0.10009858838235343,
+        -1.83,
+        -0.12612672225194352,
+        0.056572006472937114,
+        -0.297108343310061,
+        3.72,
+        -0.04731885432642225,
+        0.16407838142920625,
+        0.13155571040213782,
+        0.66,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "palm-energy-cross-orbit",
+      "mesh": "ring",
+      "material": "energy-gold",
+      "transform": [
+        0.15809279164389592,
+        -0.10535202925661556,
+        0.00544993349052799,
+        -1.83,
+        0.20234954577464848,
+        0.06911562141608384,
+        -0.10653019331120353,
+        3.72,
+        0.0834345884812358,
+        0.03199970012018541,
+        0.2480355138644997,
+        0.66,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "energy-spark-0",
+      "mesh": "sentinel-fin",
+      "material": "energy-blue",
+      "transform": [
+        1.6532731788489268E-18,
+        0.065,
+        0,
+        -1.32,
+        -0.027,
+        3.980102097228898E-18,
+        0,
+        3.72,
+        0,
+        0,
+        0.045,
+        0.65,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "energy-spark-1",
+      "mesh": "sentinel-fin",
+      "material": "energy-blue",
+      "transform": [
+        0.025678525939969145,
+        0.02008610463437158,
+        0,
+        -1.6724013328687768,
+        -0.00834345884812358,
+        0.06181867355918498,
+        0,
+        4.157485997495771,
+        0,
+        0,
+        0.045,
+        0.65,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "energy-spark-2",
+      "mesh": "sentinel-fin",
+      "material": "energy-blue",
+      "transform": [
+        0.015870201811896776,
+        -0.052586104634371585,
+        0,
+        -2.2425986671312232,
+        0.02184345884812358,
+        0.03820604139901076,
+        0,
+        3.990381216054538,
+        0,
+        0,
+        0.045,
+        0.65,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "energy-spark-3",
+      "mesh": "sentinel-fin",
+      "material": "energy-blue",
+      "transform": [
+        -0.015870201811896772,
+        -0.052586104634371585,
+        0,
+        -2.2425986671312232,
+        0.02184345884812358,
+        -0.03820604139901075,
+        0,
+        3.4496187839454624,
+        0,
+        0,
+        0.045,
+        0.65,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "energy-spark-4",
+      "mesh": "sentinel-fin",
+      "material": "energy-blue",
+      "transform": [
+        -0.025678525939969145,
+        0.020086104634371604,
+        0,
+        -1.672401332868777,
+        -0.008343458848123588,
+        -0.06181867355918498,
+        0,
+        3.2825140025042296,
+        0,
+        0,
+        0.045,
+        0.65,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "sun-key",
+      "kind": "point",
+      "position": [
+        -3.7,
+        7.3,
+        5.2
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1,
+        0.85,
+        0.63
+      ],
+      "intensity": 2.6,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "sky-fill",
+      "kind": "point",
+      "position": [
+        4.3,
+        4.9,
+        2.7
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.49,
+        0.72,
+        1
+      ],
+      "intensity": 1.05,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "violet-rim",
+      "kind": "point",
+      "position": [
+        -0.3,
+        5.7,
+        -3.6
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.73,
+        0.47,
+        1
+      ],
+      "intensity": 1.8,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "high-sun",
+      "kind": "directional",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "direction": [
+        -0.5,
+        1,
+        0.25
+      ],
+      "colour": [
+        1,
+        0.92,
+        0.75
+      ],
+      "intensity": 0.34,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "energy-direct-accent",
+      "kind": "point",
+      "position": [
+        -1.55,
+        3.84,
+        1.16
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.12,
+        0.64,
+        1
+      ],
+      "intensity": 0.22,
+      "size": [
+        1,
+        1
+      ]
+    }
+  ],
+  "subjects": [
+    "pelvis",
+    "tunic-body",
+    "orange-wrap-front",
+    "left-tunic-tail",
+    "right-tunic-tail",
+    "waist-belt",
+    "belt-clasp",
+    "neck",
+    "neck-scarf",
+    "streaming-scarf",
+    "left-upper-sleeve",
+    "left-elbow",
+    "left-forearm",
+    "left-wrist-wrap",
+    "right-upper-sleeve",
+    "right-elbow",
+    "right-forearm",
+    "right-wrist-wrap",
+    "open-palm",
+    "open-hand-finger-0",
+    "open-hand-finger-1",
+    "open-hand-finger-2",
+    "open-hand-finger-3",
+    "open-hand-thumb",
+    "raised-fist",
+    "fist-knuckle-0",
+    "fist-knuckle-1",
+    "fist-knuckle-2",
+    "fist-knuckle-3",
+    "planted-thigh",
+    "planted-knee",
+    "planted-shin",
+    "planted-kneepad",
+    "planted-boot-cuff",
+    "planted-boot",
+    "planted-boot-sole",
+    "raised-thigh",
+    "raised-knee",
+    "raised-shin",
+    "raised-kneepad",
+    "raised-boot-cuff",
+    "raised-boot",
+    "raised-boot-sole",
+    "hero-head",
+    "hero-jaw",
+    "hero-nose",
+    "left-hero-ear",
+    "left-hero-ear-inset",
+    "left-hero-eye",
+    "left-hero-iris",
+    "left-hero-brow",
+    "right-hero-ear",
+    "right-hero-ear-inset",
+    "right-hero-eye",
+    "right-hero-iris",
+    "right-hero-brow",
+    "hero-mouth",
+    "cropped-hair-base",
+    "swept-lock-0",
+    "swept-lock-1",
+    "swept-lock-2",
+    "swept-lock-3",
+    "swept-lock-4",
+    "swept-lock-5",
+    "side-lock"
+  ]
+}

@@ -1,0 +1,1132 @@
+{
+  "schemaVersion": 1,
+  "generator": "SceneAssets/1",
+  "seed": 2026,
+  "license": "GPL-2.0-only",
+  "coordinates": "Right-handed; \u002BY up; subjects face \u002BZ; scene units are arbitrary consistent design units; transforms are row-major affine.",
+  "textureConvention": "PLY vertices store x y z nx ny nz u v, with u/v in [0,1]; indexed seams are shared to preserve closed topology. Reject non-finite UVs, clamp each component to [0,1], then nearest sample x=min(width-1,int(u*width)), y=min(height-1,int((1-v)*height)); v=0 is bottom and v=1 is top. PNG masks are gamma-2 encoded; decoded texels multiply authored base and ambient colours in every engine, never specular/reflection colours.",
+  "timingBoundary": "Run this generator and verify all hashes before benchmarking. Asset generation and validation are excluded from render timing.",
+  "sources": [
+    {
+      "path": "SceneAssets/SceneAssets.fsproj",
+      "sha256": "811600a04d6c06bdacc577d0303ea671cfeabe92b469d3ba6f4ca604f574d40f"
+    },
+    {
+      "path": "SceneAssets/packages.lock.json",
+      "sha256": "199c8bc5f22115369e727497a84f5d36eb21d9977c08550d97e50765a2bdacd3"
+    },
+    {
+      "path": "SceneAssets/Geometry.fs",
+      "sha256": "3e9fe6f03f91055efaedbb6244311dbd22059309bf09d1f9599a5be2f9b6a935"
+    },
+    {
+      "path": "SceneAssets/Meshes.fs",
+      "sha256": "4f23f7765d14f7e791cacde09e521e2b5340b919a8901694543bd883dd60292b"
+    },
+    {
+      "path": "SceneAssets/Textures.fs",
+      "sha256": "5c7099807c20d60b5bc9af4cf3301b42d144db7ea23b68199ec82aaf800d8f90"
+    },
+    {
+      "path": "SceneAssets/Scenes.fs",
+      "sha256": "bbe17aa71f6b623e0050cc7c155aa0054846963b6a3c6f7087b3010d845f1d66"
+    },
+    {
+      "path": "SceneAssets/Checks.fs",
+      "sha256": "6a43e3767b39109dbde97babeb97a28db60692c32e395b7d36aae2ee6777991a"
+    },
+    {
+      "path": "SceneAssets/Program.fs",
+      "sha256": "cc82e83d8e252922113f8a6e40c9898e47f33b3d2d7cd342c94b53445e551d74"
+    },
+    {
+      "path": "SceneFormat/SceneFormat.fs",
+      "sha256": "5b34dcdfdf9edee125544a54185ae1138bb5142b4c071eff6eeaa0fe076dbbfb"
+    },
+    {
+      "path": "RayTracer.ImageIO/RayTracer.ImageIO.fsproj",
+      "sha256": "732bb4218c96ffd53dc46007824569dcb46b8a07f53e42cfa5797b10552ecf67"
+    },
+    {
+      "path": "RayTracer.ImageIO/RgbImage.fs",
+      "sha256": "dd0fcbae601f606dab5d5ff5cce0092bdd23f6c1c660e09e2981331cd6f640fd"
+    },
+    {
+      "path": "RayTracer.ImageIO/packages.lock.json",
+      "sha256": "9ece3545e2e2b99f550b5f30aca7317642508eeb430c484a878a4af8e8794afc"
+    },
+    {
+      "path": "global.json",
+      "sha256": "c39786ab1a147662bbe4db015f900165178875ec4a872ddae53bc0c90771ac34"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    }
+  ],
+  "meshes": [
+    {
+      "id": "sphere",
+      "path": "artifacts/scene-assets/meshes/sphere.ply",
+      "sha256": "2c518f6b50542995d0038ffa70a362db39419ba94f7b23e1da37468f2050d377",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "UV sphere deformation; 32 meridians, 20 latitudes; shared seam and pole indices",
+      "smooth": true,
+      "topology": {
+        "vertices": 610,
+        "triangles": 1216,
+        "edges": 1824,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 4.1363067556180715,
+        "boundsMin": [
+          -1,
+          -1,
+          -1
+        ],
+        "boundsMax": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "small-sphere",
+      "path": "artifacts/scene-assets/meshes/small-sphere.ply",
+      "sha256": "3f7b4f85cd8b2dea3a1a6833b1693151daab474ee6588b04ca234fb5c61fc05d",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "UV sphere deformation; 20 meridians, 12 latitudes; shared seam and pole indices",
+      "smooth": true,
+      "topology": {
+        "vertices": 222,
+        "triangles": 440,
+        "edges": 660,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 4.050029932546541,
+        "boundsMin": [
+          -1,
+          -1,
+          -1
+        ],
+        "boundsMax": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "rounded-cylinder",
+      "path": "artifacts/scene-assets/meshes/rounded-cylinder.ply",
+      "sha256": "197d4d973167b6be6c4cc26fd01fb4f83eb5b846eb56a59d17ef74a358a37793",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Capped surface of revolution; 24 sectors; authored rounded profile",
+      "smooth": true,
+      "topology": {
+        "vertices": 194,
+        "triangles": 384,
+        "edges": 576,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 5.874065942470858,
+        "boundsMin": [
+          -1,
+          -1,
+          -1
+        ],
+        "boundsMax": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "tapered-leg",
+      "path": "artifacts/scene-assets/meshes/tapered-leg.ply",
+      "sha256": "20940ed0b5b0270834f5e5241b3b83e56d0b954a6cce7c21a1d7028165aa042f",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Capped surface of revolution; 24 sectors; authored rounded profile",
+      "smooth": true,
+      "topology": {
+        "vertices": 146,
+        "triangles": 288,
+        "edges": 432,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 4.808215469540813,
+        "boundsMin": [
+          -1,
+          -1,
+          -1
+        ],
+        "boundsMax": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "moulded-pedestal",
+      "path": "artifacts/scene-assets/meshes/moulded-pedestal.ply",
+      "sha256": "bb03959b4be279f2ed84e88713552e2a890b0d4d83f3db80d0b44768213b3955",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Capped surface of revolution; 40 sectors; authored rounded profile",
+      "smooth": true,
+      "topology": {
+        "vertices": 442,
+        "triangles": 880,
+        "edges": 1320,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 3.5438705429909185,
+        "boundsMin": [
+          -1,
+          -1,
+          -1
+        ],
+        "boundsMax": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "disc",
+      "path": "artifacts/scene-assets/meshes/disc.ply",
+      "sha256": "7fe0e61611762138a2c371791419ad12e657458d1be98f397178e8dffdcf8033",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Capped surface of revolution; 48 sectors; authored rounded profile",
+      "smooth": true,
+      "topology": {
+        "vertices": 194,
+        "triangles": 384,
+        "edges": 576,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 6.2210495705486615,
+        "boundsMin": [
+          -1,
+          -1,
+          -1
+        ],
+        "boundsMax": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "ring",
+      "path": "artifacts/scene-assets/meshes/ring.ply",
+      "sha256": "a8c5fa93e3853cf9acc908f69d62f77745a1b6006ecce8404c0f31f880e13cce",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original closed-loop tube sweep; 64 sections, 10 radial samples",
+      "smooth": true,
+      "topology": {
+        "vertices": 640,
+        "triangles": 1280,
+        "edges": 1920,
+        "components": 1,
+        "eulerCharacteristic": 0,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.0903372308689237,
+        "boundsMin": [
+          -1.066573956,
+          -0.07,
+          -1.066573956
+        ],
+        "boundsMax": [
+          1.066573956,
+          0.07,
+          1.066573956
+        ]
+      }
+    },
+    {
+      "id": "arch",
+      "path": "artifacts/scene-assets/meshes/arch.ply",
+      "sha256": "a32cdd58a81f3797dc879ea9829a4f187a4fea874904f81794481120517cda08",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original capped tube sweep; 25 sections, 12 radial samples",
+      "smooth": true,
+      "topology": {
+        "vertices": 302,
+        "triangles": 600,
+        "edges": 900,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.06400108508673719,
+        "boundsMin": [
+          -1.054394037,
+          0.221551471,
+          -0.09
+        ],
+        "boundsMax": [
+          1.054394037,
+          1.09,
+          0.09
+        ]
+      }
+    },
+    {
+      "id": "sculpted-curl",
+      "path": "artifacts/scene-assets/meshes/sculpted-curl.ply",
+      "sha256": "bdd9a7f50d3ff493f3a6f90fbf7cd1eedb996c3b3ecaf1bb23bbf4636fb677c6",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original capped tube sweep; 36 sections, 10 radial samples",
+      "smooth": true,
+      "topology": {
+        "vertices": 362,
+        "triangles": 720,
+        "edges": 1080,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.30093465962596877,
+        "boundsMin": [
+          -0.831783639,
+          -0.698750424,
+          -0.159988982
+        ],
+        "boundsMax": [
+          1.099515136,
+          0.969880488,
+          0.209940993
+        ]
+      }
+    },
+    {
+      "id": "eyelid",
+      "path": "artifacts/scene-assets/meshes/eyelid.ply",
+      "sha256": "c93e03d8750960877270c5e7142db352a5592d3974d7ac59aceb068f80ae95c6",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original capped tube sweep; 17 sections, 8 radial samples",
+      "smooth": true,
+      "topology": {
+        "vertices": 138,
+        "triangles": 272,
+        "edges": 408,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.18019526991797097,
+        "boundsMin": [
+          -1.116449686,
+          -0.109724522,
+          -0.159091349
+        ],
+        "boundsMax": [
+          1.116449686,
+          0.84,
+          0.26
+        ]
+      }
+    },
+    {
+      "id": "chair-curved-rail",
+      "path": "artifacts/scene-assets/meshes/chair-curved-rail.ply",
+      "sha256": "3abf775c52592e116c5d8f424d7e1a38ce2c3cebab4ebce596b8084b911bb9a3",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original capped tube sweep; 25 sections, 12 radial samples",
+      "smooth": true,
+      "topology": {
+        "vertices": 302,
+        "triangles": 600,
+        "edges": 900,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.05551431564233114,
+        "boundsMin": [
+          -1.033585226,
+          -0.093460747,
+          -0.265
+        ],
+        "boundsMax": [
+          1.033585226,
+          0.195,
+          0.090326085
+        ]
+      }
+    },
+    {
+      "id": "seat-piping",
+      "path": "artifacts/scene-assets/meshes/seat-piping.ply",
+      "sha256": "2b7444292836b0e9ee37cc327e35d5031c2ab7f9459961d985ebddfac75e788f",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original closed-loop tube sweep; 80 sections, 8 radial samples",
+      "smooth": true,
+      "topology": {
+        "vertices": 640,
+        "triangles": 1280,
+        "edges": 1920,
+        "components": 1,
+        "eulerCharacteristic": 0,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.001889532975049104,
+        "boundsMin": [
+          -0.702,
+          -0.012,
+          -0.612
+        ],
+        "boundsMax": [
+          0.702,
+          0.012,
+          0.612
+        ]
+      }
+    },
+    {
+      "id": "chair-curved-slat",
+      "path": "artifacts/scene-assets/meshes/chair-curved-slat.ply",
+      "sha256": "11ed75310341d1182fb1d2c2ff177665f65d669c7641cd2060867bb5aec90f12",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Six beveled cube grids with welded boundary indices; radius 0.2; optional authored deformation",
+      "smooth": true,
+      "topology": {
+        "vertices": 218,
+        "triangles": 432,
+        "edges": 648,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.006752921537930614,
+        "boundsMin": [
+          -0.062,
+          -0.5,
+          -0.022752604
+        ],
+        "boundsMax": [
+          0.062,
+          0.5,
+          0.073
+        ]
+      }
+    },
+    {
+      "id": "rounded-box",
+      "path": "artifacts/scene-assets/meshes/rounded-box.ply",
+      "sha256": "d3e61dcd3397ee5db3e1dd9885131a966c968ccab4c8b0fb8a368cc5397406b1",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Six beveled cube grids with welded boundary indices; radius 0.2; optional authored deformation",
+      "smooth": true,
+      "topology": {
+        "vertices": 218,
+        "triangles": 432,
+        "edges": 648,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 7.779863532674909,
+        "boundsMin": [
+          -1,
+          -1,
+          -1
+        ],
+        "boundsMax": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "classical-head",
+      "path": "artifacts/scene-assets/meshes/classical-head.ply",
+      "sha256": "c23b4e0f4192016d8dfad13dd9167958a0577a44e55e507e86445bdc2a06ff71",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "UV sphere deformation; 56 meridians, 40 latitudes; shared seam and pole indices",
+      "smooth": true,
+      "topology": {
+        "vertices": 2186,
+        "triangles": 4368,
+        "edges": 6552,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 2.670065979338825,
+        "boundsMin": [
+          -0.88,
+          -1,
+          -0.76
+        ],
+        "boundsMax": [
+          0.88,
+          1,
+          0.78270146
+        ]
+      }
+    },
+    {
+      "id": "classical-nose",
+      "path": "artifacts/scene-assets/meshes/classical-nose.ply",
+      "sha256": "b2f63d8b21ce2a4e32a91a3d8d3f80c9b52ec7d760c0f356f2f27f82a9a75c81",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original anatomical nasal bridge, alae and tip; elliptical closed loft",
+      "smooth": true,
+      "topology": {
+        "vertices": 170,
+        "triangles": 336,
+        "edges": 504,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.033547396877176984,
+        "boundsMin": [
+          -0.16,
+          -0.37,
+          0.66
+        ],
+        "boundsMax": [
+          0.16,
+          0.5,
+          1.08
+        ]
+      }
+    },
+    {
+      "id": "classical-shoulders",
+      "path": "artifacts/scene-assets/meshes/classical-shoulders.ply",
+      "sha256": "ea6e90a8d6ac994b34088c8a5f73b809747912439b5b210d77da7edac0a51e63",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original tapered chest, deltoid shoulder silhouette and neck seat",
+      "smooth": true,
+      "topology": {
+        "vertices": 386,
+        "triangles": 768,
+        "edges": 1152,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 1.254240799927976,
+        "boundsMin": [
+          -1.12,
+          0,
+          -0.44
+        ],
+        "boundsMax": [
+          1.12,
+          1.2,
+          0.44
+        ]
+      }
+    },
+    {
+      "id": "toga-drape",
+      "path": "artifacts/scene-assets/meshes/toga-drape.ply",
+      "sha256": "49e6c330c71ebe11048effde7f60df9d6e3efaf16af08bb2458a5c5084dd2251",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original thick draped surface; 40 x 24 cells on each side; sealed perimeter; thickness 0.045",
+      "smooth": true,
+      "topology": {
+        "vertices": 2050,
+        "triangles": 4096,
+        "edges": 6144,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.07343493750000007,
+        "boundsMin": [
+          -1.03,
+          -0.67,
+          0.256024716
+        ],
+        "boundsMax": [
+          1.03,
+          0.69,
+          0.593198096
+        ]
+      }
+    },
+    {
+      "id": "sentinel-cape",
+      "path": "artifacts/scene-assets/meshes/sentinel-cape.ply",
+      "sha256": "06edc1ee43a8ab07b88c778ad77f60cd91903ccb8b52b2eb4df8aaf8110a5f43",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original thick draped surface; 36 x 28 cells on each side; sealed perimeter; thickness 0.06",
+      "smooth": true,
+      "topology": {
+        "vertices": 2146,
+        "triangles": 4288,
+        "edges": 6432,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.3979718995186219,
+        "boundsMin": [
+          -1.63,
+          0.268682526,
+          -1.147434361
+        ],
+        "boundsMax": [
+          1.63,
+          3.03,
+          -0.553
+        ]
+      }
+    },
+    {
+      "id": "sentinel-helmet",
+      "path": "artifacts/scene-assets/meshes/sentinel-helmet.ply",
+      "sha256": "edb635eda496d2f3b1a7fd7880ab2b895be258f26831b71c0a7cdbd76b471097",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original elongated twelve-sector crown; no licensed or traced character reference",
+      "smooth": false,
+      "topology": {
+        "vertices": 74,
+        "triangles": 144,
+        "edges": 216,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 3.0901584994122975,
+        "boundsMin": [
+          -0.92,
+          -1,
+          -0.8
+        ],
+        "boundsMax": [
+          0.92,
+          1.15,
+          0.78
+        ]
+      }
+    },
+    {
+      "id": "armor-torso",
+      "path": "artifacts/scene-assets/meshes/armor-torso.ply",
+      "sha256": "c48a601cca9d5ba4e263eb35bbdd78cc8650fbe6343a2f3e7f7c161d291e7d36",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original angular cuirass, broad shoulders and tapered waist",
+      "smooth": false,
+      "topology": {
+        "vertices": 74,
+        "triangles": 144,
+        "edges": 216,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 1.7284695003232158,
+        "boundsMin": [
+          -1.08,
+          0,
+          -0.51
+        ],
+        "boundsMax": [
+          1.08,
+          1.63,
+          0.51
+        ]
+      }
+    },
+    {
+      "id": "sentinel-visor",
+      "path": "artifacts/scene-assets/meshes/sentinel-visor.ply",
+      "sha256": "33907454d92e548756236e12c9a9ae491fc502cff04462e389b8d901282ee3ff",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original polygon, ear-clipped front/back caps and consistently wound closed side walls",
+      "smooth": false,
+      "topology": {
+        "vertices": 16,
+        "triangles": 28,
+        "edges": 42,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.04752599999999999,
+        "boundsMin": [
+          -0.92,
+          -0.08,
+          -0.06
+        ],
+        "boundsMax": [
+          0.9,
+          0.3,
+          0.06
+        ]
+      }
+    },
+    {
+      "id": "sentinel-faceplate",
+      "path": "artifacts/scene-assets/meshes/sentinel-faceplate.ply",
+      "sha256": "073580616082e0c98fc4202dd9153b0e8aa7bdd3ca4bc156ea1d415b79af8c43",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original polygon, ear-clipped front/back caps and consistently wound closed side walls",
+      "smooth": false,
+      "topology": {
+        "vertices": 12,
+        "triangles": 20,
+        "edges": 30,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.44506799999999996,
+        "boundsMin": [
+          -0.66,
+          -0.7,
+          -0.18
+        ],
+        "boundsMax": [
+          0.66,
+          0.5,
+          0.18
+        ]
+      }
+    },
+    {
+      "id": "armor-panel",
+      "path": "artifacts/scene-assets/meshes/armor-panel.ply",
+      "sha256": "55f4c11676b8df5e2a459f833980b2a5685bd77a036c3be23e81023202f72e93",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original polygon, ear-clipped front/back caps and consistently wound closed side walls",
+      "smooth": false,
+      "topology": {
+        "vertices": 12,
+        "triangles": 20,
+        "edges": 30,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.350614,
+        "boundsMin": [
+          -0.86,
+          -0.66,
+          -0.11
+        ],
+        "boundsMax": [
+          0.9,
+          0.78,
+          0.11
+        ]
+      }
+    },
+    {
+      "id": "sentinel-fin",
+      "path": "artifacts/scene-assets/meshes/sentinel-fin.ply",
+      "sha256": "ee51faa35644941896c39bb5e83762c2f409074df6f72adf4aa9900cafe1404f",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original polygon, ear-clipped front/back caps and consistently wound closed side walls",
+      "smooth": false,
+      "topology": {
+        "vertices": 10,
+        "triangles": 16,
+        "edges": 24,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.187326,
+        "boundsMin": [
+          -0.4,
+          -0.85,
+          -0.09
+        ],
+        "boundsMax": [
+          0.4,
+          1.17,
+          0.09
+        ]
+      }
+    },
+    {
+      "id": "leaf",
+      "path": "artifacts/scene-assets/meshes/leaf.ply",
+      "sha256": "978e4cffd5c52a6be25021af3ecb1b8b39f33cc5cbe5c77f107ae38d5f481f70",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "UV sphere deformation; 20 meridians, 14 latitudes; shared seam and pole indices",
+      "smooth": true,
+      "topology": {
+        "vertices": 262,
+        "triangles": 520,
+        "edges": 780,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.2799179773921797,
+        "boundsMin": [
+          -0.442540253,
+          -1,
+          -0.045334834
+        ],
+        "boundsMax": [
+          0.442540253,
+          1,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "swept-hair-lock",
+      "path": "artifacts/scene-assets/meshes/swept-hair-lock.ply",
+      "sha256": "7ccc2a6323ecb696180ff15c9926b4b8564243244095611c48ba53f331343258",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original capped tube sweep; 20 sections, 12 radial samples",
+      "smooth": true,
+      "topology": {
+        "vertices": 242,
+        "triangles": 480,
+        "edges": 720,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.07212152428885275,
+        "boundsMin": [
+          -0.193906967,
+          -0.119933682,
+          -0.276390105
+        ],
+        "boundsMax": [
+          0.765266473,
+          0.685368665,
+          0.156884068
+        ]
+      }
+    },
+    {
+      "id": "hero-scarf",
+      "path": "artifacts/scene-assets/meshes/hero-scarf.ply",
+      "sha256": "e165047c8b4a8791c851154a8337a0f0853420983602595b840c87fa55c09a0f",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original thick draped surface; 8 x 32 cells on each side; sealed perimeter; thickness 0.028",
+      "smooth": true,
+      "topology": {
+        "vertices": 594,
+        "triangles": 1184,
+        "edges": 1776,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.01664599999999998,
+        "boundsMin": [
+          0,
+          -0.32145745,
+          -0.183945196
+        ],
+        "boundsMax": [
+          2.05,
+          0.351225326,
+          0.182335545
+        ]
+      }
+    },
+    {
+      "id": "tunic-panel",
+      "path": "artifacts/scene-assets/meshes/tunic-panel.ply",
+      "sha256": "2e76db8cd41e74a2239cb283bcc291ea833b53fcb26245bad6b361b874511376",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original polygon, ear-clipped front/back caps and consistently wound closed side walls",
+      "smooth": false,
+      "topology": {
+        "vertices": 12,
+        "triangles": 20,
+        "edges": 30,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 0.24002999999999997,
+        "boundsMin": [
+          -0.81,
+          -1.02,
+          -0.05
+        ],
+        "boundsMax": [
+          0.73,
+          0.84,
+          0.05
+        ]
+      }
+    },
+    {
+      "id": "floating-rock",
+      "path": "artifacts/scene-assets/meshes/floating-rock.ply",
+      "sha256": "182ed5b30b90afa512da63e2d7e20a46afbdb0bb9e9d0289044fe2a25ad62125",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Original faceted floating rock; deterministic angular displacement, seed 2026",
+      "smooth": false,
+      "topology": {
+        "vertices": 67,
+        "triangles": 130,
+        "edges": 195,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 3.0167715306761176,
+        "boundsMin": [
+          -1.018445053,
+          -1.12,
+          -0.886195954
+        ],
+        "boundsMax": [
+          1.137181859,
+          0.92,
+          1.132468137
+        ]
+      }
+    },
+    {
+      "id": "octagonal-stone",
+      "path": "artifacts/scene-assets/meshes/octagonal-stone.ply",
+      "sha256": "ef2d2ee33499417f3a8566c18faa3650e11f7363c95f923c614d6e49c12f9cb0",
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original geometry authored in this repository; generated locally; no external models or scans",
+      "sourceUrl": "",
+      "recipe": "Capped surface of revolution; 8 sectors; authored rounded profile",
+      "smooth": false,
+      "topology": {
+        "vertices": 34,
+        "triangles": 64,
+        "edges": 96,
+        "components": 1,
+        "eulerCharacteristic": 2,
+        "closed": true,
+        "consistentWinding": true,
+        "signedVolume": 5.577567779187202,
+        "boundsMin": [
+          -1,
+          -1,
+          -1
+        ],
+        "boundsMax": [
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": "wood-grain",
+      "path": "artifacts/scene-assets/textures/wood-grain.png",
+      "sha256": "61e5352102b13b60f13d66f0eebb04d9ee4de74e6c94c6f8c5e03d0ece01f4ec",
+      "width": 512,
+      "height": 512,
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original deterministic F# texture recipe; no images, scans, fonts or external texture samples",
+      "sourceUrl": "",
+      "recipe": "Original walnut modulation: long warped growth bands, fine pore noise and periodic lattice noise; no photographic input",
+      "transfer": "RGB8 gamma-2-encoded linear modulation mask; diffuse/ambient material colour multiplies decoded texel; top-down PNG rows"
+    },
+    {
+      "id": "wood-endgrain",
+      "path": "artifacts/scene-assets/textures/wood-endgrain.png",
+      "sha256": "b9ee7325e30cb242f4b53f976018864654c4bab3bd4ba1c7f97794ebd692adfd",
+      "width": 512,
+      "height": 512,
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original deterministic F# texture recipe; no images, scans, fonts or external texture samples",
+      "sourceUrl": "",
+      "recipe": "Original cut-wood modulation: perturbed concentric growth rings and tiny deterministic pores",
+      "transfer": "RGB8 gamma-2-encoded linear modulation mask; diffuse/ambient material colour multiplies decoded texel; top-down PNG rows"
+    },
+    {
+      "id": "marble-veins",
+      "path": "artifacts/scene-assets/textures/marble-veins.png",
+      "sha256": "c809a241e25f8d1d8bb111f806781c5cc5feb9d361ff1661cbedcb265dbfa7a0",
+      "width": 512,
+      "height": 512,
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original deterministic F# texture recipe; no images, scans, fonts or external texture samples",
+      "sourceUrl": "",
+      "recipe": "Original stone modulation: warped narrow mineral veins over low-frequency cloudy value noise",
+      "transfer": "RGB8 gamma-2-encoded linear modulation mask; diffuse/ambient material colour multiplies decoded texel; top-down PNG rows"
+    },
+    {
+      "id": "woven-fabric",
+      "path": "artifacts/scene-assets/textures/woven-fabric.png",
+      "sha256": "e7ec12905d86060fe0faff3114927229e32da602ccfeae531eb40bd25a674d4a",
+      "width": 512,
+      "height": 512,
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original deterministic F# texture recipe; no images, scans, fonts or external texture samples",
+      "sourceUrl": "",
+      "recipe": "Original textile modulation: alternating over/under threads, yarn micro-variation and periodic 64-thread weave",
+      "transfer": "RGB8 gamma-2-encoded linear modulation mask; diffuse/ambient material colour multiplies decoded texel; top-down PNG rows"
+    },
+    {
+      "id": "basalt",
+      "path": "artifacts/scene-assets/textures/basalt.png",
+      "sha256": "d138e2837bec7d32cbae9d59cb3fc90887aa17c32239feaed8c25a834816ca44",
+      "width": 512,
+      "height": 512,
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original deterministic F# texture recipe; no images, scans, fonts or external texture samples",
+      "sourceUrl": "",
+      "recipe": "Original rock modulation: three-scale tileable mineral noise and fine angular-looking sinusoidal fissures",
+      "transfer": "RGB8 gamma-2-encoded linear modulation mask; diffuse/ambient material colour multiplies decoded texel; top-down PNG rows"
+    },
+    {
+      "id": "brushed-metal",
+      "path": "artifacts/scene-assets/textures/brushed-metal.png",
+      "sha256": "4dcea343942815bfa02254fc76388ec7c1327b58be1a656c3aa080b03674176b",
+      "width": 512,
+      "height": 512,
+      "license": "GPL-2.0-only",
+      "authors": "Ray_Tracer_FSharp contributors (procedural design with Copilot assistance)",
+      "origin": "Original deterministic F# texture recipe; no images, scans, fonts or external texture samples",
+      "sourceUrl": "",
+      "recipe": "Original subtle alloy modulation: periodic directional brushing and broad low-contrast finish variation",
+      "transfer": "RGB8 gamma-2-encoded linear modulation mask; diffuse/ambient material colour multiplies decoded texel; top-down PNG rows"
+    }
+  ],
+  "scenes": [
+    {
+      "path": "benchmarks/scenes/chair.json",
+      "sha256": "ce33b5f08b535ff21d44640557c93e295fcae9af1679cafb5cf84391f010ff4b"
+    },
+    {
+      "path": "benchmarks/scenes/roman-bust.json",
+      "sha256": "b8074042499dcf0f3dd1b601a179ba33ff316ccbf6409d74c3f4ef38e5da3f8c"
+    },
+    {
+      "path": "benchmarks/scenes/space-sentinel.json",
+      "sha256": "8036b0353a9d002df6fe71b8751a794c88eaa5167b43534cef550cf29a16d65e"
+    },
+    {
+      "path": "benchmarks/scenes/sky-arena.json",
+      "sha256": "6bc23ff6ec29a955201bf492a5b7660415e64d0e7a27a2e75d960576e7b57805"
+    },
+    {
+      "path": "benchmarks/scenes/material-lab.json",
+      "sha256": "bf764d906f1812d17924bb2df0e8c8d46eed43ec1a7400ff44cb4100c2d1f051"
+    }
+  ]
+}

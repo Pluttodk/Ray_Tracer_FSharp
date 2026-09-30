@@ -108,8 +108,7 @@ module API =
     b.toShape t
   
   let mkSphere (p : point) (r : float) (m : texture) : shape = 
-    let sphere = SphereShape(p, r, m)
-    Transform.transform sphere (Transformation.translate p.X p.Y p.Z)
+    SphereShape(p, r, m) :> shape
   
   let mkBaseSphere (p : point) (r : float)  : baseShape = 
     new BaseSphere(p, r) :> baseShape
@@ -129,20 +128,23 @@ module API =
   let mkImplicit (s : string) : baseShape = 
     mkImplicit s
 
+  let mkImplicitInInterval (s: string) (minimum: float) (maximum: float) : baseShape =
+    ImplicitSurfaces.mkImplicitInInterval s minimum maximum
+
+  let mkBoundedImplicit (s: string) (low: point) (high: point) : baseShape =
+    ImplicitSurfaces.mkBoundedImplicit s (BBox(low, high))
+
   let mkPLY (filename : string) (smooth : bool) : baseShape = 
     TriangleMesh.drawTriangles filename smooth
 
   let mkHollowCylinder (c : point) (r : float) (h : float) (t : texture) : shape = 
-    let s = HollowCylinder(c, r, h, t)
-    Transform.transform s (Transformation.translate c.X c.Y c.Z)
+    HollowCylinder(c, r, h, t) :> shape
 
   let mkSolidCylinder (c : point) (r : float) (h : float) (t : texture) (top : texture) (bottom : texture) : shape = 
-    let s = SolidCylinder(c, r, h, t, top, bottom) :> shape
-    Transform.transform s (Transformation.translate c.X c.Y c.Z)
+    SolidCylinder(c, r, h, t, top, bottom) :> shape
 
   let mkDisk (c : point) (r : float) (t : texture) : shape = 
-    let disc = Disc(Point.Zero, r, t) :> shape
-    Transform.transform disc (Transformation.translate c.X c.Y c.Z)
+    Disc(c, r, t) :> shape
 
   let mkBaseDisk (c : point) (r : float) : baseShape = 
     new BaseDisc(c, r) :> baseShape

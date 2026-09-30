@@ -1,0 +1,33 @@
+{
+  "scene": "gold-dragon",
+  "originalFunction": "TracerTest/Meshes.fs:renderGoldDragon",
+  "originalFailure": "The checked-in example references ply/dragon.ply, but that model was not included in the repository.",
+  "prepareCommand": "dotnet fsi scripts/prepare-gold-dragon.fsx",
+  "neutralSceneCommand": "dotnet fsi SceneAssets/GoldDragon.fsx",
+  "neutralScene": "benchmarks/scenes/gold-dragon.json",
+  "neutralSettings": "artifacts/scene-assets/gold-dragon/original-settings.json",
+  "mesh": "artifacts/scene-assets/stanford/dragon_recon/dragon_vrip.ply",
+  "sha256": "fea87ff48f2aba22fb53e7b67c3ff3f7b8c2a3b3a0653af62c48bba67c6d5744",
+  "credit": "Stanford University Computer Graphics Laboratory",
+  "terms": "https://graphics.stanford.edu/data/3Dscanrep/",
+  "licenseNote": "Optional attributed noncommercial research data; not covered by the renderer GPL. No commercial use without Stanford permission.",
+  "originalSettings": {
+    "width": 1024,
+    "height": 768,
+    "cameraSamples": 16,
+    "lightSamples": 16,
+    "glossySamples": 16,
+    "maxBounces": 2,
+    "sampler": "multi-jittered",
+    "sampleSets": 83,
+    "rotationY": 0.7853981633974483,
+    "scale": 40.0,
+    "translation": [0.0, -2.3, 0.0],
+    "cameraPosition": [2.0, 6.0, 12.0],
+    "cameraTarget": [0.0, 1.5, 0.0],
+    "viewDistance": 4.0,
+    "viewWidth": 4.0,
+    "viewHeight": 3.0
+  },
+  "matrixPolicy": "Extra authored/gold-only scene, separate from the four-scene six-material matrix. The source mesh has holes and must not be silently treated as solid glass."
+}

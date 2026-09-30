@@ -6,7 +6,7 @@ open Tracer.ExprToPoly
 open Tracer.ExprParse
 open Tracer.ImplicitSurfaces
 
-let allTest =
+let allTest () =
 
   let test01 =
       let p = toUnipoly (sepolyToSIEpoly (polyAsList ((parseStr >> exprToPoly) "3x^3 + 3x^2 + 5x + 1" "x"))) [|1.;1.;1.;1.;1.;1.|]

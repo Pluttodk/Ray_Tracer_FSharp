@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "cuda-sampled-lights",
+  "title": "GPU sampler construction and zero-area mesh regression",
+  "description": "Two glossy materials are first used in reverse declaration order, with a repeated material and an unused glossy definition. Blue overrides ambient/specular/reflection colors; red exercises null defaults. Independently sampled rectangle/environment lights and an occluder exercise nontrivial sample sets. Two zero-area faces per instance must remain nonintersecting like the shared CPU mesh.",
+  "camera": {
+    "position": [0, 0, -4],
+    "target": [0, 0, 0],
+    "up": [0, 1, 0],
+    "viewDistance": 1,
+    "viewWidth": 1.2,
+    "viewHeight": 0.9,
+    "lensRadius": 0,
+    "focusDistance": 4
+  },
+  "ambientColour": [1, 1, 1],
+  "ambientIntensity": 0.05,
+  "maxBounces": 2,
+  "materials": [
+    {
+      "id": "blue",
+      "kind": "glossy",
+      "colour": [0.2, 0.4, 0.8],
+      "ambientColour": [1, 0.75, 0.5],
+      "specularColour": [0.3, 0.7, 1],
+      "reflectionColour": [0.6, 0.8, 0.2],
+      "ambient": 0.1,
+      "diffuse": 0.6,
+      "specular": 0.2,
+      "exponent": 10,
+      "reflectivity": 0.3,
+      "glossExponent": 10,
+      "ior": 1.5,
+      "filter": [1, 1, 1],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "red",
+      "kind": "glossy",
+      "colour": [0.8, 0.3, 0.1],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.1,
+      "diffuse": 0.6,
+      "specular": 0.2,
+      "exponent": 10,
+      "reflectivity": 0.3,
+      "glossExponent": 10,
+      "ior": 1.5,
+      "filter": [1, 1, 1],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "unused-glossy",
+      "kind": "glossy",
+      "colour": [0.2, 0.9, 0.2],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.1,
+      "diffuse": 0.6,
+      "specular": 0.2,
+      "exponent": 10,
+      "reflectivity": 0.3,
+      "glossExponent": 10,
+      "ior": 1.5,
+      "filter": [1, 1, 1],
+      "emission": 0,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "patch",
+      "path": "sampled-lights-mesh.ply",
+      "smooth": false,
+      "closed": false
+    }
+  ],
+  "objects": [
+    {
+      "id": "red-patch",
+      "mesh": "patch",
+      "material": "red",
+      "transform": [1, 0, 0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    },
+    {
+      "id": "occluder",
+      "mesh": "patch",
+      "material": "red",
+      "transform": [0.25, 0, 0, 0, 0, 0.25, 0, 0.3, 0, 0, 0.25, -1, 0, 0, 0, 1]
+    },
+    {
+      "id": "blue-patch",
+      "mesh": "patch",
+      "material": "blue",
+      "transform": [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    }
+  ],
+  "subjects": ["red-patch", "blue-patch"],
+  "lights": [
+    {
+      "id": "point",
+      "kind": "point",
+      "position": [-3, 1, -2],
+      "direction": [0, 0, 0],
+      "colour": [1, 1, 1],
+      "intensity": 0.8,
+      "size": [0, 0]
+    },
+    {
+      "id": "rectangle",
+      "kind": "rectangle",
+      "position": [0, 2, -2],
+      "direction": [0, 0, 1],
+      "colour": [0.8, 0.9, 1],
+      "intensity": 2,
+      "size": [1.1, 0.6]
+    },
+    {
+      "id": "environment",
+      "kind": "environment",
+      "position": [0, 0, 0],
+      "direction": [0, 0, 0],
+      "colour": [0.8, 0.7, 0.6],
+      "intensity": 0.25,
+      "size": [1000000, 1000000]
+    }
+  ]
+}

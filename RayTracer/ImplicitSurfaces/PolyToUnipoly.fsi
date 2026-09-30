@@ -21,3 +21,5 @@ module PolyToUnipoly =
   val unipolyDerivative : unipoly -> unipoly
   val sturmSeq : unipoly -> unipoly -> unipoly list
   val getInterval : unipoly list -> float -> float -> int -> (float * float * float) option
+  val rootBound : unipoly -> float
+  val realRootsInInterval : unipoly -> float -> float -> float array

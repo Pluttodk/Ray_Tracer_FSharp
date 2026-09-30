@@ -5,8 +5,8 @@ open System
 open Assert
 open Tracer.Basics
 
-let allTest = 
-  0
+let allTest () =
+  ()
 //    let testPointLowest = 
 //        let p1 = Point(1.,2.,0.)
 //        let p2 = Point(0.,-2.,1.)

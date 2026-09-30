@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "id": "gold-dragon",
+  "title": "Stanford Gold Dragon - optional historical bonus",
+  "description": "Extra authored/gold-only adaptation of TracerTest/Meshes.fs:renderGoldDragon. Original unmodified Stanford Dragon reconstruction, 437645 vertices/871414 triangles, flat shaded and open; never a glass subject. Credit: Stanford University Computer Graphics Laboratory, https://graphics.stanford.edu/data/3Dscanrep/. Attributed noncommercial research/free redistribution only; commercial use needs permission. The scan and derived renders are optional ignored research artifacts, not GPL-relicensed. Original gold colours/coefficients, transform, camera, two point lights, environment and ambient are retained. The blue floor here is an original finite 200000-by-200000 slab with its top at y=0, not the truly infinite plane; the separately restored original function preserves that exact primitive. Render settings: 1024x768, sixteen multi-jittered camera/light/glossy samples, 83 sample sets, two bounces; see benchmarks/gold-dragon.json.",
+  "camera": {
+    "position": [
+      2,
+      6,
+      12
+    ],
+    "target": [
+      0,
+      1.5,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewDistance": 4,
+    "viewWidth": 4,
+    "viewHeight": 3,
+    "lensRadius": 0,
+    "focusDistance": 12.971121771072847
+  },
+  "ambientColour": [
+    0,
+    0,
+    1
+  ],
+  "ambientIntensity": 0.1,
+  "maxBounces": 2,
+  "materials": [
+    {
+      "id": "original-glossy-gold",
+      "kind": "glossy",
+      "colour": [
+        1,
+        1,
+        0.3
+      ],
+      "ambientColour": [
+        1,
+        0.75,
+        0.5
+      ],
+      "specularColour": null,
+      "reflectionColour": null,
+      "ambient": 0.1,
+      "diffuse": 0.9,
+      "specular": 0.4,
+      "exponent": 10,
+      "reflectivity": 0.3,
+      "glossExponent": 10,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "original-blue-reflector",
+      "kind": "mirror",
+      "colour": [
+        0,
+        0,
+        1
+      ],
+      "ambientColour": null,
+      "specularColour": null,
+      "reflectionColour": [
+        0,
+        0,
+        1
+      ],
+      "ambient": 1,
+      "diffuse": 1,
+      "specular": 0,
+      "exponent": 0,
+      "reflectivity": 0.5,
+      "glossExponent": 0,
+      "ior": 1.5,
+      "filter": [
+        1,
+        1,
+        1
+      ],
+      "emission": 0,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "original-stanford-dragon",
+      "path": "../../artifacts/scene-assets/stanford/dragon_recon/dragon_vrip.ply",
+      "smooth": false,
+      "closed": false
+    },
+    {
+      "id": "gold-dragon-staging-plane",
+      "path": "../../artifacts/scene-assets/gold-dragon/staging-plane.ply",
+      "smooth": false,
+      "closed": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "dragon",
+      "mesh": "original-stanford-dragon",
+      "material": "original-glossy-gold",
+      "transform": [
+        28.284271247461902,
+        0,
+        28.2842712474619,
+        0,
+        0,
+        40,
+        0,
+        -2.3,
+        -28.2842712474619,
+        0,
+        28.284271247461902,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "blue-reflective-floor",
+      "mesh": "gold-dragon-staging-plane",
+      "material": "original-blue-reflector",
+      "transform": [
+        100000,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        -0.01,
+        0,
+        -100000,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "original-white-point",
+      "kind": "point",
+      "position": [
+        6,
+        2,
+        6
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1,
+        1,
+        1
+      ],
+      "intensity": 0.5,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "original-red-point",
+      "kind": "point",
+      "position": [
+        -6,
+        2,
+        6
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1,
+        0,
+        0
+      ],
+      "intensity": 0.5,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "original-lemon-environment",
+      "kind": "environment",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "direction": [
+        0,
+        1,
+        0
+      ],
+      "colour": [
+        1,
+        1,
+        0.3
+      ],
+      "intensity": 0.85,
+      "size": [
+        1000000,
+        1000000
+      ]
+    }
+  ],
+  "subjects": [
+    "dragon"
+  ]
+}

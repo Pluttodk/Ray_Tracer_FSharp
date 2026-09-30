@@ -1,10 +1,7 @@
 module Tracer.Basics.Transformation
 
-open System.Windows
 open System
 open Tracer.Basics
-open System
-open System.Diagnostics
     
 
     type QuickMatrix = {
@@ -43,7 +40,16 @@ open System.Diagnostics
         Pos4x4 = 1.}
     type Transformation = 
         | T of QuickMatrix * QuickMatrix
-    let mkTransformation (a,b) = T(a,b)
+    let private finiteMatrix matrix =
+        [matrix.Pos1x1; matrix.Pos1x2; matrix.Pos1x3; matrix.Pos1x4
+         matrix.Pos2x1; matrix.Pos2x2; matrix.Pos2x3; matrix.Pos2x4
+         matrix.Pos3x1; matrix.Pos3x2; matrix.Pos3x3; matrix.Pos3x4
+         matrix.Pos4x1; matrix.Pos4x2; matrix.Pos4x3; matrix.Pos4x4]
+        |> List.forall Double.IsFinite
+    let mkTransformation (a,b) =
+        if not (finiteMatrix a && finiteMatrix b) then
+            invalidArg "transformation" "A transformation and its inverse must have finite coefficients."
+        T(a,b)
 
     let multAr ((a:float array),(b:float array)) = a.[0]*b.[0]+a.[1]*b.[1]+a.[2]*b.[2]+a.[3]*b.[3]
     type QuickMatrix with
@@ -88,15 +94,29 @@ open System.Diagnostics
     let vectorToMatrix (v:Vector) = {identityMatrixWithPos(v.X,v.Y,v.Z) with Pos4x4 = 0.}
     let pointToMatrix (p:Point) = identityMatrixWithPos (p.X,p.Y,p.Z)
 
-    let translate x y z = mkTransformation (identityMatrixWithPos (x,y,z), identityMatrixWithPos (-x,-y,-z))
+    let private finite name value =
+        if not (Double.IsFinite value) then invalidArg name "Transformation values must be finite."
+
+    let translate x y z =
+        finite "x" x
+        finite "y" y
+        finite "z" z
+        mkTransformation (identityMatrixWithPos (x,y,z), identityMatrixWithPos (-x,-y,-z))
 
     let scale width height depth = 
+        for name, value in ["width", width; "height", height; "depth", depth] do
+            finite name value
+            if value = 0. || not (Double.IsFinite (1. / value)) then
+                invalidArg name "A scale must have a finite, nonzero inverse."
         let scaleMatrix (x,y,z) = {defaultQuickMatrix with Pos1x1 = x; Pos2x2 = y; Pos3x3 = z}
 
         mkTransformation (scaleMatrix(width,height,depth),scaleMatrix(1./width,1./height,1./depth))
     let sheare (xy:float,xz:float,yx:float,yz:float,zx:float,zy:float) = 
+        for value in [xy; xz; yx; yz; zx; zy] do finite "shear" value
         let matrix = {defaultQuickMatrix with Pos1x2 = yx; Pos1x3 = zx; Pos2x1 = xy; Pos2x3 = zy; Pos3x1 = xz; Pos3x2 = yz}
-        let det = (1.-(xy*yx)+(xz*zx)-(yz*zy)+(xy*yz*zx)+(xz*yz*zy))
+        let det = 1. - xy*yx - xz*zx - yz*zy + xy*yz*zx + xz*yx*zy
+        if det = 0. || not (Double.IsFinite det) || not (Double.IsFinite (1. / det)) then
+            invalidArg "shear" "A shear must be invertible."
         let mult = 1./det
 
         let inv = {defaultQuickMatrix with 
@@ -107,18 +127,21 @@ open System.Diagnostics
         mkTransformation(matrix,inv)
 
     let rotateX angle = 
+        finite "angle" angle
         let cos = Math.Cos(angle)
         let sin = Math.Sin(angle) 
         mkTransformation(
             {defaultQuickMatrix with Pos2x2 = cos; Pos2x3 = -sin; Pos3x2 = sin; Pos3x3 = cos},
             {defaultQuickMatrix with Pos2x2 = cos; Pos2x3 = sin; Pos3x2 = -sin; Pos3x3 = cos})
     let rotateY angle = 
+        finite "angle" angle
         let cos = Math.Cos(angle)
         let sin = Math.Sin(angle) 
         mkTransformation(
             {defaultQuickMatrix with Pos1x1 = cos; Pos1x3 = sin; Pos3x1 = -sin; Pos3x3 = cos},
             {defaultQuickMatrix with Pos1x1 = cos; Pos1x3 = -sin; Pos3x1 = sin; Pos3x3 = cos})
     let rotateZ angle =
+        finite "angle" angle
         let cos = Math.Cos(angle)
         let sin = Math.Sin(angle) 
         mkTransformation(
@@ -131,7 +154,7 @@ open System.Diagnostics
                 let v = QuickMatrix.multi(value,first)
                 sum(v,rest)
             | _ -> value
-        sum (l.Head,l.Tail)
+        sum (defaultQuickMatrix,l)
 
     let mergeTransformations (l: Transformation List) : Transformation = 
         let matrixList = (List.rev l) |> List.map (fun a -> getMatrix a)
@@ -152,8 +175,14 @@ open System.Diagnostics
         let z = q.Pos3x4
         new Point(x, y, z)
 
-    let transformPoint (p,m) = (matrixToPoint (QuickMatrix.multi (m, (pointToMatrix p))))
-    let transformVector (v,m) = (matrixToVector (QuickMatrix.multi (m, (vectorToMatrix v))))
+    let transformPoint (p:Point, m:QuickMatrix) =
+        Point(Math.FusedMultiplyAdd(m.Pos1x1,p.X,Math.FusedMultiplyAdd(m.Pos1x2,p.Y,Math.FusedMultiplyAdd(m.Pos1x3,p.Z,m.Pos1x4))),
+              Math.FusedMultiplyAdd(m.Pos2x1,p.X,Math.FusedMultiplyAdd(m.Pos2x2,p.Y,Math.FusedMultiplyAdd(m.Pos2x3,p.Z,m.Pos2x4))),
+              Math.FusedMultiplyAdd(m.Pos3x1,p.X,Math.FusedMultiplyAdd(m.Pos3x2,p.Y,Math.FusedMultiplyAdd(m.Pos3x3,p.Z,m.Pos3x4))))
+    let transformVector (v:Vector, m:QuickMatrix) =
+        Vector(Math.FusedMultiplyAdd(m.Pos1x1,v.X,Math.FusedMultiplyAdd(m.Pos1x2,v.Y,m.Pos1x3*v.Z)),
+               Math.FusedMultiplyAdd(m.Pos2x1,v.X,Math.FusedMultiplyAdd(m.Pos2x2,v.Y,m.Pos2x3*v.Z)),
+               Math.FusedMultiplyAdd(m.Pos3x1,v.X,Math.FusedMultiplyAdd(m.Pos3x2,v.Y,m.Pos3x3*v.Z)))
 
 
 

@@ -118,12 +118,18 @@ module ExprToPoly =
   let rec simplifyExpr e =
     let rec inner ex =
       match ex with
+      | FNum value when not (System.Double.IsFinite value) ->
+          invalidArg "expression" "Expression constants and constant arithmetic must be finite."
       // numbers
       | FAdd(FNum c1, FNum c2)  -> FNum (c1 + c2)
       | FMult(FNum c1, FNum c2) -> FNum (c1 * c2)
       | FDiv(FNum c1, FNum c2)  -> FNum (c1 / c2)
       | FExponent(FNum c, n)    -> FNum (pown c n)
-      | FRoot(FNum c, n)        -> FNum (c**(1./(float n)))
+      | FRoot(e, 1) -> inner e
+      | FRoot(FNum c, n)        ->
+          if not (System.Double.IsFinite c) then invalidArg "expression" "Root constants must be finite."
+          let value = realRoot c n
+          if System.Double.IsFinite value then FNum value else ex
       // exponents
       | FExponent(_,0)          -> FNum 1.0
       | FExponent(e1,1)         -> simplifyExpr e1

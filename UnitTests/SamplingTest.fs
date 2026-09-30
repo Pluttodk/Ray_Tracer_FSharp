@@ -4,23 +4,15 @@ open Tracer.Basics.Sampling
 open System
 open Assert
 
-// These two helper-methods are copied from Sampling.fs (which is duplication, sadly),
-// but I did not want to expose these methods in the original signature file.
 let getGrid (v:float) max = int(v*(float max))
-
-let illegalSpots = [|(2, 1);(-2, 1);(2, -1);(-2, -1);(1, 2);(1, -2);(-1, 2);(-1, -2)|]
 
 let isRookThreatened (samples:(float*float) []) i =
     let n = samples.Length
     let valX, valY = samples.[i]
     let gridX, gridY = getGrid valX n, getGrid valY n
-    let mutable result = true
-    for (x,y) in samples do
-        if not 
-            (Array.exists  (fun (x2, y2) -> (gridX+x2) = (getGrid x n) && 
-                                            (gridY+y2) = (getGrid y n)) illegalSpots)
-        then result <- false
-    result
+    samples |> Array.mapi (fun index (x, y) ->
+        index <> i && (gridX = getGrid x n || gridY = getGrid y n))
+    |> Array.exists id
 
 // Returns actual jittered array vs. expected array
 let getJitteredEvaluation (samples:(float*float) []) =
@@ -31,9 +23,9 @@ let getJitteredEvaluation (samples:(float*float) []) =
     let gridValues = Array.sort gridValues
     (gridExpected, gridValues)
 
-let allTest =
+let allTest () =
     let jittered_JitteredPropertyIsMaintained =
-        let sampler = multiJittered 4 1
+        let sampler = jittered 4 1
         let samples = [|for i in 0..sampler.SampleCount-1 do yield sampler.Next()|]
         let expected, actual = getJitteredEvaluation samples
         Assert.Equal (expected, actual, "jittered_JitteredPropertyIsMaintained")
@@ -62,14 +54,12 @@ let allTest =
             if isRookThreatened samples i then result <- false
         Assert.True (result, "multiJittered_NRooksPropertyIsMaintained")
 
-    let sampleSets_SetsAreShuffled = 
+    let sampleSets_SeedRepeatsSetOrder =
         setRandomSeed 19
         let sampler = multiJittered 2 2
         let sets1 = [|for j in 0..sampler.SetCount-1 do yield [|for i in 0..sampler.SampleCount-1 do yield sampler.Next()|]|]
         let sample1_1 = Array.sort sets1.[0]
         let sample1_2 = Array.sort sets1.[1]
-        
-        System.Threading.Thread.Sleep(50) // Sleep so random changes (THIS SUCKS!!!)
         
         setRandomSeed 19
         let sampler = multiJittered 2 2
@@ -77,28 +67,28 @@ let allTest =
         let sample2_1 = Array.sort sets2.[0]
         let sample2_2 = Array.sort sets2.[1]
 
-        Assert.Equal (sample1_1, sample2_1, "sampleSets_SetsAreShuffled1")
-        Assert.Equal (sample1_2, sample2_2, "sampleSets_SetsAreShuffled2")
+        Assert.Equal (sample1_1, sample2_1, "sampleSets_SeedRepeatsSetOrder1")
+        Assert.Equal (sample1_2, sample2_2, "sampleSets_SeedRepeatsSetOrder2")
+        Assert.Equal (sets1, sets2, "sampleSets_SeedRepeatsExactOrder")
 
     let sampleSets_SetsAreCorrectSize = 
         let sampler = multiJittered 2 4
         Assert.Equal (4, sampler.SetCount, "sampleSets_SetsAreCorrectSize")
 
-    let sampleSets_SamplesAreShuffled =
+    let sampleSets_SeedControlsSamples =
         setRandomSeed 19
         let sampler = multiJittered 4 2
         let samples1 = [|for i in 0..sampler.SampleCount-1 do yield sampler.Next()|]
-
-        System.Threading.Thread.Sleep(50) // Sleep so random changes (THIS SUCKS!!!)
 
         setRandomSeed 19
         let sampler = multiJittered 4 2
         let samples2 = [|for i in 0..sampler.SampleCount-1 do yield sampler.Next()|]
 
-        Assert.True (not (samples1 = samples2), "sampleSets_SamplesAreShuffled1")
-        let samples1 = Array.sort samples1
-        let samples2 = Array.sort samples2
-        Assert.Equal (samples1, samples2, "sampleSets_SamplesAreShuffled2")
+        Assert.Equal (samples1, samples2, "sampleSets_SeedControlsExactSampleOrder")
+        setRandomSeed 20
+        let changed = multiJittered 4 2
+        let samples3 = Array.init changed.SampleCount (fun _ -> changed.Next())
+        Assert.True (samples1 <> samples3, "sampleSets_DifferentSeedsChangeSamples")
     
     let sampleSets_SamplesAreCorrectSize =
         let sampler = multiJittered 4 1
@@ -106,7 +96,7 @@ let allTest =
 
     let mapToDisc_SamplesAreInCorrectQuadrants =
         let sampler = multiJittered 16 1
-        let samples = [|for i in 0..sampler.SampleCount-1 do yield (mapToDisc (sampler.Next()))|]
+        let samples = [|for i in 0..sampler.SampleCount-1 do yield sampler.Next()|]
         let toDisc = Array.map mapToDisc samples
         let validArr = [|(true, true);(false, false);(true, false);(false, true)|]
         let result = Array.forall (fun (b1, b2) -> 
@@ -115,13 +105,10 @@ let allTest =
 
     let mapToDisc_SamplesAreInValidRange =
         let sampler = multiJittered 16 1
-        let samples = [|for i in 0..sampler.SampleCount-1 do yield (mapToDisc (sampler.Next()))|]
+        let samples = [|for i in 0..sampler.SampleCount-1 do yield sampler.Next()|]
         let toDisc = Array.map mapToDisc samples
-        let result = Array.forall (fun (x, y) -> 
-                                            x > -0.9 && y > -0.9 || 
-                                            x < 0.9 && y < 0.9 ||
-                                            x < 0.9 && y > -0.9 ||
-                                            x > -0.9 && y < 0.9) toDisc
+        let result = Array.forall (fun (x, y) ->
+            Double.IsFinite x && Double.IsFinite y && x * x + y * y <= 1. + 1e-12) toDisc
         Assert.True (result, "mapToDisc_SamplesAreInValidRange")
 
     let Sampler_SamplerReturnsNextSample =

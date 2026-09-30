@@ -1,0 +1,825 @@
+{
+  "schemaVersion": 1,
+  "id": "material-lab",
+  "title": "Direct-light material laboratory",
+  "description": "Cornell-style diagnostic box for direct visibility, point/rectangle lighting, matte, Phong, glossy, mirror and closed glass geometry. This is a classic direct-light scene: no claimed indirect color bleeding or path-traced transport. Point fill deliberately keeps the frozen legacy area-light defect from making the scene unreadable.",
+  "camera": {
+    "position": [
+      0,
+      2.6,
+      8.1
+    ],
+    "target": [
+      0,
+      1.55,
+      -0.3
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewDistance": 1,
+    "viewWidth": 0.708237145061396,
+    "viewHeight": 0.708237145061396,
+    "lensRadius": 0,
+    "focusDistance": 8.465370635713478
+  },
+  "ambientColour": [
+    0.9,
+    0.94,
+    1
+  ],
+  "ambientIntensity": 0.2,
+  "maxBounces": 4,
+  "materials": [
+    {
+      "id": "charcoal",
+      "kind": "matte",
+      "colour": [
+        0.055,
+        0.071,
+        0.09
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "marble",
+      "kind": "phong",
+      "colour": [
+        0.79,
+        0.74,
+        0.63
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": "../../artifacts/scene-assets/textures/marble-veins.png"
+    },
+    {
+      "id": "reflection-card",
+      "kind": "emissive",
+      "colour": [
+        0.82,
+        0.92,
+        1
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0,
+      "diffuse": 0,
+      "specular": 0,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 1.1,
+      "texture": ""
+    },
+    {
+      "id": "lab-white",
+      "kind": "matte",
+      "colour": [
+        0.7,
+        0.7,
+        0.68
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "lab-red",
+      "kind": "matte",
+      "colour": [
+        0.63,
+        0.075,
+        0.055
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "lab-blue",
+      "kind": "matte",
+      "colour": [
+        0.06,
+        0.18,
+        0.57
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "lab-clay",
+      "kind": "matte",
+      "colour": [
+        0.64,
+        0.35,
+        0.16
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "lab-mirror",
+      "kind": "mirror",
+      "colour": [
+        0.2,
+        0.23,
+        0.25
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.08,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0.88,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "lab-glass",
+      "kind": "glass",
+      "colour": [
+        0.9,
+        0.96,
+        0.94
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.02,
+      "diffuse": 0.05,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.78,
+        0.95,
+        0.91
+      ],
+      "emission": 0,
+      "texture": ""
+    },
+    {
+      "id": "lab-glossy",
+      "kind": "glossy",
+      "colour": [
+        0.32,
+        0.17,
+        0.08
+      ],
+      "ambientColour": null,
+      "specularColour": [
+        1,
+        0.97,
+        0.92
+      ],
+      "reflectionColour": [
+        1,
+        1,
+        1
+      ],
+      "ambient": 0.24,
+      "diffuse": 0.7,
+      "specular": 0.2,
+      "exponent": 72,
+      "reflectivity": 0.65,
+      "glossExponent": 48,
+      "ior": 1.5,
+      "filter": [
+        0.88,
+        0.96,
+        0.94
+      ],
+      "emission": 0,
+      "texture": ""
+    }
+  ],
+  "meshes": [
+    {
+      "id": "sphere",
+      "path": "../../artifacts/scene-assets/meshes/sphere.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "disc",
+      "path": "../../artifacts/scene-assets/meshes/disc.ply",
+      "smooth": true,
+      "closed": true
+    },
+    {
+      "id": "rounded-box",
+      "path": "../../artifacts/scene-assets/meshes/rounded-box.ply",
+      "smooth": true,
+      "closed": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "floor",
+      "mesh": "rounded-box",
+      "material": "lab-white",
+      "transform": [
+        2.5,
+        0,
+        0,
+        0,
+        0,
+        0.12,
+        0,
+        -0.12,
+        0,
+        0,
+        2.7,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "back",
+      "mesh": "rounded-box",
+      "material": "lab-white",
+      "transform": [
+        2.5,
+        0,
+        0,
+        0,
+        0,
+        2.25,
+        0,
+        2.15,
+        0,
+        0,
+        0.12,
+        -2.45,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "left",
+      "mesh": "rounded-box",
+      "material": "lab-red",
+      "transform": [
+        0.12,
+        0,
+        0,
+        -2.5,
+        0,
+        2.25,
+        0,
+        2.15,
+        0,
+        0,
+        2.45,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "right",
+      "mesh": "rounded-box",
+      "material": "lab-blue",
+      "transform": [
+        0.12,
+        0,
+        0,
+        2.5,
+        0,
+        2.25,
+        0,
+        2.15,
+        0,
+        0,
+        2.45,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "ceiling",
+      "mesh": "rounded-box",
+      "material": "lab-white",
+      "transform": [
+        2.5,
+        0,
+        0,
+        0,
+        0,
+        0.12,
+        0,
+        4.35,
+        0,
+        0,
+        2.45,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "clay-sphere",
+      "mesh": "sphere",
+      "material": "lab-clay",
+      "transform": [
+        0.65,
+        0,
+        0,
+        -1.5,
+        0,
+        0.65,
+        0,
+        0.7,
+        0,
+        0,
+        0.65,
+        0.55,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "clay-sphere-stand",
+      "mesh": "disc",
+      "material": "charcoal",
+      "transform": [
+        0.71,
+        0,
+        0,
+        -1.5,
+        0,
+        0.026,
+        0,
+        0.025,
+        0,
+        0,
+        0.71,
+        0.55,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "glass-sphere",
+      "mesh": "sphere",
+      "material": "lab-glass",
+      "transform": [
+        0.65,
+        0,
+        0,
+        0,
+        0,
+        0.65,
+        0,
+        0.7,
+        0,
+        0,
+        0.65,
+        0.55,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "glass-sphere-stand",
+      "mesh": "disc",
+      "material": "charcoal",
+      "transform": [
+        0.71,
+        0,
+        0,
+        0,
+        0,
+        0.026,
+        0,
+        0.025,
+        0,
+        0,
+        0.71,
+        0.55,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "mirror-sphere",
+      "mesh": "sphere",
+      "material": "lab-mirror",
+      "transform": [
+        0.65,
+        0,
+        0,
+        1.5,
+        0,
+        0.65,
+        0,
+        0.7,
+        0,
+        0,
+        0.65,
+        0.55,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "mirror-sphere-stand",
+      "mesh": "disc",
+      "material": "charcoal",
+      "transform": [
+        0.71,
+        0,
+        0,
+        1.5,
+        0,
+        0.026,
+        0,
+        0.025,
+        0,
+        0,
+        0.71,
+        0.55,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "rear-glossy-block",
+      "mesh": "rounded-box",
+      "material": "lab-glossy",
+      "transform": [
+        0.5578559596035969,
+        0,
+        -0.17906248495143617,
+        -0.78,
+        0,
+        0.83,
+        0,
+        0.83,
+        0.1920852111297224,
+        0,
+        0.5200352165796243,
+        -1.23,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "rear-polished-sphere",
+      "mesh": "sphere",
+      "material": "marble",
+      "transform": [
+        0.52,
+        0,
+        0,
+        0.8,
+        0,
+        0.52,
+        0,
+        1.22,
+        0,
+        0,
+        0.52,
+        -1.15,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "rear-pedestal",
+      "mesh": "rounded-box",
+      "material": "lab-white",
+      "transform": [
+        0.54,
+        0,
+        0,
+        0.8,
+        0,
+        0.35,
+        0,
+        0.35,
+        0,
+        0,
+        0.54,
+        -1.15,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "visible-ceiling-emitter",
+      "mesh": "rounded-box",
+      "material": "reflection-card",
+      "transform": [
+        0.77,
+        0,
+        0,
+        0,
+        0,
+        0.015,
+        0,
+        4.19,
+        0,
+        0,
+        0.47,
+        -0.15,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "id": "reliable-point-key",
+      "kind": "point",
+      "position": [
+        -0.6,
+        3.8,
+        2.1
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        1,
+        0.92,
+        0.79
+      ],
+      "intensity": 2.3,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "cool-point-fill",
+      "kind": "point",
+      "position": [
+        1.75,
+        2.5,
+        1.6
+      ],
+      "direction": [
+        0,
+        0,
+        0
+      ],
+      "colour": [
+        0.65,
+        0.82,
+        1
+      ],
+      "intensity": 0.4,
+      "size": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "ceiling-rectangle",
+      "kind": "rectangle",
+      "position": [
+        0,
+        4.14,
+        -0.15
+      ],
+      "direction": [
+        0,
+        -1,
+        0
+      ],
+      "colour": [
+        1,
+        0.92,
+        0.78
+      ],
+      "intensity": 0.65,
+      "size": [
+        1.5,
+        0.9
+      ]
+    }
+  ],
+  "subjects": [
+    "clay-sphere",
+    "glass-sphere",
+    "mirror-sphere",
+    "rear-glossy-block",
+    "rear-polished-sphere"
+  ]
+}

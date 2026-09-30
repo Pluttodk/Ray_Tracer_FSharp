@@ -1,234 +1,239 @@
 namespace Tracer.Basics.Render
 
-open Tracer.Basics
-open Tracer.Basics.Acceleration
 open System
-open System.Drawing
-open System.Windows.Forms
+open System.Diagnostics
 open System.Threading.Tasks
+open Tracer.Basics
 open Tracer.Basics.Sampling
-open System.Runtime.InteropServices
-open System.Drawing.Imaging
-open System.Threading
+open Tracer.Basics.PathTracing
+open Tracer.Imaging
 
-type Render(scene : Scene, camera : Camera) =
-    // Pre-rendering
-    let rec filtershapes (nobb: Shape list) (bb : Shape list) = function
-      | []            -> nobb, List.toArray bb
-      | (c:Shape)::cr -> 
-          try 
-            c.getBoundingBox() |> ignore
-            filtershapes nobb (c::bb) cr
-          with 
-            | _ -> filtershapes (c::nobb) bb cr                   
-    let (nobbshapes, bbshapes) = filtershapes [] [] scene.Shapes
+type RenderFilm =
+    { Width: int
+      Height: int
+      Pixels: float array
+      BuildMilliseconds: float
+      TraceMilliseconds: float }
+    /// Linear exposure multiplier applied before the display transfer, the way
+    /// a camera's exposure works. A path-traced interior can sit two orders of
+    /// magnitude below display white - San Miguel's median pixel is 0.0067 -
+    /// and without this the only ways to correct it are to distort the lighting
+    /// or to post-process outside the renderer.
+    member this.ToImage(transfer: string, exposure: float) =
+        if not (Double.IsFinite exposure) || exposure <= 0. then
+            invalidArg (nameof exposure) "Exposure must be finite and positive."
+        let image = new RgbImage(this.Width, this.Height)
+        let destination = image.Pixels
+        for index = 0 to this.Width * this.Height - 1 do
+            let offset = index * 3
+            let colour =
+                Colour(this.Pixels.[offset] * exposure,
+                       this.Pixels.[offset + 1] * exposure,
+                       this.Pixels.[offset + 2] * exposure).ToDisplayColor transfer
+            destination.[offset] <- colour.R
+            destination.[offset + 1] <- colour.G
+            destination.[offset + 2] <- colour.B
+        image
 
-    let idOfScene = Acceleration.listOfAccel.Length + 1
-    member this.Camera = camera
-    member this.Scene = scene
-    member this.Shapes = List.toArray scene.Shapes
+    member this.ToImage(transfer: string) =
+        let image = new RgbImage(this.Width, this.Height)
+        let destination = image.Pixels
+        for index = 0 to this.Width * this.Height - 1 do
+            let offset = index * 3
+            let colour = Colour(this.Pixels.[offset], this.Pixels.[offset + 1], this.Pixels.[offset + 2]).ToDisplayColor transfer
+            destination.[offset] <- colour.R
+            destination.[offset + 1] <- colour.G
+            destination.[offset + 2] <- colour.B
+        image
 
-    member this.Cast accel ray =
-        // Get the hitpoint
-        let hitPoint: HitPoint = this.GetFirstHitPoint accel ray
+type Render(scene: Scene, camera: Camera, ?options: RenderOptions) =
+    let options = defaultArg options RenderOptions.Default
+    do
+        if options.Threads <= 0 || options.TileSize <= 0 then
+            invalidArg (nameof options) "Thread and tile counts must be positive."
+        if not (List.contains options.Transfer ["gamma2"; "srgb"; "linear"; "aces"]) then
+            invalidArg (nameof options) "Unknown output transfer function."
+    let shapes = List.toArray scene.Shapes
+    let kind = defaultArg options.Acceleration scene.Acceleration
+    let allOpaque = shapes |> Array.forall (fun shape -> shape.IsOpaque)
+    let sampledCamera: ISampledCamera voption =
+        match camera :> obj with
+        | :? ISampledCamera as sampled when camera.GetType() = typeof<PinholeCamera> || camera.GetType() = typeof<ThinLensCamera> ->
+            ValueSome sampled
+        | _ -> ValueNone
+    let mutable lastFilm: RenderFilm option = None
+    /// Set when denoising was requested but could not run, so callers can report
+    /// it rather than silently shipping an undenoised image.
+    let mutable denoiseNote: string option = None
+    let mutable lastMeanSamples = 0.
 
-        // Check if we hit
-        if hitPoint.DidHit then
-            // Sum the light colors for that hitpoint
-            let ambientColour = this.CastAmbientColour accel hitPoint
-            let totalLightColour = 
-                this.Scene.Lights 
-                |> List.fold (fun acc light -> 
-                    if light :? EnvironmentLight then
-                        lock light (fun() -> 
-                            let colour = this.CastRecursively accel ray hitPoint.Shape hitPoint light Colour.Black this.Scene.MaxBounces hitPoint.Material.BounceMethod
-                            acc + colour)
-                    else
-                        let colour = this.CastRecursively accel ray hitPoint.Shape hitPoint light Colour.Black this.Scene.MaxBounces hitPoint.Material.BounceMethod
-                        acc + colour
-                    ) Colour.Black
-            ambientColour + totalLightColour
-        else
-            // If we did not hit, return the background colour
-            this.Scene.BackgroundColour
+    let makeIntegrator acceleration =
+        let query =
+            { new IRayQuery with
+                member _.Closest(ray, minimum, maximum) = Acceleration.traverseClosest acceleration ray minimum maximum
+                member _.Any(ray, minimum, maximum) = Acceleration.anyHit acceleration ray minimum maximum }
+        match options.Integrator with
+        | Classic -> ClassicIntegrator(scene, query, allOpaque, options.CancellationToken) :> IIntegrator
+        | Path ->
+            PathIntegrator(scene, query, allOpaque, options.CancellationToken,
+                           scene.MaxBounces, options.RouletteDepth) :> IIntegrator
 
-    member this.CastAmbientColour accel hitPoint = 
-        hitPoint.Material.AmbientColour(hitPoint, this.Scene.Ambient) *
-            match this.Scene.Ambient with
-                | :? AmbientOccluder as occluder -> this.Occlude accel occluder hitPoint
-                | _ -> Colour.White
+    member _.Camera = camera
+    member _.Scene = scene
+    member _.Shapes = Array.copy shapes
+    member _.Options = options
+    member _.LastFilm = lastFilm
+    member _.DenoiseNote = denoiseNote
+    /// Mean samples per pixel actually traced. Equals the requested count when
+    /// adaptive sampling is off; below it when pixels terminated early.
+    member _.LastMeanSamplesPerPixel = lastMeanSamples
+    member _.PreProcessing =
+        if kind = Acceleration.FlatBVH then Acceleration.buildFlatWithOptions options.BvhOptions shapes
+        else Acceleration.buildWith kind shapes
+    member _.GetFirstHitPoint acceleration ray = Acceleration.traverseClosest acceleration ray 0. infinity
+    member _.GetFirstShadowHitPoint acceleration ray = Acceleration.traverseClosest acceleration ray 0. infinity
+    member _.Cast acceleration ray = (makeIntegrator acceleration).Trace(ray, sampleKey options.Seed 0 0)
 
-    member this.Occlude accel (occluder: AmbientOccluder) (hitPoint: HitPoint) = 
-        let sampler = occluder.Sampler
-        let transOrthoCoord (hemPoint:(float*float*float)) = 
-            
-            // Transform orthonormal frame of sample point
-            let sp = new Tracer.Basics.Point(hemPoint)
-            let up = new Vector(0., 1., 0.)
-            let w = hitPoint.Normal
-            let v = (up % w).Normalise
-            let u = w % v
-            let transformed_sp = sp.OrthonormalTransform(u, v, w)
+    member this.RenderLinear =
+        options.CancellationToken.ThrowIfCancellationRequested()
+        let watch = Stopwatch.StartNew()
+        let acceleration = this.PreProcessing
+        let buildMilliseconds = watch.Elapsed.TotalMilliseconds
+        let integrator = makeIntegrator acceleration
+        let pixels = Array.zeroCreate<float> (camera.ResX * camera.ResY * 3)
+        // Guide buffers are only accumulated when they will actually be used;
+        // capturing them costs an extra write per sample.
+        let denoising = options.Denoise && options.Integrator = Path
+        // Adaptive sampling only makes sense for a stochastic integrator; the
+        // Whitted path is deterministic, so its per-sample variance is aliasing,
+        // not noise, and terminating early would just alias more.
+        let adaptive = options.AdaptiveThreshold > 0. && options.Integrator = Path
+        let adaptiveMinSamples = max 2 options.AdaptiveMinSamples
+        let mutable adaptiveSamplesTaken = 0L
+        let albedo = if denoising then Array.zeroCreate<float> (camera.ResX * camera.ResY * 3) else Array.empty
+        let normals = if denoising then Array.zeroCreate<float> (camera.ResX * camera.ResY * 3) else Array.empty
+        let tileColumns = (camera.ResX + options.TileSize - 1) / options.TileSize
+        let tileRows = (camera.ResY + options.TileSize - 1) / options.TileSize
+        let parallelOptions =
+            ParallelOptions(MaxDegreeOfParallelism = options.Threads, CancellationToken = options.CancellationToken)
+        watch.Restart()
+        Parallel.For(0, tileColumns * tileRows, parallelOptions, fun tile ->
+            let startX = (tile % tileColumns) * options.TileSize
+            let startY = (tile / tileColumns) * options.TileSize
+            let endX = min camera.ResX (startX + options.TileSize)
+            let endY = min camera.ResY (startY + options.TileSize)
+            for y = startY to endY - 1 do
+                for x = startX to endX - 1 do
+                    let pixel = y * camera.ResX + x
+                    let cameraKey = mixKey (uint64 (uint32 options.Seed) ^^^ uint64 pixel)
+                    let struct (rays, count) =
+                        match sampledCamera with
+                        | ValueSome sampled -> struct (Array.empty, sampled.SampleCount)
+                        | ValueNone ->
+                            let rays = camera.CreateRaysAt x y cameraKey
+                            struct (rays, rays.Length)
+                    if count = 0 then invalidOp $"Camera returned no rays for pixel ({x},{y})."
+                    let mutable red = 0.
+                    let mutable green = 0.
+                    let mutable blue = 0.
+                    let mutable albedoR = 0.
+                    let mutable albedoG = 0.
+                    let mutable albedoB = 0.
+                    let mutable normalX = 0.
+                    let mutable normalY = 0.
+                    let mutable normalZ = 0.
+                    // Welford accumulators over per-sample luminance, used to
+                    // decide when this pixel has converged. Running them
+                    // incrementally avoids a second pass over the samples.
+                    let mutable taken = 0
+                    let mutable luminanceMean = 0.
+                    let mutable luminanceM2 = 0.
+                    let mutable converged = false
+                    while taken < count && not converged do
+                        let sample = taken
+                        let ray =
+                            match sampledCamera with
+                            | ValueSome sampled -> sampled.CreateRay(x, y, cameraKey, sample)
+                            | ValueNone -> rays.[sample]
+                        let key = sampleKey options.Seed pixel sample
+                        let colour =
+                            if denoising then
+                                let struct (colour, guideAlbedo, guideNormal) = integrator.TraceWithGuides(ray, key)
+                                albedoR <- albedoR + guideAlbedo.R
+                                albedoG <- albedoG + guideAlbedo.G
+                                albedoB <- albedoB + guideAlbedo.B
+                                normalX <- normalX + guideNormal.X
+                                normalY <- normalY + guideNormal.Y
+                                normalZ <- normalZ + guideNormal.Z
+                                colour
+                            else integrator.Trace(ray, key)
+                        red <- red + colour.R
+                        green <- green + colour.G
+                        blue <- blue + colour.B
+                        taken <- taken + 1
+                        if adaptive then
+                            let luminance = 0.2126 * colour.R + 0.7152 * colour.G + 0.0722 * colour.B
+                            let delta = luminance - luminanceMean
+                            luminanceMean <- luminanceMean + delta / float taken
+                            luminanceM2 <- luminanceM2 + delta * (luminance - luminanceMean)
+                            // Stop once the standard error of the MEAN is a small
+                            // fraction of the mean itself. Checking only every
+                            // few samples keeps the test cheap and stops a lucky
+                            // run of samples from terminating a pixel early.
+                            if taken >= adaptiveMinSamples && taken % 8 = 0 then
+                                let variance = luminanceM2 / float (taken - 1)
+                                let standardError = sqrt (variance / float taken)
+                                if standardError <= options.AdaptiveThreshold * (abs luminanceMean + 1e-4) then
+                                    converged <- true
+                    let scale = 1. / float (max 1 taken)
+                    let target = ((camera.ResY - 1 - y) * camera.ResX + x) * 3
+                    pixels.[target] <- red * scale
+                    pixels.[target + 1] <- green * scale
+                    pixels.[target + 2] <- blue * scale
+                    if adaptive then
+                        System.Threading.Interlocked.Add(&adaptiveSamplesTaken, int64 taken) |> ignore
+                    if denoising then
+                        albedo.[target] <- albedoR * scale
+                        albedo.[target + 1] <- albedoG * scale
+                        albedo.[target + 2] <- albedoB * scale
+                        // Averaged normals are no longer unit length; OIDN wants
+                        // them normalized, so renormalize per pixel.
+                        let length = sqrt (normalX * normalX + normalY * normalY + normalZ * normalZ)
+                        if length > 1e-9 then
+                            normals.[target] <- normalX / length
+                            normals.[target + 1] <- normalY / length
+                            normals.[target + 2] <- normalZ / length) |> ignore
+        watch.Stop()
+        lastMeanSamples <-
+            if adaptive then float adaptiveSamplesTaken / float (camera.ResX * camera.ResY)
+            else float (if sampledCamera.IsSome then (match sampledCamera with ValueSome c -> c.SampleCount | _ -> 0) else 0)
+        if denoising then
+            let toFloat32 (source: float array) = Array.init source.Length (fun i -> float32 source.[i])
+            match Denoiser.denoiseWithDiagnostics camera.ResX camera.ResY
+                      (toFloat32 pixels) (Some(toFloat32 albedo)) (Some(toFloat32 normals)) with
+            | Ok denoised ->
+                for index = 0 to pixels.Length - 1 do
+                    let value = float denoised.[index]
+                    // The denoiser can return small negatives; Colour rejects
+                    // those, and negative radiance is meaningless anyway.
+                    pixels.[index] <- if Double.IsFinite value && value > 0. then value else 0.
+            | Error message -> denoiseNote <- Some message
+        let film =
+            { Width = camera.ResX; Height = camera.ResY; Pixels = pixels
+              BuildMilliseconds = buildMilliseconds; TraceMilliseconds = watch.Elapsed.TotalMilliseconds }
+        lastFilm <- Some film
+        film
 
-            if transformed_sp * hitPoint.Normal > 0.0 then
-                transformed_sp
-            else 
-                (-sp.X * v - sp.Y * u + sp.Z * w).Normalise
+    member this.RenderParallel = this.RenderLinear.ToImage(options.Transfer, options.Exposure)
+    member _.SaveImage(image: RgbImage, path: string) = image.SavePng path
+    member _.Clean(image: RgbImage) = image.Dispose()
 
-        let samples = sampler.NextSet()
-        let total = [for (x, y) in samples do yield transOrthoCoord (mapToHemisphere (x,y) 1.)]
-                    |> List.fold (fun acc ad -> acc + this.CastAmbientOcclusion accel ad occluder hitPoint) Colour.Black 
+    member this.RenderToFile path =
+        use image = this.RenderParallel
+        this.SaveImage(image, path)
 
-        total / sampler.SampleCount
+    member _.ShowImageOnScreen(_: RgbImage) : unit =
+        raise (PlatformNotSupportedException("Use renderToFile to save a PNG with the headless renderer."))
 
-    member this.CastAmbientOcclusion accel (sp: Vector) (occluder: AmbientOccluder) (hitPoint: HitPoint) = 
-        let ray = Ray(hitPoint.EscapedPoint, sp.Normalise)
-        let rayHit = this.GetFirstHitPoint accel ray
-        if rayHit.DidHit then
-            occluder.MinIntensityColour
-        else
-            occluder.Colour       
-
-    // Get the first point the ray hits (if it hits, otherwise an empty hit point)
-    member this.GetFirstHitPoint accel (ray:Ray) : HitPoint = 
-
-      let rec findClosestHit (h:HitPoint) t' = function
-      | []    -> 
-          let hit = traverseIAcceleration accel ray bbshapes
-          if hit.DidHit && hit.Time < t' then hit
-          else h
-      | (s:Shape)::sl -> 
-          let hit = s.hitFunction ray
-          if hit.DidHit && hit.Time < t' then findClosestHit hit hit.Time sl
-          else findClosestHit h t' sl
-      findClosestHit (HitPoint(ray)) infinity nobbshapes
-
-    member this.GetFirstShadowHitPoint accel (ray:Ray) : HitPoint = 
-        let hit = this.GetFirstHitPoint accel ray
-        if hit.Material :? EmissiveMaterial then HitPoint(ray) // no shadow if we have direct rout to emissive material
-        else hit
-
-    // Returns the average shadow for a hitpoint and a light source
-    member this.CastShadow accel (hitPoint: HitPoint) (light: Light) : Colour = 
-        if light :? AmbientLight || hitPoint.Material :? TransparentMaterial
-            then Colour.Black
-        else
-            let shadowRays = light.GetShadowRay hitPoint
-            
-            let maxTime =
-                match light with
-                | :? PointLight as p -> p.Position.Distance(hitPoint.Point).Magnitude
-                | _ -> 2147483647.
-
-            let isShadow ray = 
-                let hp = (this.GetFirstShadowHitPoint accel ray)
-                if hp.DidHit && hp.Time < maxTime then
-                        Colour.White
-                    else 
-                        Colour.Black
-            
-            if shadowRays.Length = 0 then 
-                Colour.Black
-            else
-                let totalShadow = Array.fold (fun acc ray -> acc + isShadow ray) Colour.Black shadowRays
-                (totalShadow / float(shadowRays.Length))
-
-    // Will cast a ray recursively
-    member this.CastRecursively 
-        (accel: IAcceleration) (incomingRay: Ray) (shape: Shape) (hitPoint: HitPoint) (light: Light) (acc: Colour) (bounces: int) 
-        (reflectionFunction: HitPoint -> Ray[]) : Colour =
-        
-        if light :? EnvironmentLight then
-            (light :?> EnvironmentLight).FlushDirections(hitPoint)
-
-        let shadowColour = this.CastShadow accel hitPoint light
-
-        if bounces = 0 || not hitPoint.Material.IsRecursive then
-            acc + (hitPoint.Material.Bounce(shape, hitPoint, light) - shadowColour)
-        else
-            let outRay = reflectionFunction hitPoint
-            let baseColour = acc + (hitPoint.Material.Bounce(shape, hitPoint, light) - shadowColour)
-            let mutable outColour = Colour.Black
-            for i = 0 to outRay.Length-1 do
-                 
-                    let outHitPoint = this.GetFirstHitPoint accel outRay.[i]
-                    if outHitPoint.DidHit then
-                        
-                        let recursiveColour = this.CastRecursively accel outRay.[i] outHitPoint.Shape outHitPoint light baseColour (bounces - 1) reflectionFunction
-                        outColour <- outColour + hitPoint.Material.ReflectionFactor(hitPoint, outRay.[i]) * recursiveColour
-                    else
-                        outColour <- outColour + this.Scene.BackgroundColour
-            baseColour + (outColour)
-
-    member this.PreProcessing =
-        let accel = Acceleration.createAcceleration (shapeArray (idOfScene, bbshapes, None))
-
-        accel
-
-    member this.ShowImageOnScreen (renderedImage:Bitmap) =
-        let window = new Form(ClientSize=Size(renderedImage.Width, renderedImage.Height), StartPosition=FormStartPosition.CenterScreen)
-        window.Paint.Add(fun draw -> draw.Graphics.DrawImage(renderedImage, Point(0, 0)))
-        Application.Run(window)
-
-    member this.SaveImage (renderedImage:Bitmap, filepath) =
-        // Save image
-        renderedImage.Save(filepath)
-        
-    member this.RenderParallel = 
-        // Create our timer and Acceleration Structure
-        let accel = this.PreProcessing
-
-        // Prepare image
-        let renderedImage = (new Bitmap(camera.ResX, camera.ResY))
-        use g = Graphics.FromImage(renderedImage)
-        use brush = new SolidBrush(Color.Black)
-        g.FillRectangle(brush, 0,0,camera.ResX,camera.ResY)
-        
-        //ref: http://csharpexamples.com/fast-image-processing-c/
-        let bitmapData = renderedImage.LockBits(new Rectangle(0, 0, renderedImage.Width, renderedImage.Height), ImageLockMode.ReadWrite, renderedImage.PixelFormat)
-        let bytesPrPixel = Bitmap.GetPixelFormatSize(renderedImage.PixelFormat) / 8
-        let byteCount = bitmapData.Stride * renderedImage.Height
-        let pixel : byte[] = Array.zeroCreate(byteCount)
-        let firstPixel = bitmapData.Scan0
-        Marshal.Copy(firstPixel, pixel, 0, pixel.Length)
-        
-        Parallel.For(0, bitmapData.Height * bitmapData.Width, fun xy ->
-            let y = xy / bitmapData.Width
-            let x = (xy % bitmapData.Width) * bytesPrPixel
-
-            let currentLine = y * bitmapData.Stride
-        
-            let coordsX = x/bytesPrPixel
-            let rays = camera.CreateRays coordsX y
-            let cols = Array.map (fun ray -> (this.Cast accel ray)) rays
-            let colour = (Array.fold (+) Colour.Black cols)/float cols.Length
-
-            let color = colour.ToColor
-
-            pixel.[currentLine + x] <- (byte)color.B
-            pixel.[currentLine + x + 1] <- (byte)color.G
-            pixel.[currentLine + x + 2] <- (byte)color.R
-
-            ) |> ignore
-
-        Marshal.Copy(pixel, 0, firstPixel, pixel.Length);
-        renderedImage.UnlockBits(bitmapData)
-
-        renderedImage.RotateFlip(RotateFlipType.RotateNoneFlipY)
-
-        renderedImage
-
-    member this.Clean (image:Bitmap) =
-        image.Dispose()
-        Acceleration.listOfAccel <- []
-        GC.Collect()
-
-    member this.RenderToFile filename =
-        let image = this.RenderParallel
-        this.SaveImage(image, filename)
-        this.Clean image
-
-    member this.RenderToScreen =
-        let image = this.RenderParallel
-        this.ShowImageOnScreen(image)
-        this.Clean image
+    member _.RenderToScreen : unit =
+        raise (PlatformNotSupportedException("Use renderToFile to save a PNG with the headless renderer."))

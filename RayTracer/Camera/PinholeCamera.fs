@@ -8,10 +8,25 @@ type PinholeCamera(position: Tracer.Basics.Point, lookat: Tracer.Basics.Point,
     inherit Camera(position, lookat, up, zoom, width, height, resX, resY)
 
     default this.CreateRays x y =
-        let samples = sampler.NextSet()
-        // Create the rays for anti-aliasing.
-        [|for (sx, sy) in samples do
-            let px = this.Pw * (float(x - (this.ResX/2)) + sx)
-            let py = this.Ph * (float(y - (this.ResY/2)) + sy)
-            let direction = (px * this.V) + (py * this.U) - (zoom * this.W)
-            yield (new Ray(this.Position, direction.Normalise))|]
+        this.CreateRaysAt x y (this.PixelKey x y)
+
+    member private this.RayAt(x, y, key, sample) =
+        this.CheckPixel x y
+        if sample < 0 || sample >= sampler.SampleCount then
+            invalidArg (nameof sample) "Camera sample index is out of range."
+        let sx, sy = sampler.SampleAt(key, sample)
+        let px = this.Pw * (float x - float this.ResX / 2. + sx)
+        let py = this.Ph * (float y - float this.ResY / 2. + sy)
+        let u, v, w = this.U, this.V, this.W
+        let direction =
+            Vector(px * v.X + py * u.X - zoom * w.X,
+                   px * v.Y + py * u.Y - zoom * w.Y,
+                   px * v.Z + py * u.Z - zoom * w.Z).Normalise
+        Ray(this.Position, direction)
+
+    override this.CreateRaysAt x y key =
+        Array.init sampler.SampleCount (fun sample -> this.RayAt(x, y, key, sample))
+
+    interface ISampledCamera with
+        member _.SampleCount = sampler.SampleCount
+        member this.CreateRay(x, y, key, sample) = this.RayAt(x, y, key, sample)
