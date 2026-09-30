@@ -34,13 +34,6 @@
           "RayTracer.ImageIO": "[1.0.0, )"
         }
       },
-      "raytracer.animation": {
-        "type": "Project",
-        "dependencies": {
-          "Basics": "[1.0.0, )",
-          "FSharp.Core": "[10.1.400, )"
-        }
-      },
       "raytracer.imageio": {
         "type": "Project",
         "dependencies": {

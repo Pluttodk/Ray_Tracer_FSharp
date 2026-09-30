@@ -42,3 +42,5 @@ jobs:
           dotnet fsi SceneAssets/CheckLegacyPly.fsx
       - name: Offline image smoke
         run: dotnet run --project TracerTest -c Release --no-build -- --smoke
+      - name: Animation smoke
+        run: dotnet run --project AnimationRunner -c Release --no-build -- --demo hop --frames 2 --res 64x36 --spp 1 --no-video --out artifacts/anim/smoke

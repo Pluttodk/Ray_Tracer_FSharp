@@ -30,10 +30,12 @@
     <Compile Include="MeshRegressionTests.fs" />
     <Compile Include="NumericalRegressionTests.fs" />
     <Compile Include="MotionTests.fs" />
+    <Compile Include="AnimationTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../RayTracer/RayTracer.fsproj" />
+    <ProjectReference Include="../RayTracer.Animation/RayTracer.Animation.fsproj" />
     <ProjectReference Include="../RayTracer.ImageIO/RayTracer.ImageIO.fsproj" />
   </ItemGroup>
 </Project>

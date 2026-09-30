@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>AnimationRunner</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Encode.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RayTracer/RayTracer.fsproj" />
+    <ProjectReference Include="../RayTracer.Animation/RayTracer.Animation.fsproj" />
+    <ProjectReference Include="../RayTracer.ImageIO/RayTracer.ImageIO.fsproj" />
+  </ItemGroup>
+</Project>

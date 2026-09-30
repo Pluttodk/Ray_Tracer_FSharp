@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Tracer.Animation</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Easing.fs" />
+    <Compile Include="Tracks.fs" />
+    <Compile Include="SceneGraph.fs" />
+    <Compile Include="Stage.fs" />
+    <Compile Include="Demos.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RayTracer/RayTracer.fsproj" />
+  </ItemGroup>
+</Project>
