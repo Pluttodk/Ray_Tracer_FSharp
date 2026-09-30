@@ -16,6 +16,27 @@
           "FSharp.Core": "4.3.4"
         }
       },
+      "SharpGLTF.Core": {
+        "type": "Transitive",
+        "resolved": "1.0.7",
+        "contentHash": "dZHCUl2jH1ViiLbAwyYbVfZnFqsF1e/9OhZAfLBoggOpqnsbgKQghldK3LnobmtNRp6GNZMyaNkPceqERkqmsQ=="
+      },
+      "SharpGLTF.Runtime": {
+        "type": "Transitive",
+        "resolved": "1.0.7",
+        "contentHash": "nHLEn7HlVq4KEc/2LSXtjMiWqabIirgS42kPogH6UQ+GhXUGQEOd/UjYb3xYI+ijfM9T7Q098Y9SqwbWfqs3NA==",
+        "dependencies": {
+          "SharpGLTF.Core": "1.0.7"
+        }
+      },
+      "SharpGLTF.Toolkit": {
+        "type": "Transitive",
+        "resolved": "1.0.7",
+        "contentHash": "v4N6KzbQ6gnBdTN970191BYD1Nyo2lGOhli/Ivnt36GehKQvE8m7ROqg0sP3ixSQWNj1vj34+S7HoSNDaPzvXQ==",
+        "dependencies": {
+          "SharpGLTF.Runtime": "1.0.7"
+        }
+      },
       "StbImageSharp": {
         "type": "Transitive",
         "resolved": "2.30.16",
@@ -38,7 +59,9 @@
         "type": "Project",
         "dependencies": {
           "Basics": "[1.0.0, )",
-          "FSharp.Core": "[10.1.400, )"
+          "FSharp.Core": "[10.1.400, )",
+          "RayTracer.ImageIO": "[1.0.0, )",
+          "SharpGLTF.Toolkit": "[1.0.7, )"
         }
       },
       "raytracer.imageio": {

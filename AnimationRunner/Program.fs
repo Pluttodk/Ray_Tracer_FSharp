@@ -23,12 +23,13 @@ type Options =
       Output: string option
       Resume: bool
       Video: bool
-      ExportGltf: string option }
+      ExportGltf: string option
+      LightScale: float }
 
 let private defaults =
     { Demo = None; Scene = None; Clip = None; Settings = FrameSettings.Default; Start = 0; End = None; Frames = None
       Seed = 2026; FixedNoise = false; Integrator = Classic; Denoise = false; Transfer = "srgb"
-      Output = None; Resume = true; Video = true; ExportGltf = None }
+      Output = None; Resume = true; Video = true; ExportGltf = None; LightScale = 1. }
 
 let usage () =
     printfn """Usage: AnimationRunner (--demo NAME | --scene FILE.gltf|.glb [--clip NAME] | --list) [options]
@@ -46,6 +47,7 @@ let usage () =
   --out DIR            output directory (default artifacts/anim/NAME)
   --no-resume          re-render frames that already exist
   --no-video           skip the ffmpeg MP4
+  --light-scale F      multiplies the intensity of lights imported from glTF (default 1)
   --export-gltf FILE   write the scene and its animation as glTF 2.0 (.gltf or .glb) and exit"""
 
 let parse (argv: string[]) =
@@ -89,6 +91,7 @@ let parse (argv: string[]) =
         | "--no-resume" :: rest -> go { options with Resume = false } rest
         | "--no-video" :: rest -> go { options with Video = false } rest
         | "--export-gltf" :: v :: rest -> go { options with ExportGltf = Some v } rest
+        | "--light-scale" :: v :: rest -> go { options with LightScale = number "light-scale" v } rest
         | option :: _ -> invalidArg "arguments" $"Unknown or incomplete option {option}."
     let options = go defaults (List.ofArray argv)
     let s = options.Settings
@@ -204,11 +207,23 @@ let main argv =
                     match Demos.tryFind name with
                     | Some demo -> demo.Build ()
                     | None -> invalidArg "demo" $"Unknown demo {name}; see --list."
-                | None, Some _ -> invalidArg "scene" "glTF scenes are not supported yet."
+                | None, Some path ->
+                    let defaults = Gltf.ImportOptions.Default
+                    let imported =
+                        Gltf.load path
+                            { defaults with
+                                Clip = options.Clip
+                                PointLightScale = defaults.PointLightScale * options.LightScale
+                                DirectionalLightScale = defaults.DirectionalLightScale * options.LightScale }
+                    for warning in imported.Warnings do eprintfn "warning: %s" warning
+                    imported.Scene
                 | _ -> invalidArg "arguments" "Give exactly one of --demo or --scene."
             let scene = AnimatedScene.validate scene
             match options.ExportGltf with
-            | Some _ -> invalidArg "export-gltf" "glTF export is not supported yet."
+            | Some path ->
+                let warnings = Gltf.save scene path 60.
+                for warning in warnings do eprintfn "warning: %s" warning
+                printfn "Wrote %s" (Path.GetFullPath path)
             | None -> render options scene
             0
     with

@@ -13,8 +13,13 @@
     <Compile Include="Bake.fs" />
     <Compile Include="Stage.fs" />
     <Compile Include="Demos.fs" />
+    <Compile Include="Gltf.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../RayTracer/RayTracer.fsproj" />
+    <ProjectReference Include="../RayTracer.ImageIO/RayTracer.ImageIO.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.7" />
   </ItemGroup>
 </Project>

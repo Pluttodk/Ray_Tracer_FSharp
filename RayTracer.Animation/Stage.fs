@@ -34,17 +34,21 @@ module Stage =
             if cell % 2 = 0 then a else b)
         |> markOpaque
 
-    /// The unbounded y = 0 ground plane, facing +Y.
-    let ground texture = Transform.transform (InfinitePlane(texture)) (rotateX (-Math.PI / 2.))
+    /// A node holding the unbounded y = 0 ground plane, facing +Y. Its UVs are world X and -Z.
+    let groundNode texture =
+        Node.create "ground"
+        |> Node.withRest { Trs.identity with Rotation = Quaternion.ofAxisAngle (Vector(1., 0., 0.)) (-Math.PI / 2.) }
+        |> Node.withContent [ Geometry(InfinitePlane(texture)) ]
 
     /// An axis-aligned box from `low` to `high` with one texture on every face.
     let box (low: Point) (high: Point) texture =
         Box(low, high, texture, texture, texture, texture, texture, texture) :> Shape
 
-    /// Render geometry matching a physics box collider.
-    let colliderBox (centre: Point) (half: Vector) (rotation: Quaternion) texture =
-        let local = box (Point(-half.X, -half.Y, -half.Z)) (Point(half.X, half.Y, half.Z)) texture
-        Transform.transform local (Trs.toTransformation { Translation = Vector(centre.X, centre.Y, centre.Z); Rotation = rotation; Scale = Vector(1., 1., 1.) })
+    /// A node holding a box matching a physics box collider.
+    let colliderNode name (centre: Point) (half: Vector) (rotation: Quaternion) texture =
+        Node.create name
+        |> Node.withRest { Translation = Vector(centre.X, centre.Y, centre.Z); Rotation = rotation; Scale = Vector(1., 1., 1.) }
+        |> Node.withContent [ Geometry(box (Point(-half.X, -half.Y, -half.Z)) (Point(half.X, half.Y, half.Z)) texture) ]
 
     let sphere radius texture = SphereShape(Point.Zero, radius, texture) :> Shape
 

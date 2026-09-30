@@ -1,4 +1,4 @@
-module Tracer.Basics.TriangleMesh
+﻿module Tracer.Basics.TriangleMesh
 
 open System
 open System.IO
@@ -247,6 +247,7 @@ type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array a
 type MeshShape internal (geometry: MeshGeometry, texture: Texture) =
     inherit Shape()
     member _.Geometry = geometry
+    member _.Texture = texture
     override _.IsOpaque = Textures.isOpaque texture
     override _.getBoundingBox() = geometry.Bounds
     override _.isInside point =
@@ -269,3 +270,27 @@ type BaseMeshShape internal (geometry: MeshGeometry) =
 let drawTriangles (filepath: string) (smoothen: bool) =
     let vertices, faces = parseIndexedPLY filepath
     BaseMeshShape(MeshGeometry(vertices, faces, smoothen)) :> BaseShape
+
+/// Builds a mesh from in-memory arrays, e.g. a glTF primitive. `normals` and `uvs` are either empty or hold one
+/// entry per position; `triangles` holds three position indices per triangle.
+let fromArrays (positions: Point[]) (normals: Vector[]) (uvs: (float * float)[]) (triangles: int[]) (smooth: bool) =
+    if isNull positions || positions.Length = 0 then invalidArg (nameof positions) "A mesh needs at least one vertex."
+    if not (isNull normals || normals.Length = 0 || normals.Length = positions.Length) then
+        invalidArg (nameof normals) "Give one normal per vertex, or none."
+    if not (isNull uvs || uvs.Length = 0 || uvs.Length = positions.Length) then
+        invalidArg (nameof uvs) "Give one UV per vertex, or none."
+    if isNull triangles || triangles.Length = 0 || triangles.Length % 3 <> 0 then
+        invalidArg (nameof triangles) "Triangle indices must come in threes."
+    if triangles |> Array.exists (fun i -> i < 0 || i >= positions.Length) then
+        invalidArg (nameof triangles) "A triangle index is out of range."
+    let hasNormals = not (isNull normals) && normals.Length > 0
+    let hasUvs = not (isNull uvs) && uvs.Length > 0
+    let vertices =
+        positions |> Array.mapi (fun i p ->
+            let nx, ny, nz =
+                if hasNormals && normals.[i].IsFinite && not normals.[i].IsZero then Some normals.[i].X, Some normals.[i].Y, Some normals.[i].Z
+                else None, None, None
+            let u, v = if hasUvs then Some (fst uvs.[i]), Some (snd uvs.[i]) else None, None
+            Vertex(p.X, p.Y, p.Z, nx, ny, nz, u, v))
+    let faces = Array.init (triangles.Length / 3) (fun t -> [| triangles.[3 * t]; triangles.[3 * t + 1]; triangles.[3 * t + 2] |])
+    BaseMeshShape(MeshGeometry(vertices, faces, smooth)) :> BaseShape

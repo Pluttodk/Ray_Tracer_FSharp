@@ -145,6 +145,51 @@ noncommercial research terms apply; commercial use requires permission.
 See [`benchmarks/gold-dragon.json`](benchmarks/gold-dragon.json) and the generated
 provenance. The normal benchmark does not download or depend on this asset.
 
+## Animation
+
+[`RayTracer.Animation`](RayTracer.Animation) adds keyframed and simulated
+animation, and [`AnimationRunner`](AnimationRunner) renders it to numbered PNGs
+and an MP4 (when `ffmpeg` is on `PATH`):
+
+```sh
+dotnet run --project AnimationRunner -c Release -- --list
+dotnet run --project AnimationRunner -c Release -- --demo lamp --res 960x540 --spp 16
+dotnet run --project AnimationRunner -c Release -- --scene shot.glb --clip Action --integrator path
+dotnet run --project AnimationRunner -c Release -- --demo bouncing-ball --export-gltf bounce.glb
+```
+
+Frames go to `artifacts/anim/NAME/frame_00000.png`. An interrupted render
+resumes from the first missing frame; `manifest.json` refuses to mix frames
+rendered with different settings. Each frame gets its own seed unless
+`--fixed-noise` is given.
+
+- **glTF 2.0 interchange.** `--scene` loads `.gltf`/`.glb` files as exported by
+  Blender and other tools: node hierarchy, TRS animation with step, linear and
+  cubic-spline keys, triangle meshes with base-colour textures, perspective
+  cameras and `KHR_lights_punctual`. Metallic-roughness materials map to the
+  nearest classic material, and anything lost is reported as a warning. Skins,
+  morph targets and orthographic cameras are not supported. `--export-gltf`
+  writes a scene back out for inspection in Blender. Analytic shapes are
+  tessellated, procedural textures are baked to images, and aimed cameras and
+  eased tracks are resampled.
+- **Motion blur.** Rays carry a shutter time. Cameras stratify it across the
+  shutter (`--shutter 0.5` is a 180° shutter), and moving objects are
+  intersected at the pose for each ray's time. Rotations blur along arcs.
+  Lights and the camera itself are placed at mid-shutter.
+- **Authoring in code.** A scene is a tree of named nodes with rest TRS poses,
+  animated by clips. `Smooth.vector`/`Smooth.rotation` give auto-clamped spline
+  keys, and `Easing` covers anticipation (`backIn`) and follow-through
+  (`backOut`). A camera can aim at any node.
+- **Physics.** `Physics` simulates rigid spheres with restitution, Coulomb
+  friction and rolling, against planes, boxes and each other. `Bake` turns a
+  simulation into ordinary keyframe tracks, optionally with volume-preserving
+  squash on impact and stretch in flight. Baked motion therefore exports to
+  glTF and mixes with hand-keyed animation.
+
+The demos are `hop`, `rolling-ball`, `bouncing-ball`, `camera-dolly` and
+`lamp`. The top-level acceleration structure is rebuilt every frame, while mesh
+BVHs are built once and reused.
+
 ## Implementation
 
 The modern renderer uses hit-local barycentrics and face orientation,

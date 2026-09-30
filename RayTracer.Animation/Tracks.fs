@@ -125,11 +125,55 @@ module Sampler =
                     { X = c a.X m.X b.X n.X; Y = c a.Y m.Y b.Y n.Y
                       Z = c a.Z m.Z b.Z n.Z; W = c a.W m.W b.W n.W }
 
+/// Smooth keys in the style of Blender's auto-clamped handles: Catmull-Rom tangents, flattened wherever a
+/// component turns around (so there is no overshoot) and at the first and last key (so motion eases in and
+/// out). Stored as glTF cubic-spline keys, so they export exactly.
+module Smooth =
+    let private tangents (times: float[]) (values: float[][]) =
+        let n = times.Length
+        Array.init n (fun k ->
+            if k = 0 || k = n - 1 then Array.zeroCreate values.[k].Length
+            else
+                Array.init values.[k].Length (fun c ->
+                    let before = values.[k].[c] - values.[k - 1].[c]
+                    let after = values.[k + 1].[c] - values.[k].[c]
+                    if before * after <= 0. then 0.
+                    else (values.[k + 1].[c] - values.[k - 1].[c]) / (times.[k + 1] - times.[k - 1])))
+
+    let vector (keys: (float * Vector) list) : Sampler<Vector> =
+        let times = keys |> List.map fst |> Array.ofList
+        let values = keys |> List.map (fun (_, v) -> [| v.X; v.Y; v.Z |]) |> Array.ofList
+        let m = tangents times values |> Array.map (fun t -> Vector(t.[0], t.[1], t.[2]))
+        Sampler.cubic [ for k in 0 .. times.Length - 1 -> times.[k], m.[k], Vector(values.[k].[0], values.[k].[1], values.[k].[2]), m.[k] ]
+
+    let rotation (keys: (float * Quaternion) list) : Sampler<Quaternion> =
+        let times = keys |> List.map fst |> Array.ofList
+        // Keep consecutive rotations in one hemisphere so the spline takes the short way round.
+        let quats = keys |> List.map snd |> Array.ofList
+        for k in 1 .. quats.Length - 1 do
+            if Quaternion.dot quats.[k - 1] quats.[k] < 0. then quats.[k] <- Quaternion.negate quats.[k]
+        let values = quats |> Array.map (fun q -> [| q.X; q.Y; q.Z; q.W |])
+        let m = tangents times values |> Array.map (fun t -> { X = t.[0]; Y = t.[1]; Z = t.[2]; W = t.[3] })
+        Sampler.cubic [ for k in 0 .. times.Length - 1 -> times.[k], m.[k], quats.[k], m.[k] ]
+
 /// Helpers for authoring clips in code.
 module Clip =
     let create name channels = { Name = name; Channels = channels }
 
     let translate node sampler = { Node = node; Track = Translation sampler }
+
+    /// Delays every key of the clip by `offset` seconds.
+    let shift (offset: float) (clip: Clip) =
+        let move (s: Sampler<'T>) = { s with Times = s.Times |> Array.map ((+) offset) }
+        { clip with
+            Channels =
+                clip.Channels |> List.map (fun channel ->
+                    { channel with
+                        Track =
+                            match channel.Track with
+                            | Translation s -> Translation (move s)
+                            | Rotation s -> Rotation (move s)
+                            | Scale s -> Scale (move s) }) }
     let rotate node sampler = { Node = node; Track = Rotation sampler }
     let scale node sampler = { Node = node; Track = Scale sampler }
 

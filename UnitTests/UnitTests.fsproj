@@ -32,7 +32,11 @@
     <Compile Include="MotionTests.fs" />
     <Compile Include="AnimationTests.fs" />
     <Compile Include="PhysicsTests.fs" />
+    <Compile Include="GltfTests.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../RayTracer/RayTracer.fsproj" />
