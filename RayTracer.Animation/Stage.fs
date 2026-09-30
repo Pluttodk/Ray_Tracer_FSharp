@@ -41,6 +41,11 @@ module Stage =
     let box (low: Point) (high: Point) texture =
         Box(low, high, texture, texture, texture, texture, texture, texture) :> Shape
 
+    /// Render geometry matching a physics box collider.
+    let colliderBox (centre: Point) (half: Vector) (rotation: Quaternion) texture =
+        let local = box (Point(-half.X, -half.Y, -half.Z)) (Point(half.X, half.Y, half.Z)) texture
+        Transform.transform local (Trs.toTransformation { Translation = Vector(centre.X, centre.Y, centre.Z); Rotation = rotation; Scale = Vector(1., 1., 1.) })
+
     let sphere radius texture = SphereShape(Point.Zero, radius, texture) :> Shape
 
     let sun (direction: Vector) intensity = DirectionalLight(Colour.White, intensity, direction.Normalise) :> Light

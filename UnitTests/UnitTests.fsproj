@@ -31,6 +31,7 @@
     <Compile Include="NumericalRegressionTests.fs" />
     <Compile Include="MotionTests.fs" />
     <Compile Include="AnimationTests.fs" />
+    <Compile Include="PhysicsTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

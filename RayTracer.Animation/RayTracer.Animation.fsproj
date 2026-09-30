@@ -9,6 +9,8 @@
     <Compile Include="Easing.fs" />
     <Compile Include="Tracks.fs" />
     <Compile Include="SceneGraph.fs" />
+    <Compile Include="Physics.fs" />
+    <Compile Include="Bake.fs" />
     <Compile Include="Stage.fs" />
     <Compile Include="Demos.fs" />
   </ItemGroup>
