@@ -25,12 +25,14 @@ type Options =
       Video: bool
       ExportGltf: string option
       LightScale: float
-      Telegram: bool }
+      Telegram: bool
+      Audio: bool
+      AudioOnly: bool }
 
 let private defaults =
     { Demo = None; Scene = None; Clip = None; Settings = FrameSettings.Default; Start = 0; End = None; Frames = None
       Seed = 2026; FixedNoise = false; Integrator = Classic; Denoise = false; Transfer = "srgb"
-      Output = None; Resume = true; Video = true; ExportGltf = None; LightScale = 1.; Telegram = false }
+      Output = None; Resume = true; Video = true; ExportGltf = None; LightScale = 1.; Telegram = false; Audio = true; AudioOnly = false }
 
 let usage () =
     printfn """Usage: AnimationRunner (--demo NAME | --scene FILE.gltf|.glb [--clip NAME] | --list) [options]
@@ -48,6 +50,8 @@ let usage () =
   --out DIR            output directory (default artifacts/anim/NAME)
   --no-resume          re-render frames that already exist
   --no-video           skip the ffmpeg MP4
+  --no-audio           leave out the soundtrack (for animations that have one)
+  --audio-only         write the soundtrack WAV only, without rendering
   --light-scale F      multiplies the intensity of lights imported from glTF (default 1)
   --telegram           send the finished MP4 to Telegram; needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID
                        (exit code 3 if the frames rendered but delivery failed)
@@ -94,6 +98,8 @@ let parse (argv: string[]) =
         | "--no-resume" :: rest -> go { options with Resume = false } rest
         | "--no-video" :: rest -> go { options with Video = false } rest
         | "--telegram" :: rest -> go { options with Telegram = true } rest
+        | "--no-audio" :: rest -> go { options with Audio = false } rest
+        | "--audio-only" :: rest -> go { options with AudioOnly = true } rest
         | "--export-gltf" :: v :: rest -> go { options with ExportGltf = Some v } rest
         | "--light-scale" :: v :: rest -> go { options with LightScale = number "light-scale" v } rest
         | option :: _ -> invalidArg "arguments" $"Unknown or incomplete option {option}."
@@ -150,6 +156,18 @@ let frameSeed baseSeed fixedNoise (frame: int) =
     if fixedNoise then baseSeed
     else int (Sampling.mixKey (uint64 (uint32 baseSeed) <<< 32 ||| uint64 (uint32 frame)) &&& 0x7fffffffUL)
 
+/// Builds the animation's soundtrack (if it has one) for [start, start + length) and writes soundtrack.wav.
+let soundtrack (options: Options) (scene: AnimatedScene) (directory: string) (start: float) (length: float) =
+    match Catalog.soundtrack scene.Name with
+    | None -> None
+    | Some build ->
+        let timer = Stopwatch.StartNew()
+        let buffer = build scene (fun name -> Encode.decodeAudio (Film.asset name))
+        let path = Path.Combine(directory, "soundtrack.wav")
+        Audio.writeWav path (Audio.slice buffer start length)
+        printfn "Soundtrack: %s (%.1fs to mix)" path timer.Elapsed.TotalSeconds
+        Some path
+
 let render (options: Options) (scene: AnimatedScene) =
     // Check delivery before rendering, so a missing credential is not discovered hours later.
     let telegram =
@@ -198,9 +216,10 @@ let render (options: Options) (scene: AnimatedScene) =
                 frame frameTimer.Elapsed.TotalSeconds film.BuildMilliseconds
                 (TimeSpan.FromSeconds(perFrame * float remaining).ToString(@"hh\:mm\:ss"))
     printfn "Rendered %d frame(s) in %s." rendered (timer.Elapsed.ToString(@"hh\:mm\:ss"))
+    let audio = if options.Audio then soundtrack options scene directory (float options.Start / settings.Fps) (float total / settings.Fps) else None
     if options.Video then
         let video = Path.Combine(directory, scene.Name + ".mp4")
-        if Encode.toMp4 directory settings.Fps options.Start video then
+        if Encode.toMp4 directory settings.Fps options.Start audio video then
             printfn "Video: %s" video
             match telegram with
             | Some target ->
@@ -224,14 +243,14 @@ let main argv =
             usage ()
             0
         elif argv = [| "--list" |] then
-            for demo in Demos.all do printfn "%-16s %s" demo.Name demo.Description
+            for demo in Catalog.all do printfn "%-16s %s" demo.Name demo.Description
             0
         else
             let options = parse argv
             let scene =
                 match options.Demo, options.Scene with
                 | Some name, None ->
-                    match Demos.tryFind name with
+                    match Catalog.tryFind name with
                     | Some demo -> demo.Build ()
                     | None -> invalidArg "demo" $"Unknown demo {name}; see --list."
                 | None, Some path ->
@@ -251,6 +270,10 @@ let main argv =
                 let warnings = Gltf.save scene path 60.
                 for warning in warnings do eprintfn "warning: %s" warning
                 printfn "Wrote %s" (Path.GetFullPath path)
+            | None when options.AudioOnly ->
+                let directory = Path.GetFullPath(defaultArg options.Output (Path.Combine("artifacts", "anim", scene.Name)))
+                Directory.CreateDirectory directory |> ignore
+                if (soundtrack options scene directory 0. scene.Duration).IsNone then invalidArg "audio-only" $"{scene.Name} has no soundtrack."
             | None -> if not (render options scene) then exit 3
             0
     with

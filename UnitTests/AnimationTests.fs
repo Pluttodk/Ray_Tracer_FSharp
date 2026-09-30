@@ -61,7 +61,7 @@ let private sphereNode name =
     Node.create name |> Node.withContent [ Geometry(SphereShape(Point.Zero, 0.5, Textures.mkMatTexture (MatteMaterial(Colour.White, 0., Colour.White, 1.)))) ]
 
 let private testScene clips roots =
-    { Name = "test"; Roots = roots; Clips = clips; ActiveCamera = "camera"
+    { Name = "test"; Roots = roots; Clips = clips; ActiveCamera = "camera"; Cuts = []
       StaticShapes = []; StaticLights = []; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Duration = 1. }
 
 let sceneGraphTests () =

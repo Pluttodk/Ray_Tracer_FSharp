@@ -60,6 +60,7 @@ module Demos =
                   Clip.rotate "ball-spin" (Sampler.linear spinKeys)
                   Clip.rotate "camera-pivot" (Sampler.linear orbitKeys |> Sampler.withEase Easing.smoothstep) ] ]
           ActiveCamera = "camera"
+          Cuts = []
           StaticShapes = []
           StaticLights = daylight ()
           Ambient = ambient 0.
@@ -103,6 +104,7 @@ module Demos =
           Roots = nodes @ [ focus; camera; floor (); colliderNode "ramp" centre half rotation (solid (plastic (rgb 0.75 0.55 0.3))) ]
           Clips = [ clip; Clip.create "camera" [ Clip.translate "focus" (Sampler.linear [ 0., Vector(-2.5, 1., 0.); 3., Vector(1.5, 0.6, 0.); duration, Vector(3.5, 0.5, 0.) ] |> Sampler.withEase Easing.smoothstep) ] ]
           ActiveCamera = "camera"
+          Cuts = []
           StaticShapes = []
           StaticLights = daylight ()
           Ambient = ambient 0.
@@ -125,6 +127,7 @@ module Demos =
           Roots = nodes @ [ focus; camera; floor () ]
           Clips = [ clip ]
           ActiveCamera = "camera"
+          Cuts = []
           StaticShapes = []
           StaticLights = daylight ()
           Ambient = ambient 0.
@@ -185,6 +188,7 @@ module Demos =
                 [ Clip.translate "camera" (Smooth.vector path)
                   Clip.translate "focus" (Smooth.vector [ 0., Vector(0., 1.1, 0.); 4., Vector(0., 1.5, 0.); duration, Vector(0.5, 1.2, 0.) ]) ] ]
           ActiveCamera = "camera"
+          Cuts = []
           StaticShapes = []
           StaticLights = daylight ()
           Ambient = ambient 0.
@@ -269,6 +273,7 @@ module Demos =
                   Clip.translate "focus" (Smooth.vector [ 0., Vector(1.2, 0.8, 0.); 2.5, Vector(1.6, 0.8, 0.); duration, Vector(2.6, 0.6, 0.) ]) ]
               Clip.shift nudge ballClip ]
           ActiveCamera = "camera"
+          Cuts = []
           StaticShapes = []
           StaticLights = [ sun (Vector(-0.3, 1., 0.8)) 0.55; sky (rgb 0.8 0.85 1.) (rgb 0.25 0.35 0.7) 0.25 2 ]
           Ambient = ambient 0.

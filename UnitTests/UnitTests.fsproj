@@ -33,6 +33,7 @@
     <Compile Include="AnimationTests.fs" />
     <Compile Include="PhysicsTests.fs" />
     <Compile Include="GltfTests.fs" />
+    <Compile Include="FilmTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

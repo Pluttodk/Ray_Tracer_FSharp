@@ -40,6 +40,7 @@
     <Compile Include="Camera/Camera.fs" />
     <Compile Include="Camera/PinholeCamera.fs" />
     <Compile Include="Camera/ThinLensCamera.fs" />
+    <Compile Include="Camera/MovingCamera.fs" />
     <Compile Include="TriangleMesh/PLYParser.fs" />
     <Compile Include="TriangleMesh/TriangleMesh.fs" />
     <Compile Include="ImplicitSurfaces/ExprParse.fsi" />

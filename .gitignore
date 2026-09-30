@@ -8,3 +8,5 @@ artifacts/
 .tools/
 RayTracer.Gpu/validation/
 ply/dragon.ply
+assets/dragon/*
+!assets/dragon/SOURCES.md

@@ -18,10 +18,68 @@ type CameraSpec =
       Target: string option }
     static member Default = { YFov = 0.7; ApertureRadius = 0.; FocusDistance = 10.; Target = None }
 
+/// A mesh deformed by a skeleton (glTF skinning). Each vertex follows up to four joints; as in glTF, the
+/// vertices end up in world space and the transform of the node carrying the mesh is ignored.
+type SkinnedMesh =
+    { Positions: Point[]
+      Normals: Vector[]
+      Uvs: (float * float)[]
+      Triangles: int[]
+      /// Four joint slots per vertex, indexing JointNodes.
+      Joints: int[]
+      /// Four weights per vertex, matching Joints.
+      Weights: float[]
+      /// Names of the nodes acting as joints.
+      JointNodes: string[]
+      /// Per joint: the inverse of its world matrix in the bind pose.
+      InverseBind: QuickMatrix[]
+      Texture: Textures.Texture }
+
+module Skinning =
+    /// Poses the mesh with the given world matrices and returns it in the frame whose world matrix is `frame`
+    /// (so it can be instanced, and motion-blurred, like rigid geometry of that node).
+    let pose (mesh: SkinnedMesh) (world: IDictionary<string, QuickMatrix>) (frame: QuickMatrix) : Shape =
+        let joints = Array.init mesh.JointNodes.Length (fun i -> QuickMatrix.multi (world.[mesh.JointNodes.[i]], mesh.InverseBind.[i]))
+        let toFrame = getInvMatrix (ofAffine frame)
+        let n = mesh.Positions.Length
+        let positions = Array.zeroCreate<Point> n
+        let normals = Array.zeroCreate<Vector> n
+        for v in 0 .. n - 1 do
+            // Weighted sum of the joint matrices' 3x4 parts (linear blend skinning).
+            let m = Array.zeroCreate<float> 12
+            let mutable total = 0.
+            for k in 0 .. 3 do
+                let w = mesh.Weights.[4 * v + k]
+                if w > 0. then
+                    total <- total + w
+                    let j = joints.[mesh.Joints.[4 * v + k]]
+                    m.[0] <- m.[0] + w * j.Pos1x1; m.[1] <- m.[1] + w * j.Pos1x2; m.[2] <- m.[2] + w * j.Pos1x3; m.[3] <- m.[3] + w * j.Pos1x4
+                    m.[4] <- m.[4] + w * j.Pos2x1; m.[5] <- m.[5] + w * j.Pos2x2; m.[6] <- m.[6] + w * j.Pos2x3; m.[7] <- m.[7] + w * j.Pos2x4
+                    m.[8] <- m.[8] + w * j.Pos3x1; m.[9] <- m.[9] + w * j.Pos3x2; m.[10] <- m.[10] + w * j.Pos3x3; m.[11] <- m.[11] + w * j.Pos3x4
+            let scale = if total > 0. then 1. / total else 1.
+            let p = mesh.Positions.[v]
+            let world =
+                if total = 0. then p
+                else Point(scale * (m.[0] * p.X + m.[1] * p.Y + m.[2] * p.Z + m.[3]),
+                           scale * (m.[4] * p.X + m.[5] * p.Y + m.[6] * p.Z + m.[7]),
+                           scale * (m.[8] * p.X + m.[9] * p.Y + m.[10] * p.Z + m.[11]))
+            positions.[v] <- transformPoint (world, toFrame)
+            if mesh.Normals.Length > 0 then
+                let q = mesh.Normals.[v]
+                let worldNormal =
+                    if total = 0. then q
+                    else Vector(m.[0] * q.X + m.[1] * q.Y + m.[2] * q.Z, m.[4] * q.X + m.[5] * q.Y + m.[6] * q.Z, m.[8] * q.X + m.[9] * q.Y + m.[10] * q.Z)
+                // Normals go into the frame by the inverse transpose of its inverse, i.e. the frame's transpose.
+                normals.[v] <- transformVector (worldNormal, (getMatrix (ofAffine frame)).transpose)
+        let hasNormals = mesh.Normals.Length > 0
+        (TriangleMesh.fromArrays positions (if hasNormals then normals else [||]) mesh.Uvs mesh.Triangles hasNormals).toShape mesh.Texture
+
 /// What a node carries. Geometry and lights are authored in the node's local space.
 type Content =
     /// Built once and re-instanced every frame, so meshes keep their internal acceleration structure.
     | Geometry of Shape
+    /// A skeleton-deformed mesh, re-posed every frame (at mid-shutter).
+    | Skinned of SkinnedMesh
     | LightSource of Light
     | CameraRig of CameraSpec
 
@@ -47,6 +105,8 @@ type AnimatedScene =
       Clips: Clip list
       /// Name of the node carrying the active camera.
       ActiveCamera: string
+      /// Camera cuts: from each time on, the named camera node is active (before the first cut, ActiveCamera).
+      Cuts: (float * string) list
       /// Shapes that never move; they are passed straight to every frame without instancing.
       StaticShapes: Shape list
       StaticLights: Light list
@@ -71,12 +131,17 @@ module AnimatedScene =
             for channel in clip.Channels do
                 if not (known.Contains channel.Node) then
                     invalidArg (nameof scene) $"Clip {clip.Name} animates unknown node {channel.Node}."
-        let camera =
-            nodes scene |> Seq.tryFind (fun node -> node.Name = scene.ActiveCamera)
-        match camera with
-        | Some node when node.Content |> List.exists (function CameraRig _ -> true | _ -> false) -> ()
-        | _ -> invalidArg (nameof scene) $"Active camera node {scene.ActiveCamera} does not exist or has no camera."
+        for name in scene.ActiveCamera :: (scene.Cuts |> List.map snd) do
+            match nodes scene |> Seq.tryFind (fun node -> node.Name = name) with
+            | Some node when node.Content |> List.exists (function CameraRig _ -> true | _ -> false) -> ()
+            | _ -> invalidArg (nameof scene) $"Camera node {name} does not exist or has no camera."
+        if scene.Cuts |> List.pairwise |> List.exists (fun ((a, _), (b, _)) -> b <= a) then
+            invalidArg (nameof scene) "Camera cuts must be in increasing time order."
         scene
+
+    /// The camera node active at time t, following the cuts.
+    let cameraAt (scene: AnimatedScene) (t: float) =
+        scene.Cuts |> List.fold (fun active (time, name) -> if time <= t then name else active) scene.ActiveCamera
 
     /// Every node's world matrix at time t.
     let worldMatrices (scene: AnimatedScene) (t: float) =
@@ -95,7 +160,8 @@ module AnimatedScene =
 
     let cameraPose (scene: AnimatedScene) (t: float) =
         let world = worldMatrices scene t
-        let node = nodes scene |> Seq.find (fun node -> node.Name = scene.ActiveCamera)
+        let active = cameraAt scene t
+        let node = nodes scene |> Seq.find (fun node -> node.Name = active)
         let spec = node.Content |> List.pick (function CameraRig spec -> Some spec | _ -> None)
         let m = world.[node.Name]
         let position = origin m
@@ -151,6 +217,15 @@ module Frame =
                         else shapes.Add(Transform.transform shape (ofAffine matrices.[0]))
                     else
                         shapes.Add(MotionTransform.transform shape (AnimatedTransform(Array.zip times matrices)))
+                | Skinned mesh ->
+                    // Pose the skin at mid-shutter in the node's own frame, then instance it like rigid geometry,
+                    // so the node's (flight) motion still blurs; the deformation itself is not blurred.
+                    let shape = Skinning.pose mesh middle middle.[node.Name]
+                    let matrices = worlds |> Array.map (fun world -> world.[node.Name])
+                    if matrices |> Array.forall (closeTo matrices.[0]) then
+                        shapes.Add(Transform.transform shape (ofAffine matrices.[0]))
+                    else
+                        shapes.Add(MotionTransform.transform shape (AnimatedTransform(Array.zip times matrices)))
                 | LightSource light ->
                     // Lights are placed at mid-shutter; light motion blur is not modelled.
                     let m = middle.[node.Name]
@@ -163,7 +238,24 @@ module Frame =
         let side = max 1 (int (ceil (sqrt (float settings.SamplesPerPixel))))
         let height = 2. * tan (pose.Spec.YFov / 2.)
         let width = height * float settings.Width / float settings.Height
-        if pose.Spec.ApertureRadius > 0. then
+        // A pinhole that moves during the shutter blurs the world relative to it, not just moving objects.
+        let poses =
+            if shutterClose <= shutterOpen then [||]
+            else
+                let steps = max 2 settings.MotionSteps
+                Array.init steps (fun i ->
+                    let t = shutterOpen + (shutterClose - shutterOpen) * float i / float (steps - 1)
+                    let p = AnimatedScene.cameraPose scene t
+                    t, p.Position, p.LookAt, p.Up)
+        let moving =
+            poses.Length > 1
+            && poses |> Array.exists (fun (_, p, l, u) ->
+                let _, p0, l0, u0 = poses.[0]
+                (p - p0).Magnitude > 1e-9 || (l - l0).Magnitude > 1e-9 || (u - u0).Magnitude > 1e-9)
+        if moving && pose.Spec.ApertureRadius = 0. then
+            MovingPinholeCamera(poses, 1., width, height, settings.Width, settings.Height, multiJittered side 83, shutterOpen, shutterClose)
+            :> Tracer.Basics.Camera
+        elif pose.Spec.ApertureRadius > 0. then
             ThinLensCamera(pose.Position, pose.LookAt, pose.Up, 1., width, height, settings.Width, settings.Height,
                            pose.Spec.ApertureRadius, pose.Spec.FocusDistance,
                            multiJittered side 83, multiJittered side 89, shutterOpen, shutterClose) :> Tracer.Basics.Camera

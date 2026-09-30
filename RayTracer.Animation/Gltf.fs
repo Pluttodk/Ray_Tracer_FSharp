@@ -161,6 +161,46 @@ module Gltf =
                 meshes.[mesh.LogicalIndex] <- shapes
                 shapes
 
+        /// System.Numerics matrices use row vectors (translation in M41..M43); ours use column vectors.
+        let matrixOf (m: System.Numerics.Matrix4x4) =
+            { identityMatrix with
+                Pos1x1 = float m.M11; Pos1x2 = float m.M21; Pos1x3 = float m.M31; Pos1x4 = float m.M41
+                Pos2x1 = float m.M12; Pos2x2 = float m.M22; Pos2x3 = float m.M32; Pos2x4 = float m.M42
+                Pos3x1 = float m.M13; Pos3x2 = float m.M23; Pos3x3 = float m.M33; Pos3x4 = float m.M43 }
+
+        let convertSkinned (mesh: SharpGLTF.Schema2.Mesh) (skin: SharpGLTF.Schema2.Skin) =
+            let joints = Array.init skin.JointsCount (fun i -> skin.GetJoint i)
+            let jointNames = joints |> Array.map (fun struct (node, _) -> nameOf node)
+            let inverseBind = joints |> Array.map (fun struct (_, m) -> matrixOf m)
+            [ for primitive in mesh.Primitives do
+                match primitive.DrawPrimitiveType with
+                | SharpGLTF.Schema2.PrimitiveType.TRIANGLES | SharpGLTF.Schema2.PrimitiveType.TRIANGLE_STRIP | SharpGLTF.Schema2.PrimitiveType.TRIANGLE_FAN ->
+                    if primitive.MorphTargetsCount > 0 then warn "Morph targets are ignored; meshes use their base shape."
+                    let vec4 name =
+                        match primitive.GetVertexAccessor name with
+                        | null -> None
+                        | accessor -> Some (accessor.AsVector4Array() |> Seq.collect (fun (v: V4) -> [ float v.X; float v.Y; float v.Z; float v.W ]) |> Array.ofSeq)
+                    match vec4 "JOINTS_0", vec4 "WEIGHTS_0" with
+                    | Some jointSlots, Some weights ->
+                        if not (isNull (primitive.GetVertexAccessor "JOINTS_1")) then warn "Only four joint influences per vertex are used."
+                        let positions = primitive.GetVertexAccessor("POSITION").AsVector3Array() |> Seq.map (fun p -> Point(float p.X, float p.Y, float p.Z)) |> Array.ofSeq
+                        let normals =
+                            match primitive.GetVertexAccessor "NORMAL" with
+                            | null -> [||]
+                            | accessor -> accessor.AsVector3Array() |> Seq.map vector |> Array.ofSeq
+                        let uvs =
+                            match primitive.GetVertexAccessor "TEXCOORD_0" with
+                            | null -> [||]
+                            | accessor -> accessor.AsVector2Array() |> Seq.map (fun (uv: V2) -> float uv.X, 1. - float uv.Y) |> Array.ofSeq
+                        let triangles = primitive.GetTriangleIndices() |> Seq.collect (fun struct (a, b, c) -> [ a; b; c ]) |> Array.ofSeq
+                        if triangles.Length > 0 then
+                            yield Skinned
+                                { Positions = positions; Normals = (if options.SmoothShading then normals else [||]); Uvs = uvs
+                                  Triangles = triangles; Joints = jointSlots |> Array.map int; Weights = weights
+                                  JointNodes = jointNames; InverseBind = inverseBind; Texture = convertMaterial primitive.Material }
+                    | _ -> warn "A skinned primitive lacks JOINTS_0/WEIGHTS_0 and is skipped."
+                | other -> warn $"Primitives of type {other} are skipped; only triangles render." ]
+
         let convertLight (light: SharpGLTF.Schema2.PunctualLight) =
             let c = colour light.Color
             match light.LightType with
@@ -175,10 +215,11 @@ module Gltf =
         let rec convertNode (node: SharpGLTF.Schema2.Node) : Node =
             let local = node.LocalTransform
             let rest = { Translation = vector local.Translation; Rotation = quaternion local.Rotation; Scale = vector local.Scale }
-            if not (isNull node.Skin) then warn "Skinned meshes are not supported; they render in their bind pose."
             let content =
                 [ if not (isNull node.Mesh) then
-                      for shape in convertMesh node.Mesh do yield Geometry shape
+                      if isNull node.Skin then
+                          for shape in convertMesh node.Mesh do yield Geometry shape
+                      else yield! convertSkinned node.Mesh node.Skin
                   if not (isNull node.Camera) then
                       match node.Camera.Settings with
                       | :? SharpGLTF.Schema2.CameraPerspective as perspective ->
@@ -241,7 +282,7 @@ module Gltf =
                     [ Stage.sun (Vector(0.4, 1., 0.6)) 0.85; Stage.sky (Colour(0.85, 0.9, 1.)) (Colour(0.3, 0.5, 0.9)) 0.35 2 ]
             let duration = clips |> List.map (fun clip -> clip.Duration) |> List.fold max 0.
             let scene =
-                { Name = sceneName; Roots = roots; Clips = clips; ActiveCamera = activeCamera; StaticShapes = []
+                { Name = sceneName; Roots = roots; Clips = clips; ActiveCamera = activeCamera; Cuts = []; StaticShapes = []
                   StaticLights = lights; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 4
                   Duration = if duration > 0. then duration else 1. }
             { Scene = AnimatedScene.validate scene; Warnings = List.ofSeq warnings }
@@ -485,6 +526,7 @@ module Gltf =
                     camera.SetPerspectiveMode(Nullable(), float32 spec.YFov, 0.05f, 1000.f)
                     target.Camera <- camera
                     if spec.ApertureRadius > 0. then warn "Depth of field is not part of glTF and is not exported."
+                | Skinned _ -> warn "Skinned meshes are not exported."
                 | Geometry _ -> ()
             for child in node.Children do exportNode (Choice2Of2 target) child
 
@@ -530,6 +572,8 @@ module Gltf =
 
         /// glTF has no aim constraint, so a targeted camera gets a baked rotation track.
         let exportCameraAim () =
+            if not scene.Cuts.IsEmpty then warn "Camera cuts are not part of glTF; only the first camera is animated."
+            let scene = { scene with Cuts = [] }
             let cameraNode = AnimatedScene.nodes scene |> Seq.find (fun n -> n.Name = scene.ActiveCamera)
             let spec = cameraNode.Content |> List.pick (function CameraRig s -> Some s | _ -> None)
             match spec.Target with

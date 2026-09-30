@@ -11,9 +11,12 @@
     <Compile Include="SceneGraph.fs" />
     <Compile Include="Physics.fs" />
     <Compile Include="Bake.fs" />
+    <Compile Include="Terrain.fs" />
     <Compile Include="Stage.fs" />
     <Compile Include="Demos.fs" />
     <Compile Include="Gltf.fs" />
+    <Compile Include="Audio.fs" />
+    <Compile Include="Film.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../RayTracer/RayTracer.fsproj" />

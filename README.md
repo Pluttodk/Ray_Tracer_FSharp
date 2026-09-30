@@ -195,7 +195,38 @@ rendered with different settings. Each frame gets its own seed unless
   glTF and mixes with hand-keyed animation.
 
 The demos are `hop`, `rolling-ball`, `bouncing-ball`, `camera-dolly` and
-`lamp`. The top-level acceleration structure is rebuilt every frame, while mesh
+`lamp`.
+
+### Dragon flight
+
+`dragon-flight` is a 30-second short with sound. A dragon crosses a sunset
+mountain range, sweeps past the summit, hovers to roar, and flies into the
+sun, across five shots with camera cuts.
+
+```sh
+scripts/fetch-dragon-assets.sh          # CC0/public-domain model and recordings, see assets/dragon/SOURCES.md
+dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --res 960x540 --spp 9
+dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --audio-only   # iterate on the mix
+```
+
+It uses the following:
+
+- **Skeletal skinning.** glTF skins are posed every frame with linear blend
+  skinning. A moving skinned object still blurs with its node's motion; the
+  deformation itself is posed at mid-shutter.
+- **`Clip.arrange`.** It sequences the model's own clips (looped fast flight,
+  a hover, and the head-butt lunge used as the roar), with speed changes and
+  crossfades.
+- **Camera cuts.** `AnimatedScene.Cuts` switches between camera nodes, and
+  tracking cameras move during the shutter (`MovingPinholeCamera`). The
+  subject stays sharp while the world streaks.
+- **Procedural terrain.** A ridged-noise heightfield is coloured by altitude
+  and slope. A coarse, hazy ring of ranges closes the horizon.
+- **A soundtrack derived from the animation.** Wing beats are detected from
+  the wing bones and whooshes from fast, close passes. Everything is panned
+  and attenuated from the active camera. Public-domain grizzly and alligator
+  recordings, pitched down and run through a mountain reverb, make the roar.
+  The mix is written as `soundtrack.wav` and muxed into the MP4. The top-level acceleration structure is rebuilt every frame, while mesh
 BVHs are built once and reused.
 
 ## Implementation

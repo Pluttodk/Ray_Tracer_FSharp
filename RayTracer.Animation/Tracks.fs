@@ -188,3 +188,64 @@ module Clip =
                     | Rotation s -> { trs with Rotation = Sampler.evaluateRotation s t }
                     | Scale s -> { trs with Scale = Sampler.evaluateVector s t }
             | _ -> invalidArg (nameof clip) $"Clip {clip.Name} animates unknown node {channel.Node}."
+
+    /// One use of a clip on a performance timeline.
+    type Segment =
+        { Clip: Clip
+          /// Scene time at which the segment takes over.
+          Start: float
+          /// Clip time played at Start.
+          Offset: float
+          /// Playback rate (1 = as authored).
+          Speed: float
+          /// Wrap around the clip's duration instead of holding its last pose.
+          Loop: bool
+          /// Crossfade from the previous segment over this many seconds.
+          Blend: float }
+
+    let segment clip start = { Clip = clip; Start = start; Offset = 0.; Speed = 1.; Loop = false; Blend = 0.2 }
+
+    /// Bakes a sequence of clip segments into one clip with linear keys at `rate` Hz, up to `duration`.
+    /// Each segment plays from its Start until the next one begins, crossfading over the next one's Blend.
+    /// Nodes a segment's clip does not animate hold their rest pose (from `rest`) during that segment.
+    let arrange name (rest: string -> Trs) (segments: Segment list) (duration: float) (rate: float) =
+        if segments.IsEmpty then invalidArg (nameof segments) "A performance needs at least one segment."
+        let segments = segments |> List.sortBy (fun s -> s.Start) |> Array.ofList
+        let targets =
+            segments
+            |> Seq.collect (fun s -> s.Clip.Channels |> Seq.map (fun c -> c.Node, (match c.Track with Translation _ -> 0 | Rotation _ -> 1 | Scale _ -> 2)))
+            |> Seq.distinct |> Array.ofSeq
+        let clipTime (s: Segment) t =
+            let local = s.Offset + (t - s.Start) * s.Speed
+            let length = s.Clip.Duration
+            if s.Loop && length > 0. then local - length * floor (local / length) else local
+        let poseOf (s: Segment) t (node: string) =
+            let pose = Collections.Generic.Dictionary<string, Trs>()
+            pose.[node] <- rest node
+            for channel in s.Clip.Channels do
+                if channel.Node = node then
+                    let ct = clipTime s t
+                    pose.[node] <-
+                        match channel.Track with
+                        | Translation sampler -> { pose.[node] with Translation = Sampler.evaluateVector sampler ct }
+                        | Rotation sampler -> { pose.[node] with Rotation = Sampler.evaluateRotation sampler ct }
+                        | Scale sampler -> { pose.[node] with Scale = Sampler.evaluateVector sampler ct }
+            pose.[node]
+        let count = max 1 (int (ceil (duration * rate)))
+        let times = Array.init (count + 1) (fun i -> min duration (float i / rate))
+        let at t (node: string) =
+            let index = segments |> Array.tryFindIndexBack (fun s -> s.Start <= t) |> Option.defaultValue 0
+            let current = segments.[index]
+            let pose = poseOf current t node
+            if index = 0 || current.Blend <= 0. || t >= current.Start + current.Blend then pose
+            else
+                let w = Easing.smoothstep ((t - current.Start) / current.Blend)
+                Trs.lerp (poseOf segments.[index - 1] t node) pose w
+        let channels =
+            targets |> Array.map (fun (node, kind) ->
+                let poses = times |> Array.map (fun t -> t, at t node)
+                match kind with
+                | 0 -> translate node (Sampler.linear [ for t, p in poses -> t, p.Translation ])
+                | 1 -> rotate node (Sampler.linear [ for t, p in poses -> t, p.Rotation ])
+                | _ -> scale node (Sampler.linear [ for t, p in poses -> t, p.Scale ]))
+        create name (List.ofArray channels)
