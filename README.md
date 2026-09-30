@@ -163,6 +163,14 @@ resumes from the first missing frame; `manifest.json` refuses to mix frames
 rendered with different settings. Each frame gets its own seed unless
 `--fixed-noise` is given.
 
+- **Telegram delivery.** `--telegram` uploads the finished MP4 to a Telegram
+  chat. Create a bot with [@BotFather](https://t.me/BotFather), send it a
+  message, and read your chat ID from
+  `https://api.telegram.org/bot<token>/getUpdates`. Then set
+  `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in the environment. Missing
+  credentials fail before any rendering starts. The Bot API accepts videos of
+  at most 50 MB. A failed upload keeps the frames and video and exits with
+  code 3.
 - **glTF 2.0 interchange.** `--scene` loads `.gltf`/`.glb` files as exported by
   Blender and other tools: node hierarchy, TRS animation with step, linear and
   cubic-spline keys, triangle meshes with base-colour textures, perspective

@@ -24,12 +24,13 @@ type Options =
       Resume: bool
       Video: bool
       ExportGltf: string option
-      LightScale: float }
+      LightScale: float
+      Telegram: bool }
 
 let private defaults =
     { Demo = None; Scene = None; Clip = None; Settings = FrameSettings.Default; Start = 0; End = None; Frames = None
       Seed = 2026; FixedNoise = false; Integrator = Classic; Denoise = false; Transfer = "srgb"
-      Output = None; Resume = true; Video = true; ExportGltf = None; LightScale = 1. }
+      Output = None; Resume = true; Video = true; ExportGltf = None; LightScale = 1.; Telegram = false }
 
 let usage () =
     printfn """Usage: AnimationRunner (--demo NAME | --scene FILE.gltf|.glb [--clip NAME] | --list) [options]
@@ -48,6 +49,8 @@ let usage () =
   --no-resume          re-render frames that already exist
   --no-video           skip the ffmpeg MP4
   --light-scale F      multiplies the intensity of lights imported from glTF (default 1)
+  --telegram           send the finished MP4 to Telegram; needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID
+                       (exit code 3 if the frames rendered but delivery failed)
   --export-gltf FILE   write the scene and its animation as glTF 2.0 (.gltf or .glb) and exit"""
 
 let parse (argv: string[]) =
@@ -90,6 +93,7 @@ let parse (argv: string[]) =
         | "--out" :: v :: rest -> go { options with Output = Some v } rest
         | "--no-resume" :: rest -> go { options with Resume = false } rest
         | "--no-video" :: rest -> go { options with Video = false } rest
+        | "--telegram" :: rest -> go { options with Telegram = true } rest
         | "--export-gltf" :: v :: rest -> go { options with ExportGltf = Some v } rest
         | "--light-scale" :: v :: rest -> go { options with LightScale = number "light-scale" v } rest
         | option :: _ -> invalidArg "arguments" $"Unknown or incomplete option {option}."
@@ -101,6 +105,7 @@ let parse (argv: string[]) =
     if s.Shutter < 0. || s.Shutter > 1. then invalidArg "shutter" "--shutter must lie in [0, 1]."
     if s.MotionSteps < 2 then invalidArg "motion-steps" "--motion-steps must be at least 2."
     if options.Start < 0 then invalidArg "start" "--start must be non-negative."
+    if options.Telegram && not options.Video then invalidArg "telegram" "--telegram sends the MP4, so it cannot be combined with --no-video."
     match options.End, options.Frames with
     | Some _, Some _ -> invalidArg "frames" "Give --frames or --end, not both."
     | None, Some n -> { options with End = Some (options.Start + n) }
@@ -146,7 +151,14 @@ let frameSeed baseSeed fixedNoise (frame: int) =
     else int (Sampling.mixKey (uint64 (uint32 baseSeed) <<< 32 ||| uint64 (uint32 frame)) &&& 0x7fffffffUL)
 
 let render (options: Options) (scene: AnimatedScene) =
+    // Check delivery before rendering, so a missing credential is not discovered hours later.
+    let telegram =
+        if options.Telegram then
+            if not (Encode.ffmpegAvailable ()) then invalidArg "telegram" "--telegram needs ffmpeg on PATH to encode the MP4."
+            Some (Telegram.fromEnvironment ())
+        else None
     let settings = options.Settings
+    let mutable delivered = true
     let directory = Path.GetFullPath(defaultArg options.Output (Path.Combine("artifacts", "anim", scene.Name)))
     Directory.CreateDirectory directory |> ignore
     checkManifest directory (manifest options scene.Name) options.Resume
@@ -188,7 +200,22 @@ let render (options: Options) (scene: AnimatedScene) =
     printfn "Rendered %d frame(s) in %s." rendered (timer.Elapsed.ToString(@"hh\:mm\:ss"))
     if options.Video then
         let video = Path.Combine(directory, scene.Name + ".mp4")
-        if Encode.toMp4 directory settings.Fps options.Start video then printfn "Video: %s" video
+        if Encode.toMp4 directory settings.Fps options.Start video then
+            printfn "Video: %s" video
+            match telegram with
+            | Some target ->
+                let caption =
+                    $"{scene.Name}: frames {options.Start}-{last - 1} at {settings.Fps:g}fps, {settings.Width}x{settings.Height}, {settings.SamplesPerPixel}spp, rendered in {timer.Elapsed:``hh\:mm\:ss``}"
+                match Telegram.sendVideo target video caption with
+                | Ok () -> printfn "Sent to Telegram chat %s." target.ChatId
+                | Error message ->
+                    eprintfn "%s" message
+                    delivered <- false
+            | None -> ()
+        elif telegram.IsSome then
+            eprintfn "Nothing was sent to Telegram because the video could not be encoded."
+            delivered <- false
+    delivered
 
 [<EntryPoint>]
 let main argv =
@@ -224,7 +251,7 @@ let main argv =
                 let warnings = Gltf.save scene path 60.
                 for warning in warnings do eprintfn "warning: %s" warning
                 printfn "Wrote %s" (Path.GetFullPath path)
-            | None -> render options scene
+            | None -> if not (render options scene) then exit 3
             0
     with
     | :? ArgumentException as error ->
