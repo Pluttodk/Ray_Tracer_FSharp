@@ -17,6 +17,7 @@
     <Compile Include="Core/Ray.fs" />
     <Compile Include="Core/BBox.fs" />
     <Compile Include="Core/Foundation.fs" />
+    <Compile Include="Acceleration/FastPaths.fs" />
     <Compile Include="Materials/TextureFilter.fs" />
     <Compile Include="PathTracing/Bsdf.fs" />
     <Compile Include="PathTracing/Surface.fs" />

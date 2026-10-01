@@ -21,7 +21,11 @@ module Acceleration =
     /// Immutable acceleration over a snapshot of shape references. Geometry itself must remain stable.
     [<Sealed>]
     type IAcceleration internal (kind: Acceleration, shapes: Shape array, structure: Structure, fallback: int array, empty: int array) =
+        let fast = fastPaths<IHitTime> shapes
+        let occluders = fastPaths<IOccluder> shapes
         member internal _.Shapes = shapes
+        member internal _.Fast = fast
+        member internal _.Occluders = occluders
         member internal _.Structure = structure
         member internal _.Fallback = fallback
         member internal _.Empty = empty
@@ -82,13 +86,16 @@ module Acceleration =
                     | Kd tree -> KD_tree.query tree ray data accel.Shapes minimum maximum result stopAtFirst
                     | MedianBvh tree -> BVH.query tree ray data accel.Shapes minimum maximum result stopAtFirst
                     | Grid grid -> RegularGrids.query grid ray data accel.Shapes minimum maximum result stopAtFirst
-                    | Flat tree -> Tracer.Basics.FlatBVH.query tree ray data accel.Shapes minimum maximum result stopAtFirst
+                    | Flat tree ->
+                        Tracer.Basics.FlatBVH.query tree ray data accel.Shapes accel.Fast
+                            (if stopAtFirst then accel.Occluders else [||]) minimum maximum result stopAtFirst
                     | Linear -> result
         result
 
     /// Returns the closest primitive hit strictly inside (tMin,tMax); original input order wins exact ties.
     /// Uses geometry's IIntervalShape contract without reparameterizing native primitive hits.
-    let traverseClosest accel ray tMin tMax = query accel ray tMin tMax false |> finish ray
+    let traverseClosest (accel: IAcceleration) ray tMin tMax =
+        query accel ray tMin tMax false |> materialize accel.Shapes ray tMin tMax
 
     /// Opaque visibility only: every intersected primitive is a blocker, irrespective of its material.
     let anyHit accel ray tMin tMax = (query accel ray tMin tMax true).Found

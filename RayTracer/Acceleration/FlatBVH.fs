@@ -181,7 +181,9 @@ module FlatBVH =
         stack.[count] <- { Node = node; Entry = entry }
         count <- count + 1
 
-    let internal query (tree: FlatBVHStructure) ray data shapes minimum maximum initial stopAtFirst =
+    /// `fast` and `occluders` are per-slot fast paths (see AccelerationCommon.fastPaths), or empty.
+    let internal query (tree: FlatBVHStructure) ray data (shapes: Shape array) (fast: IHitTime array)
+                       (occluders: IOccluder array) minimum maximum initial stopAtFirst =
         let nodes = tree.Nodes
         if nodes.Length = 0 || minimum >= maximum then initial
         else
@@ -203,7 +205,13 @@ module FlatBVH =
                             let mutable offset = node.First
                             let finish = offset + node.Count
                             while offset < finish && not stopped do
-                                result <- consider shapes tree.Indices.[offset] ray minimum maximum result
+                                let index = tree.Indices.[offset]
+                                result <-
+                                    if occluders.Length > 0 && not (isNull occluders.[index]) then
+                                        considerOccluder occluders.[index] index ray minimum maximum result
+                                    elif fast.Length > 0 && not (isNull fast.[index]) then
+                                        considerTime fast.[index] index ray minimum maximum result
+                                    else consider shapes index ray minimum maximum result
                                 stopped <- stopAtFirst && result.Found
                                 offset <- offset + 1
                         else

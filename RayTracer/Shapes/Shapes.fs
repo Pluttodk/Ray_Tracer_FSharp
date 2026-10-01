@@ -331,6 +331,14 @@ module Transform =
                      transformVector(hit.ShadingNormal, normalMatrix), hit.Material, owner,
                      hit.U, hit.V, hit.BarycentricBeta, hit.BarycentricGamma, true)
 
+    /// HitWithin(...).DidHit of `intersectLocal`, without building the hit: the inner shape's occluder
+    /// answers when it has one.
+    let internal occludesLocal (shape: Shape) (ray: Ray) minimum maximum inverse =
+        let localRay = Ray(transformPoint(ray.GetOrigin, inverse), transformVector(ray.GetDirection, inverse), ray.ShutterTime)
+        match shape :> obj with
+        | :? IOccluder as occluder -> minimum < maximum && occluder.Occludes(localRay, minimum, maximum)
+        | _ -> (Geometry.hitWithin shape localRay minimum maximum).DidHit
+
     let transform (shape: Shape) transformation =
         let matrix, inverse = getMatrix transformation, getInvMatrix transformation
         let normalMatrix = inverse.transpose
@@ -345,7 +353,9 @@ module Transform =
                 bounds.Value |> Option.defaultWith (fun () -> invalidOp "An unbounded transformed shape has no finite bounding box.")
             member _.isInside p = shape.isInside(transformPoint(p, inverse))
           interface IIntervalShape with
-            member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum }
+            member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum
+          interface IOccluder with
+            member _.Occludes(ray, minimum, maximum) = occludesLocal shape ray minimum maximum inverse }
 
 /// Instancing whose transform changes during the shutter: each ray is intersected against the pose at its
 /// ShutterTime, which is what produces motion blur.
@@ -391,7 +401,11 @@ module MotionTransform =
                     let struct (_, inverse) = motion.At midpoint
                     shape.isInside(transformPoint(p, inverse))
               interface IIntervalShape with
-                member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum }
+                member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum
+              interface IOccluder with
+                member _.Occludes(ray, minimum, maximum) =
+                    let struct (_, inverse) = motion.At ray.ShutterTime
+                    Transform.occludesLocal shape ray minimum maximum inverse }
 
 type SolidCylinder(center: Point, radius: float, height: float, cylinder: Texture, top: Texture, bottom: Texture) =
     inherit Shape()
