@@ -99,23 +99,26 @@ module Gltf =
         let decodeImage (image: SharpGLTF.Schema2.Image) (srgb: bool) (alpha: bool) =
             use stream = image.Content.Open()
             let lut = Array.init 256 (fun b -> let v = float b / 255. in float32 (if srgb then TextureFilter.srgbToLinear v else v))
+            // Texels stay bytes and decode through the table on lookup (a quarter of the float memory).
+            let rgbLut = Array.concat [ lut; lut; lut ]
             if alpha then
                 let struct (rgb, coverage) = RgbImage.LoadWithAlpha stream
                 use rgb = rgb
-                if coverage.Length = 0 then TextureFilter.create rgb.Width rgb.Height 3 (rgb.Pixels |> Array.map (fun b -> lut.[int b]))
+                if coverage.Length = 0 then TextureFilter.createEncoded rgb.Width rgb.Height 3 (Array.copy rgb.Pixels) rgbLut
                 else
                     let pixels = rgb.Pixels
-                    let data = Array.zeroCreate<float32> (4 * coverage.Length)
+                    let data = Array.zeroCreate<byte> (4 * coverage.Length)
                     for i in 0 .. coverage.Length - 1 do
-                        data.[4 * i] <- lut.[int pixels.[3 * i]]
-                        data.[4 * i + 1] <- lut.[int pixels.[3 * i + 1]]
-                        data.[4 * i + 2] <- lut.[int pixels.[3 * i + 2]]
-                        // Alpha is linear coverage, never sRGB-encoded.
-                        data.[4 * i + 3] <- float32 coverage.[i] / 255.f
-                    TextureFilter.create rgb.Width rgb.Height 4 data
+                        data.[4 * i] <- pixels.[3 * i]
+                        data.[4 * i + 1] <- pixels.[3 * i + 1]
+                        data.[4 * i + 2] <- pixels.[3 * i + 2]
+                        data.[4 * i + 3] <- coverage.[i]
+                    // Alpha is linear coverage, never sRGB-encoded.
+                    let alphaLut = Array.init 256 (fun b -> float32 (byte b) / 255.f)
+                    TextureFilter.createEncoded rgb.Width rgb.Height 4 data (Array.append rgbLut alphaLut)
             else
                 use rgb = RgbImage.Load stream
-                TextureFilter.create rgb.Width rgb.Height 3 (rgb.Pixels |> Array.map (fun b -> lut.[int b]))
+                TextureFilter.createEncoded rgb.Width rgb.Height 3 (Array.copy rgb.Pixels) rgbLut
 
         let decode (image: SharpGLTF.Schema2.Image) (srgb: bool) (alpha: bool) =
             images.GetOrAdd(struct (image.LogicalIndex, srgb, alpha), fun _ -> decodeImage image srgb alpha)
