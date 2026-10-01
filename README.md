@@ -199,36 +199,64 @@ The demos are `hop`, `rolling-ball`, `bouncing-ball`, `camera-dolly` and
 
 ### Dragon flight
 
-`dragon-flight` is a 30-second short with sound. A dragon crosses a sunset
-mountain range, sweeps past the summit, hovers to roar, and flies into the
-sun, across five shots with camera cuts.
+`dragon-flight` is a 30-second short with sound. At golden hour, a dragon
+crosses a mountain range, skims the summit's sunlit face, hovers to roar,
+and flies into the sun, across five shots with camera cuts.
 
 ```sh
 scripts/fetch-dragon-assets.sh          # CC0/public-domain model and recordings, see assets/dragon/SOURCES.md
-dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --res 960x540
-# The film recommends path tracing, denoising, ACES, 64 spp and a light bloom/vignette/grade; flags override:
+dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --res 960x540 --spp 56
+# The film recommends path tracing, denoising, ACES, 64 spp, 3 bounces and a light bloom/vignette/grade; flags override:
 dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --res 960x540 --spp 16 --bloom 0.2 --vignette 0.3 --exposure 1.1 --saturation 1 --white-balance 0 --integrator classic --no-denoise --transfer srgb
 dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --audio-only   # iterate on the mix
+scripts/review-stills.sh LABEL [flags]  # one still per shot plus a contact sheet, in artifacts/review/LABEL
 ```
+
+At 960x540 and 56 spp a frame takes about 30 s on 128 cores, so the whole
+film takes about 6 hours.
 
 It uses the following:
 
-- **Skeletal skinning.** glTF skins are posed every frame with linear blend
-  skinning. A moving skinned object still blurs with its node's motion; the
-  deformation itself is posed at mid-shutter.
+- **Sky and sun.** A Preetham sky with a limb-darkened 0.53° sun disc,
+  reddened by the air mass at a 6° elevation. The sun lights the scene as a
+  directional light and the disc is only seen by camera and mirror rays, so
+  it is counted once. The sky is importance-sampled from a luminance table,
+  with MIS in the path tracer.
+- **Aerial perspective.** Exponential height fog with closed-form
+  transmittance, in-scattered sky light and a Henyey–Greenstein glow around
+  the sun, applied to camera and secondary rays.
+- **Physically based materials.** glTF materials import as a PBR material
+  (base colour, metallic/roughness, normal, occlusion and emissive maps,
+  `KHR_texture_transform`, bilinear filtering), plus sheen and a thin-sheet
+  diffuse transmission lobe. The film overrides the model's materials by
+  name and skinning region: cellular scales, translucent wing membranes
+  that glow when back-lit, bone horns and wet eyes.
+- **Skeletal skinning.** glTF skins are posed with linear blend skinning at
+  every motion step and intersected as a deforming mesh, so beating wings
+  blur along their arc.
 - **`Clip.arrange`.** It sequences the model's own clips (looped fast flight,
   a hover, and the head-butt lunge used as the roar), with speed changes and
   crossfades.
-- **Camera cuts.** `AnimatedScene.Cuts` switches between camera nodes, and
-  tracking cameras move during the shutter (`MovingPinholeCamera`). The
-  subject stays sharp while the world streaks.
-- **Procedural terrain.** A ridged-noise heightfield is coloured by altitude
-  and slope. A coarse, hazy ring of ranges closes the horizon.
+- **Cameras.** `AnimatedScene.Cuts` switches between camera nodes. Tracking
+  cameras move during the shutter, and the close-ups use a moving thin lens
+  that autofocuses on the dragon.
+- **Procedural terrain.** A ridged-noise heightfield with smooth normals and
+  a world-space surface: noise-modulated rock strata, patchy forest and
+  meadow, and a ragged snow line with a little specular. Shadow rays start
+  from Hanika's terminator-corrected point, so low sun on a coarse mesh
+  leaves no black ridge lines. A coarse ring of ranges closes the horizon.
+- **Snow spindrift.** The dragon's downwash lifts powder off the snow as it
+  skims the summit. The particles are a pure function of time and seed, so
+  frames render independently.
+- **Post-processing.** Multi-scale bloom, a grade and a vignette in linear
+  light, after denoising and before ACES tone mapping.
 - **A soundtrack derived from the animation.** Wing beats are detected from
   the wing bones and whooshes from fast, close passes. Everything is panned
   and attenuated from the active camera. Public-domain grizzly and alligator
   recordings, pitched down and run through a mountain reverb, make the roar.
-  The mix is written as `soundtrack.wav` and muxed into the MP4. The top-level acceleration structure is rebuilt every frame, while mesh
+  The mix is written as `soundtrack.wav` and muxed into the MP4.
+
+The top-level acceleration structure is rebuilt every frame, while mesh
 BVHs are built once and reused.
 
 ## Implementation
