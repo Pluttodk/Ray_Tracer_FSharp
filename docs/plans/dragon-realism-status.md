@@ -16,3 +16,4 @@ Branch names are `dragon-realism-<ws>`, not `dragon-realism/<ws>`. Git refuses a
 14:56 e done fdbe28d..fdc1c6b reviewed; merged, 1577 tests green. Edited PathIntegrator NEE for translucency (reviewed OK). Open: no real tangents for normal maps, no mipmaps
 15:25 s done dad5ccd reviewed; merged; summit YFov 0.8->0.6 by orchestrator; tests green
 15:44 dof done reviewed; merged, tests green, ~0 cost
+15:47 mblur done reviewed; merged, 1595 tests green, ~0 cost
