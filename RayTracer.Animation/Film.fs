@@ -316,9 +316,17 @@ module Film =
     let private cameras () =
         let camera name yfov target = Node.create name |> Node.withContent [ CameraRig { CameraSpec.Default with YFov = yfov; Target = Some target } ]
         let establishing = camera "cam-establish" 0.5 "aim-establish"
-        let tracking = camera "cam-track" 0.62 "aim-dragon"
+        // --- dof: close-ups autofocus on the dragon (lens radius in scene units, ~1 unit = 1 m) ---
+        // cam-track: dragon 30-40 units away, ~10 deep. r = 0.2 blurs the mountains ~10 px (1080p) while the
+        // dragon's front-to-back depth stays within ~2 px of blur. cam-roar: dragon 46 away, focus on the head
+        // (aim-roar); r = 0.25 gives ~14 px mountain blur and ~2 px across the body.
+        let lensCamera name yfov target radius focus =
+            Node.create name |> Node.withContent
+                [ CameraRig { CameraSpec.Default with YFov = yfov; Target = Some target; ApertureRadius = radius; FocusTarget = Some focus } ]
+        // --- dof: end ---
+        let tracking = lensCamera "cam-track" 0.62 "aim-dragon" 0.2 "aim-dragon"
         let summit = camera "cam-summit" 0.6 "aim-dragon"  // s: tighter lens for the summit pass
-        let roar = camera "cam-roar" 0.42 "aim-roar"
+        let roar = lensCamera "cam-roar" 0.42 "aim-roar" 0.25 "aim-roar"  // dof
         let depart = camera "cam-depart" 0.7 "aim-dragon"
         // Low on a foothill, panning as the dragon crosses in front of the massif.
         let establishPath = Smooth.vector [ 0., above 330. 250. 30.; 7., above 318. 232. 30. ]

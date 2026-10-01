@@ -36,6 +36,7 @@
     <Compile Include="GltfTests.fs" />
     <Compile Include="PbrTests.fs" />
     <Compile Include="FilmTests.fs" />
+    <Compile Include="DepthOfFieldTests.fs" />
     <Compile Include="PostTests.fs" />
     <Compile Include="TerrainTests.fs" />
     <Compile Include="AtmosphereTests.fs" />
