@@ -35,6 +35,11 @@ type RenderFilm =
             destination.[offset + 2] <- colour.B
         image
 
+    /// Post-processes the linear pixels (bloom, grade, vignette); call before ToImage, after denoising.
+    member this.Post(settings: Post.PostSettings) =
+        if settings.IsIdentity then this
+        else { this with Pixels = Post.apply settings this.Width this.Height this.Pixels }
+
     member this.ToImage(transfer: string) =
         let image = new RgbImage(this.Width, this.Height)
         let destination = image.Pixels

@@ -5,6 +5,18 @@ open Tracer.Basics
 open Tracer.Basics.Sampling
 open Tracer.Basics.Textures
 open Tracer.Animation.Stage
+open Tracer.Basics.Post
+
+// --- a: render defaults ---
+/// Render settings an animation recommends; command-line flags override each of them.
+type RenderDefaults =
+    { Integrator: IntegratorKind
+      Denoise: bool
+      Transfer: string
+      SamplesPerPixel: int
+      MaxBounces: int
+      Post: PostSettings }
+// --- end a ---
 
 /// "Dragon flight": a 30-second short in five shots. A dragon (Quaternius, CC0) crosses a sunset mountain
 /// range, sweeps around the summit, hovers to roar, and flies off into the sun.
@@ -385,6 +397,16 @@ module Catalog =
               Demos.Demo.Build = Film.build } ]
 
     let tryFind name = all |> List.tryFind (fun demo -> demo.Name = name)
+
+    // --- a: render defaults ---
+    /// Recommended render settings by animation name (none: the runner's own defaults).
+    let renderDefaults (name: string) : RenderDefaults option =
+        match name with
+        | "dragon-flight" ->
+            Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 3
+                   Post = { Bloom = 0.12; BloomThreshold = 1.; Vignette = 0.2; Exposure = 1.; WhiteBalance = 0.1; Saturation = 1.05 } }
+        | _ -> None
+    // --- end a ---
 
     /// Soundtracks by animation name: given the scene and a loader for audio assets (decoded to 48 kHz stereo).
     let soundtrack (name: string) : (AnimatedScene -> (string -> Audio.Buffer) -> Audio.Buffer) option =
