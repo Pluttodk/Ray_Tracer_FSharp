@@ -77,9 +77,9 @@ module Film =
     /// Near ranges stay crisp; each ridge further out is lighter and closer to the horizon colour behind it.
     let private atmosphere () =
         Some { Atmosphere.Default with
-                 Density = 4.5e-4; BaseHeight = 0.; ScaleHeight = 250.; HorizonLift = 0.08
+                 Density = 3.5e-4; BaseHeight = 0.; ScaleHeight = 200.; HorizonLift = 0.08
                  Tint = Colour(0.85, 1., 1.25)
-                 Anisotropy = 0.7; SkyWeight = 1.; SunWeight = 1.
+                 Anisotropy = 0.7; SkyWeight = 0.9; SunWeight = 1.
                  MaxDistance = 7000. }
     // --- c: end ---
 
