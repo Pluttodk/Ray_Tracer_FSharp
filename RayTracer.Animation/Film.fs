@@ -90,8 +90,8 @@ module Film =
     /// Near ranges stay crisp; each ridge further out is lighter and closer to the horizon colour behind it.
     let private atmosphere () =
         Some { Atmosphere.Default with
-                 Density = 3.5e-4; BaseHeight = 0.; ScaleHeight = 200.; HorizonLift = 0.08
-                 Tint = Colour(0.85, 1., 1.25)
+                 Density = 2.6e-4; BaseHeight = 0.; ScaleHeight = 200.; HorizonLift = 0.08
+                 Tint = Colour(0.8, 1., 1.35)
                  Anisotropy = 0.7; SkyWeight = 0.8; SunWeight = 0.6
                  MaxDistance = 7000. }
     // --- c: end ---
@@ -175,7 +175,7 @@ module Film =
     /// Keyed by the glTF material names in dragon_evolved.glb.
     module DragonMaterials =
         /// Scales per unit of generated texture coordinate (one unit spans the model's largest side).
-        let scaleDensity = 64.
+        let scaleDensity = 110.
         /// Steepness of the scale bump.
         let bumpStrength = 0.55
 
@@ -521,7 +521,7 @@ module Catalog =
         match name with
         | "dragon-flight" ->
             Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 3
-                   Post = { Bloom = 0.12; BloomThreshold = 1.; Vignette = 0.2; Exposure = 1.; WhiteBalance = 0.1; Saturation = 1.05 } }
+                   Post = { Bloom = 0.12; BloomThreshold = 1.; Vignette = 0.2; Exposure = 1.; WhiteBalance = 0.; Saturation = 1.1 } }
         | _ -> None
     // --- end a ---
 
