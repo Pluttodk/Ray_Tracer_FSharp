@@ -259,6 +259,48 @@ It uses the following:
 The top-level acceleration structure is rebuilt every frame, while mesh
 BVHs are built once and reused.
 
+### Sponza: the knight's vigil
+
+`sponza` is a 20-second short in Intel's Sponza 2022 atrium (CC-BY 4.0, with
+its curtains, ivy and cypress add-ons). An armoured knight holds his guard in
+the courtyard's sun patch, crouches, swings and advances. Five shots cover it,
+from the scene's own high view to a crane that ends over him.
+
+```sh
+scripts/fetch-sponza-assets.sh          # Intel packages + knight cache, see assets/sponza/SOURCES.md
+DOTNET_GCgen0size=0x10000000 dotnet run --project AnimationRunner -c Release -- --demo sponza --res 960x540 --spp 32
+scripts/sponza/compare.sh 9             # our frame next to a Cycles reference of the same scene
+```
+
+`scenes/sponza.json` holds the parts, sun, HDRI sky, lamps, haze, knight
+placement and shots. The F# demo (`RayTracer.Animation/Sponza.fs`) and the
+Cycles ground truth (`scripts/sponza/cycles_reference.py`) both read it, so the
+two renderers can be compared frame for frame. They agree to within a few
+percent in brightness.
+
+It uses the following:
+
+- **HDRI sky with a separate sun.** A Radiance `.hdr` loader and an
+  importance-sampled environment light. The map's own sun is clamped out and
+  replaced by an analytic directional sun, so it casts crisp shadows without
+  noise.
+- **Many lights.** The 22 lanterns are sphere lights with inverse-square
+  falloff and soft shadows. With more than eight local lights, a light BVH
+  picks one per vertex.
+- **Alpha-masked and double-sided surfaces** for leaves, and real glTF
+  tangents (or generated ones) for normal maps.
+- **The knight.** Intel's per-vertex animated USD is baked by Blender into a
+  vertex cache (`scripts/sponza/convert-knight.py`). It is played back as a
+  deforming mesh, so it gets motion blur.
+- **Haze.** A bounded volume with shadowed single scattering from the sun and
+  lamps (equiangular sampling for lamps), so sunbeams and lantern halos show
+  in the air.
+- **Speed.** Hit-time and occlusion-only fast paths through the BVHs,
+  byte-encoded textures, GC settings, and tiles small enough to keep 128
+  threads busy. OIDN is found in common install locations, including a
+  Blender bundle; the runner warns when denoising was requested but could
+  not run.
+
 ## Implementation
 
 The modern renderer uses hit-local barycentrics and face orientation,
