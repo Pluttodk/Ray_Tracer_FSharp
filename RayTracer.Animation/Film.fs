@@ -548,7 +548,10 @@ module Catalog =
         Demos.all
         @ [ { Demos.Demo.Name = "dragon-flight"
               Demos.Demo.Description = "30 s short: a dragon over sunset mountains (needs scripts/fetch-dragon-assets.sh)"
-              Demos.Demo.Build = Film.build } ]
+              Demos.Demo.Build = Film.build }
+            { Demos.Demo.Name = "sponza"
+              Demos.Demo.Description = "Intel Sponza 2022 atrium at golden hour (needs scripts/fetch-sponza-assets.sh)"
+              Demos.Demo.Build = Sponza.build } ]
 
     let tryFind name = all |> List.tryFind (fun demo -> demo.Name = name)
 
@@ -559,6 +562,9 @@ module Catalog =
         | "dragon-flight" ->
             Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 3
                    Post = { Bloom = 0.12; BloomThreshold = 1.; Vignette = 0.2; Exposure = 1.; WhiteBalance = 0.; Saturation = 1.1 } }
+        | "sponza" ->
+            Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 4
+                   Post = { Bloom = 0.1; BloomThreshold = 1.5; Vignette = 0.15; Exposure = 3.; WhiteBalance = 0.; Saturation = 1.05 } }
         | _ -> None
     // --- end a ---
 
