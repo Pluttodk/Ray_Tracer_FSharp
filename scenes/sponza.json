@@ -1,0 +1,244 @@
+{
+  "_comment": "Shared shot and lighting description for the `sponza` demo (F#) and the Cycles ground truth (scripts/sponza). Units: metres, degrees, seconds. Azimuth = atan2(x, z) of the direction TOWARDS the light (+Y up).",
+  "duration": 24.0,
+  "parts": {
+    "main": "main_sponza/NewSponza_Main_glTF_003.gltf",
+    "curtains": "pkg_a_curtains/NewSponza_Curtains_glTF.gltf",
+    "ivy": "pkg_b_ivy/NewSponza_IvyGrowth_glTF.gltf",
+    "trees": "pkg_c_trees/NewSponza_CypressTree_glTF.gltf"
+  },
+  "include": [
+    "main",
+    "curtains",
+    "ivy",
+    "trees"
+  ],
+  "sun": {
+    "azimuthDeg": -101.0,
+    "elevationDeg": 56.0,
+    "irradiance": 6.0,
+    "colour": [
+      1.0,
+      0.86,
+      0.7
+    ]
+  },
+  "sky": {
+    "hdri": "main_sponza/textures/kloppenheim_05_4k.hdr",
+    "rotationDeg": 0.0,
+    "intensity": 1.0,
+    "turbidity": 2.5,
+    "sunToSky": 6.0
+  },
+  "lamps": {
+    "enabled": false,
+    "intensity": 2.0,
+    "colour": [
+      1.0,
+      0.456,
+      0.114
+    ],
+    "radius": 0.05
+  },
+  "exposure": 3.0,
+  "shots": [
+    {
+      "name": "cam-1",
+      "start": 0.0,
+      "yfovDeg": 58.5,
+      "keys": [
+        [
+          0.0,
+          [
+            -8.807,
+            1.592,
+            -0.858
+          ],
+          [
+            -3.988,
+            2.564,
+            0.052
+          ]
+        ],
+        [
+          4.0,
+          [
+            -8.2,
+            1.7,
+            -0.6
+          ],
+          [
+            -3.4,
+            2.6,
+            0.2
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "cam-2",
+      "start": 4.0,
+      "yfovDeg": 58.6,
+      "keys": [
+        [
+          4.0,
+          [
+            10.531,
+            7.353,
+            1.528
+          ],
+          [
+            5.572,
+            7.465,
+            0.902
+          ]
+        ],
+        [
+          8.0,
+          [
+            10.2,
+            7.35,
+            1.2
+          ],
+          [
+            5.3,
+            7.4,
+            0.6
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "cam-3",
+      "start": 8.0,
+      "yfovDeg": 36.3,
+      "keys": [
+        [
+          8.0,
+          [
+            2.703,
+            1.355,
+            2.111
+          ],
+          [
+            -1.994,
+            1.787,
+            0.453
+          ]
+        ],
+        [
+          12.0,
+          [
+            2.5,
+            1.4,
+            2.2
+          ],
+          [
+            -2.1,
+            1.8,
+            0.5
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "cam-4",
+      "start": 12.0,
+      "yfovDeg": 58.2,
+      "keys": [
+        [
+          12.0,
+          [
+            -9.594,
+            6.921,
+            5.353
+          ],
+          [
+            -4.888,
+            6.82,
+            3.669
+          ]
+        ],
+        [
+          16.0,
+          [
+            -9.3,
+            6.9,
+            5.1
+          ],
+          [
+            -4.6,
+            6.8,
+            3.4
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "cam-5",
+      "start": 16.0,
+      "yfovDeg": 37.2,
+      "keys": [
+        [
+          16.0,
+          [
+            -2.237,
+            0.744,
+            2.361
+          ],
+          [
+            2.105,
+            1.961,
+            0.201
+          ]
+        ],
+        [
+          20.0,
+          [
+            -2.0,
+            0.8,
+            2.3
+          ],
+          [
+            2.3,
+            2.0,
+            0.1
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "cam-6",
+      "start": 20.0,
+      "yfovDeg": 37.2,
+      "keys": [
+        [
+          20.0,
+          [
+            -6.595,
+            10.879,
+            -0.629
+          ],
+          [
+            -1.782,
+            9.53,
+            -0.542
+          ]
+        ],
+        [
+          24.0,
+          [
+            -6.3,
+            10.8,
+            -0.6
+          ],
+          [
+            -1.5,
+            9.5,
+            -0.5
+          ]
+        ]
+      ]
+    }
+  ]
+}
