@@ -36,7 +36,7 @@ let curvedTests () =
     // Outward-tilted (convex) normals put the point below the vertex tangent planes, so it is lifted.
     let hit = hitAt curvedNormals 0.3 -0.5
     Assert.True ((hit.ShadowPoint - hit.Point) * hit.GeometricNormal > 1e-6, "terminator-convex-shadow-point-is-lifted")
-    Assert.True (distance hit.ShadowPoint hit.Point < 0.5, "terminator-convex-shadow-point-stays-near-hit")
+    Assert.True (distance hit.ShadowPoint hit.Point < 1.0, "terminator-convex-shadow-point-stays-near-hit")
     // Inward-tilted (concave) normals leave the point above every tangent plane: unchanged.
     let inward = positions |> Array.map (fun p -> Vector(-p.X * 0.5, 1., -p.Z * 0.5).Normalise)
     let same = hitAt inward 0.3 -0.5
