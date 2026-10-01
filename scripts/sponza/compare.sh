@@ -13,7 +13,9 @@
 #
 # Environment: RES (default 480x270), SPP (ours; default: the demo's recommendation), CYCLES_SPP (256),
 # OURS_ARGS / CYCLES_ARGS (extra args), SKIP_OURS=1 / SKIP_CYCLES=1 (reuse an existing image),
-# NO_BUILD=1 (skip the Release build). Our side renders one frame (frame = round(time * 24)).
+# NO_BUILD=1 (skip the Release build), POST=ours (keep bloom, vignette and saturation on both sides; by default
+# both get only exposure + ACES: ours with --bloom 0 --vignette 0 --saturation 1, Cycles with --post none).
+# Our side renders one frame (frame = round(time * 24)).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -26,6 +28,13 @@ blender=${BLENDER:-$HOME/.local/bin/blender}
 export PATH=$HOME/.dotnet:$PATH
 
 frame=$(python3 -c "print(round($time * 24))")
+if [[ ${POST:-none} == ours ]]; then
+  ours_post=()
+  cycles_post=()
+else
+  ours_post=(--bloom 0 --vignette 0 --saturation 1)
+  cycles_post=(--post none)
+fi
 ours="$out/$label-ours.png"
 cycles="$out/$label-cycles.png"
 
@@ -40,7 +49,7 @@ if [[ -z ${SKIP_OURS:-} ]]; then
   # shellcheck disable=SC2086
   /usr/bin/time -f "ours: %e s, max RSS %M KB" dotnet AnimationRunner/bin/Release/net10.0/AnimationRunner.dll \
     --demo sponza --res "$res" "${spp_args[@]}" --no-video --no-audio --no-resume \
-    --start "$frame" --end $((frame + 1)) --out "$scratch" ${OURS_ARGS:-}
+    --start "$frame" --end $((frame + 1)) --out "$scratch" "${ours_post[@]}" ${OURS_ARGS:-}
   mv "$scratch/frame_$(printf %05d "$frame").png" "$ours"
   rm -rf "$scratch"
 fi
@@ -48,7 +57,7 @@ fi
 if [[ -z ${SKIP_CYCLES:-} ]]; then
   # shellcheck disable=SC2086
   "$blender" -b --python scripts/sponza/cycles_reference.py -- --time "$time" --res "$res" \
-    --spp "${CYCLES_SPP:-256}" --out "$cycles" ${CYCLES_ARGS:-} 2>&1 | grep -E '^\[gt\]|Error|Traceback' || true
+    --spp "${CYCLES_SPP:-256}" --out "$cycles" "${cycles_post[@]}" ${CYCLES_ARGS:-} 2>&1 | grep -E '^\[gt\]|Error|Traceback' || true
 fi
 
 font=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf

@@ -30,11 +30,15 @@ UNIT CONVERSION (calibrated, see `--calib`; one constant for every light type)
     Sky.fs is baked into an equirectangular EXR in render units, so it needs no extra factor.
 
 MATCHING CHOICES
-  * Sky: `--sky auto` uses the json's sky.model if present, else looks at Sponza.fs: while it lights with
-    `Sky.light` (Preetham), the sky is a numpy port of Sky.radiance (sun disc excluded, darkened horizon
-    below) baked to a 1024x512 equirect; with the HDRI it is the json's sky.hdri through a Mapping node
-    (Rotation Z = rotationDeg, image centre towards +X, u = 0.25 towards -Z, like HdrImage.fs on
-    sponza-r2) at Background strength = intensity.
+  * Sky: `--sky auto` uses the json's sky.model if present, else follows Sponza.fs: with sky.hdri set (and
+    Sponza.fs using HdrEnvironment) the world is that HDRI with its own sun clamped out exactly like
+    HdrEnvironment.extractSun (auto level max(peak/1000, 50*median), 5 degrees; numpy port, cached as
+    artifacts/ground-truth/cache/hdri-*.hdr), through a Mapping node (Point, Rotation Z = rotationDeg; image
+    centre towards +X, u = 0.25 towards -Z, the convention of HdrImage.fs) at Background strength =
+    intensity. Without an HDRI it is Sky.fs's Preetham sky: a numpy port of Sky.radiance (sun disc
+    excluded, darkened horizon below) baked to a 1024x512 equirect.
+  * Lamps: when lamps.enabled, Cycles point lights (sphere radius lamps.radius, invisible to the camera
+    like our SphereLight) at the main file's lamp_light_* positions + lamps.offset.
   * Sun: delta light by default (`--sun-angle 0`, like our DirectionalLight); 0.53 gives the real penumbra.
   * Bounces 4 (Sponza MaxBounces), transparent bounces 64, no clamping, no motion blur (ours has a 0.5
     frame shutter; the cameras move slowly), Blackman-Harris pixel filter, OIDN with albedo + normal.
@@ -117,6 +121,7 @@ def parse_args(argv):
                    help="knight vertex cache (relative to assets/sponza or absolute); placement from json `knight`")
     p.add_argument("--force-opaque", default="",
                    help="diagnostic: comma-separated material name prefixes to render with alpha 1 (e.g. dirt_decal,LeafSpring)")
+    p.add_argument("--hdri-keep-sun", action="store_true", help="diagnostic: use the HDRI unclamped (its own sun too)")
     p.add_argument("--no-cache", action="store_true", help="re-import the glTF parts instead of using the .blend cache")
     p.add_argument("--calib", default=None, choices=["sun", "lamp"], help="render a calibration scene instead")
     p.add_argument("--write-calib-gltf", default=None, help="(plain python) write the calibration scene as glTF")
@@ -428,6 +433,46 @@ def display(img, transfer):
     return (np.clip(e, 0, 1) * 255).astype(np.uint8)
 
 
+def extract_sun(px, max_angle_deg=5.0, threshold=None):
+    """HdrEnvironment.extractSun (HdrImage.fs): from the brightest pixel, flood-fill (8-connected, wrapping
+    horizontally) the pixels brighter than the level and within `max_angle_deg` of the peak, and scale each
+    to luminance = level. Level: `threshold`, else max(peak / 1000, 50 * median). px: (h, w, 3), row 0 at
+    the top. Returns (clamped copy, info)."""
+    h, w, _ = px.shape
+    lum = 0.2126 * px[..., 0] + 0.7152 * px[..., 1] + 0.0722 * px[..., 2]
+    peak_index = int(np.argmax(lum))
+    peak = float(lum.flat[peak_index])
+    level = threshold if threshold is not None else max(peak / 1000.0, 50.0 * float(np.median(lum)))
+    # Lat-long directions (any consistent convention: only angles between pixels matter here).
+    v = (np.arange(h) + 0.5) / h * math.pi
+    u = (np.arange(w) + 0.5) / w * 2 * math.pi
+
+    def direction(k):
+        j, i = divmod(k, w)
+        return np.array([math.sin(v[j]) * math.cos(u[i]), math.cos(v[j]), math.sin(v[j]) * math.sin(u[i])])
+
+    peak_dir = direction(peak_index)
+    cos_limit = math.cos(math.radians(max_angle_deg))
+    out = px.copy()
+    count = 0
+    if peak > level:
+        stack, visited = [peak_index], {peak_index}
+        while stack:
+            k = stack.pop()
+            j, i = divmod(k, w)
+            out[j, i] *= level / lum[j, i]
+            count += 1
+            for dj in (-1, 0, 1):
+                jj = j + dj
+                if 0 <= jj < h:
+                    for di in (-1, 0, 1):
+                        n = jj * w + (i + di) % w
+                        if n not in visited and lum.flat[n] > level and direction(n) @ peak_dir >= cos_limit:
+                            visited.add(n)
+                            stack.append(n)
+    return out, {"peak": peak, "level": level, "pixels": count}
+
+
 def write_hdr(path, rgb_rows_bottom_up):
     """Radiance RGBE (.hdr), flat scanlines. (Blender's Image.save() sRGB-encodes a generated float image even
     as EXR, so the sky is written here instead.)"""
@@ -562,6 +607,7 @@ def blender_main(a):
         data.shadow_soft_size = radius
         obj = bpy.data.objects.new(name, data)
         obj.location = to_blender(position_ours)
+        obj.visible_camera = False  # our SphereLight is not geometry: camera rays pass through it
         bpy.context.scene.collection.objects.link(obj)
         return obj
 
@@ -761,7 +807,8 @@ def blender_main(a):
             if mode is None:
                 sponza_fs = search_up(os.path.join("RayTracer.Animation", "Sponza.fs"))
                 text = open(sponza_fs).read() if sponza_fs else ""
-                uses_hdri = ("HdrEnvironment" in text or "HdrImage" in text) and "Sky.light" not in text
+                # Sponza.fs lights with the HDRI whenever the json names one (Sky.light is its fallback).
+                uses_hdri = bool(sky.get("hdri")) and "HdrEnvironment" in text
                 mode = "hdri" if uses_hdri else "preetham"
         info["sky"] = mode
         if mode == "preetham":
@@ -771,8 +818,23 @@ def blender_main(a):
                 write_hdr(sky_exr, bake_equirect(model))
             world_background(image_path=sky_exr, rotation_deg=0.0, strength=1.0)
         elif mode == "hdri":
-            world_background(image_path=asset(sky["hdri"]), rotation_deg=sky.get("rotationDeg", 0.0),
-                             strength=sky.get("intensity", 1.0))
+            # Sponza.lights: the HDRI's own sun is clamped out (extractSun, auto level, 5 degrees) for lighting
+            # and camera rays alike; the json sun is the only sun.
+            source = asset(sky["hdri"])
+            clamped = os.path.join(cache_dir, "hdri-%s.hdr" % hashlib.sha1(
+                json.dumps([source, os.path.getmtime(source), "extractSun-auto-5"]).encode()).hexdigest()[:12])
+            if not os.path.exists(clamped) and not a.hdri_keep_sun:
+                img = bpy.data.images.load(source)
+                iw, ih = img.size
+                buf = np.empty(iw * ih * 4, np.float32)
+                img.pixels.foreach_get(buf)
+                px = buf.reshape(ih, iw, 4)[::-1, :, :3].astype(np.float64)
+                out, sun_info = extract_sun(px, 5.0)
+                print(f"[gt] HDRI sun clamped: {sun_info}")
+                write_hdr(clamped, out[::-1])
+                bpy.data.images.remove(img)
+            world_background(image_path=source if a.hdri_keep_sun else clamped,
+                             rotation_deg=sky.get("rotationDeg", 0.0), strength=sky.get("intensity", 1.0))
         else:
             world_background((0, 0, 0))
 
@@ -780,8 +842,10 @@ def blender_main(a):
         lamps_on = lamps.get("enabled", False) if a.lamps == "auto" else a.lamps == "on"
         if lamps_on and "main" in spec["include"]:
             positions = gltf_node_world_positions(asset(spec["parts"]["main"]), "lamp_light")
+            offset = lamps.get("offset", [0.0, 0.0, 0.0])
             for i, pos in enumerate(positions):
-                add_lamp(f"lamp{i}", pos, lamps["intensity"], tuple(lamps["colour"]), lamps["radius"])
+                add_lamp(f"lamp{i}", [pos[c] + offset[c] for c in range(3)], lamps["intensity"],
+                         tuple(lamps["colour"]), lamps["radius"])
             info["lamps"] = len(positions)
 
         # ---------------------------------------------------------- camera
