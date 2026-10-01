@@ -169,7 +169,56 @@ type MeshExportData internal (vertices: MeshVertex array, triangles: TriangleInd
     member _.DegenerateTriangleCount = degenerateCount
     member _.Blas = blas
 
-type private TrianglePrimitive(vertices: MeshVertex array, indices: TriangleIndices, index: int) =
+/// Coverage of a cut-out surface (glTF alphaMode MASK or BLEND) over the mesh's texture coordinates (u, v as
+/// stored on the mesh, v up). Where the surface is not covered, rays pass through it as if it were not
+/// there: camera, bounce and shadow rays alike, since the test happens inside mesh traversal.
+[<Sealed; AllowNullLiteral>]
+type AlphaMask(coverage: float -> float -> float, cutoff: float, stochastic: bool) =
+    /// Alpha in [0,1] at (u, v).
+    member _.Coverage(u: float, v: float) = coverage u v
+    member _.Cutoff = cutoff
+    /// Stochastic coverage keeps a surface with probability alpha per ray, so partial transparency averages
+    /// out over samples; otherwise the surface is kept where alpha >= Cutoff.
+    member _.IsStochastic = stochastic
+    /// True where a ray hits the surface. `xi` in [0,1) is a per-ray random number (stochastic coverage only).
+    member _.Covers(u: float, v: float, xi: float) =
+        let alpha = coverage u v
+        if stochastic then alpha > xi else alpha >= cutoff
+    /// A hard cut-out: covered where alpha >= cutoff (glTF MASK).
+    static member Cutout(coverage: float -> float -> float, cutoff: float) = AlphaMask(coverage, cutoff, false)
+    /// Fractional coverage, resolved per ray (glTF BLEND as stochastic transparency).
+    static member Stochastic(coverage: float -> float -> float) = AlphaMask(coverage, 0.5, true)
+
+module internal AlphaHash =
+    /// Uniform [0,1) number from the ray and the primitive: the same ray always gets the same answer.
+    let sample (ray: Ray) (index: int) =
+        let o, d = ray.GetOrigin, ray.GetDirection
+        let inline bits (x: float) = uint64 (BitConverter.DoubleToInt64Bits x)
+        let mutable h = Sampling.mixKey (uint64 (uint32 index) + 0x9E3779B97F4A7C15UL)
+        h <- Sampling.mixKey (h ^^^ bits o.X)
+        h <- Sampling.mixKey (h ^^^ bits o.Y)
+        h <- Sampling.mixKey (h ^^^ bits o.Z)
+        h <- Sampling.mixKey (h ^^^ bits d.X)
+        h <- Sampling.mixKey (h ^^^ bits d.Y)
+        h <- Sampling.mixKey (h ^^^ bits d.Z)
+        float (h >>> 11) * (1. / 9007199254740992.)
+
+/// Per-vertex tangent: the direction of increasing u, and in W the handedness (+1 or -1) of the bitangent
+/// W * (normal x tangent), which points along increasing v (as stored on the mesh, v up). This is glTF's
+/// TANGENT attribute once its texture coordinates are flipped to v up.
+[<Struct; System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)>]
+type MeshTangent = { Tx: float32; Ty: float32; Tz: float32; W: float32 }
+
+/// Where a mesh's tangent frame comes from.
+type TangentSource =
+    /// No tangents: normal maps fall back to the renderer-chosen frame.
+    | NoTangents
+    /// One tangent per vertex (e.g. a glTF TANGENT attribute).
+    | GivenTangents of MeshTangent[]
+    /// Generated from positions, normals and texture coordinates.
+    | GenerateTangents
+
+type private TrianglePrimitive(vertices: MeshVertex array, indices: TriangleIndices, index: int, mask: AlphaMask) =
     inherit Shape()
     let normal, bounds =
         let a, b, c = vertices.[indices.A], vertices.[indices.B], vertices.[indices.C]
@@ -184,16 +233,76 @@ type private TrianglePrimitive(vertices: MeshVertex array, indices: TriangleIndi
     override _.IsOpaque = true
     override _.getBoundingBox() = bounds
     override _.isInside _ = false
-    override this.hitFunction ray =
+    /// Intersection within (minimum, maximum). The alpha test runs only on hits inside the interval, so a
+    /// traversal that has already found a closer hit does not pay for texture lookups behind it.
+    member private this.Hit(ray: Ray, minimum: float, maximum: float) =
         let a, b, c = vertices.[indices.A], vertices.[indices.B], vertices.[indices.C]
         match (if nondegenerate then Geometry.intersectTriangleCoordinates ray a.X a.Y a.Z b.X b.Y b.Z c.X c.Y c.Z else ValueNone) with
         | ValueNone -> HitPoint(ray)
         | ValueSome(struct (time, beta, gamma)) ->
-            HitPoint(ray, time, normal, normal, material, this, 0., 0., beta, gamma, true)
+            if isNull mask then HitPoint(ray, time, normal, normal, material, this, 0., 0., beta, gamma, true)
+            elif not (time > minimum && time < maximum) then HitPoint(ray)
+            elif mask.Covers(interpolateUv a.U b.U c.U beta gamma, interpolateUv a.V b.V c.V beta gamma,
+                             (if mask.IsStochastic then AlphaHash.sample ray index else 0.)) then
+                HitPoint(ray, time, normal, normal, material, this, 0., 0., beta, gamma, true)
+            else HitPoint(ray)
+    override this.hitFunction ray = this.Hit(ray, -infinity, infinity)
     interface IIntervalShape with
-        member this.HitWithin(ray, minimum, maximum) = this.hitFunction ray |> Geometry.within minimum maximum
+        member this.HitWithin(ray, minimum, maximum) = this.Hit(ray, minimum, maximum) |> Geometry.within minimum maximum
 
-type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array array, smooth: bool) =
+module private Tangents =
+    /// Per-vertex tangents from texture coordinates (Lengyel's accumulation, then Gram-Schmidt against the
+    /// vertex normal). Vertices without a usable UV gradient get a zero tangent, which shading ignores.
+    let generate (vertices: MeshVertex array) (triangles: TriangleIndices array) =
+        let n = vertices.Length
+        let tan1 = Array.zeroCreate<float> (3 * n)
+        let tan2 = Array.zeroCreate<float> (3 * n)
+        let faceNormals = Array.zeroCreate<float> (3 * n)
+        let add (target: float[]) v x y z =
+            target.[3 * v] <- target.[3 * v] + x
+            target.[3 * v + 1] <- target.[3 * v + 1] + y
+            target.[3 * v + 2] <- target.[3 * v + 2] + z
+        for triangle in triangles do
+            let a, b, c = vertices.[triangle.A], vertices.[triangle.B], vertices.[triangle.C]
+            let e1x, e1y, e1z = b.X - a.X, b.Y - a.Y, b.Z - a.Z
+            let e2x, e2y, e2z = c.X - a.X, c.Y - a.Y, c.Z - a.Z
+            let fnx, fny, fnz = e1y * e2z - e1z * e2y, e1z * e2x - e1x * e2z, e1x * e2y - e1y * e2x
+            let du1, dv1 = b.U - a.U, b.V - a.V
+            let du2, dv2 = c.U - a.U, c.V - a.V
+            let r = du1 * dv2 - du2 * dv1
+            let ok = Double.IsFinite r && abs r > 1e-20
+            let f = if ok then 1. / r else 0.
+            let sx, sy, sz = (e1x * dv2 - e2x * dv1) * f, (e1y * dv2 - e2y * dv1) * f, (e1z * dv2 - e2z * dv1) * f
+            let tx, ty, tz = (e2x * du1 - e1x * du2) * f, (e2y * du1 - e1y * du2) * f, (e2z * du1 - e1z * du2) * f
+            for v in [| triangle.A; triangle.B; triangle.C |] do
+                if ok then
+                    add tan1 v sx sy sz
+                    add tan2 v tx ty tz
+                add faceNormals v fnx fny fnz
+        let none = { Tx = 0.f; Ty = 0.f; Tz = 0.f; W = 1.f }
+        Array.init n (fun i ->
+            let vertex = vertices.[i]
+            let nx, ny, nz =
+                if vertex.Nx <> 0. || vertex.Ny <> 0. || vertex.Nz <> 0. then vertex.Nx, vertex.Ny, vertex.Nz
+                else faceNormals.[3 * i], faceNormals.[3 * i + 1], faceNormals.[3 * i + 2]
+            let nl = sqrt (nx * nx + ny * ny + nz * nz)
+            let tx, ty, tz = tan1.[3 * i], tan1.[3 * i + 1], tan1.[3 * i + 2]
+            if not (nl > 0. && Double.IsFinite nl) then none
+            else
+                let nx, ny, nz = nx / nl, ny / nl, nz / nl
+                let d = nx * tx + ny * ty + nz * tz
+                let ox, oy, oz = tx - d * nx, ty - d * ny, tz - d * nz
+                let ol = sqrt (ox * ox + oy * oy + oz * oz)
+                if not (ol > 1e-30 && Double.IsFinite ol) then none
+                else
+                    let ox, oy, oz = ox / ol, oy / ol, oz / ol
+                    // Handedness: does normal x tangent point along increasing v?
+                    let bx, by, bz = ny * oz - nz * oy, nz * ox - nx * oz, nx * oy - ny * ox
+                    let w = if bx * tan2.[3 * i] + by * tan2.[3 * i + 1] + bz * tan2.[3 * i + 2] < 0. then -1.f else 1.f
+                    { Tx = float32 ox; Ty = float32 oy; Tz = float32 oz; W = w })
+
+type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array array, smooth: bool,
+                            tangentSource: TangentSource, mask: AlphaMask) =
     let indices = triangulate inputVertices inputFaces
     let normals = if smooth then vertexNormals inputVertices indices else [||]
     let vertices =
@@ -205,8 +314,15 @@ type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array a
             { X = vertex.x; Y = vertex.y; Z = vertex.z
               Nx = normal.X; Ny = normal.Y; Nz = normal.Z
               U = defaultArg vertex.u 0.; V = defaultArg vertex.v 0. })
+    let tangents =
+        match tangentSource with
+        | NoTangents -> Array.empty
+        | GivenTangents given ->
+            if given.Length <> vertices.Length then invalidArg (nameof tangentSource) "Give one tangent per vertex."
+            Array.copy given
+        | GenerateTangents -> Tangents.generate vertices indices
     let primitives =
-        indices |> Array.mapi (fun index triangle -> TrianglePrimitive(vertices, triangle, index) :> Shape)
+        indices |> Array.mapi (fun index triangle -> TrianglePrimitive(vertices, triangle, index, mask) :> Shape)
     let degenerateCount =
         primitives |> Array.sumBy (fun primitive -> if (primitive :?> TrianglePrimitive).IsDegenerate then 1 else 0)
     let accelerator = Acceleration.buildWith Acceleration.FlatBVH primitives
@@ -222,6 +338,9 @@ type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array a
     member _.DegenerateTriangleCount = degenerateCount
     member _.Bounds = bounds
     member _.AccelerationKind = accelerator.Kind
+    /// Per-vertex tangents (empty when the mesh has none).
+    member _.Tangents = ReadOnlyMemory<MeshTangent>(tangents)
+    member _.AlphaMask = mask
     /// Copies prepared geometry and the existing BLAS without rebuilding or exposing CPU-owned arrays.
     member _.Export() =
         match Acceleration.tryExportFlat accelerator with
@@ -244,8 +363,20 @@ type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array a
         let shaded =
             HitPoint(hit.Ray, hit.Time, hit.GeometricNormal, shading, getFunc texture u v,
                      shape, u, v, beta, gamma, true)
-        if smooth then shaded.WithShadowPoint(MeshGeometry.TerminatorPoint(hit.Point, hit.GeometricNormal, shading, a, b, c, alpha, beta, gamma))
-        else shaded
+        let shaded =
+            if smooth then shaded.WithShadowPoint(MeshGeometry.TerminatorPoint(hit.Point, hit.GeometricNormal, shading, a, b, c, alpha, beta, gamma))
+            else shaded
+        if tangents.Length = 0 then shaded
+        else
+            let ta, tb, tc = tangents.[triangle.A], tangents.[triangle.B], tangents.[triangle.C]
+            let t = Vector(alpha * float ta.Tx + beta * float tb.Tx + gamma * float tc.Tx,
+                           alpha * float ta.Ty + beta * float tb.Ty + gamma * float tc.Ty,
+                           alpha * float ta.Tz + beta * float tb.Tz + gamma * float tc.Tz)
+            let w = alpha * float ta.W + beta * float tb.W + gamma * float tc.W
+            // The bitangent follows the interpolated vertex normal, before HitPoint orients it.
+            let bitangent = (if w < 0. then -1. else 1.) * (shading % t)
+            if t.IsFinite && not t.IsZero && bitangent.IsFinite && not bitangent.IsZero then shaded.WithTangent(t, bitangent)
+            else shaded
 
     /// Hanika 2021 shadow-terminator point: project p onto each vertex's tangent plane
     /// when it lies below it, then blend with the barycentrics.
@@ -288,11 +419,13 @@ type BaseMeshShape internal (geometry: MeshGeometry) =
 
 let drawTriangles (filepath: string) (smoothen: bool) =
     let vertices, faces = parseIndexedPLY filepath
-    BaseMeshShape(MeshGeometry(vertices, faces, smoothen)) :> BaseShape
+    BaseMeshShape(MeshGeometry(vertices, faces, smoothen, NoTangents, null)) :> BaseShape
 
-/// Builds a mesh from in-memory arrays, e.g. a glTF primitive. `normals` and `uvs` are either empty or hold one
+/// Builds a mesh from in-memory arrays, e.g. a glTF primitive, with a tangent frame for normal maps and an
+/// optional alpha mask (null for an opaque surface). `normals` and `uvs` are either empty or hold one
 /// entry per position; `triangles` holds three position indices per triangle.
-let fromArrays (positions: Point[]) (normals: Vector[]) (uvs: (float * float)[]) (triangles: int[]) (smooth: bool) =
+let fromArraysWith (tangents: TangentSource) (mask: AlphaMask) (positions: Point[]) (normals: Vector[])
+                   (uvs: (float * float)[]) (triangles: int[]) (smooth: bool) =
     if isNull positions || positions.Length = 0 then invalidArg (nameof positions) "A mesh needs at least one vertex."
     if not (isNull normals || normals.Length = 0 || normals.Length = positions.Length) then
         invalidArg (nameof normals) "Give one normal per vertex, or none."
@@ -312,4 +445,9 @@ let fromArrays (positions: Point[]) (normals: Vector[]) (uvs: (float * float)[])
             let u, v = if hasUvs then Some (fst uvs.[i]), Some (snd uvs.[i]) else None, None
             Vertex(p.X, p.Y, p.Z, nx, ny, nz, u, v))
     let faces = Array.init (triangles.Length / 3) (fun t -> [| triangles.[3 * t]; triangles.[3 * t + 1]; triangles.[3 * t + 2] |])
-    BaseMeshShape(MeshGeometry(vertices, faces, smooth)) :> BaseShape
+    BaseMeshShape(MeshGeometry(vertices, faces, smooth, tangents, mask)) :> BaseShape
+
+/// Builds a mesh from in-memory arrays, e.g. a glTF primitive. `normals` and `uvs` are either empty or hold one
+/// entry per position; `triangles` holds three position indices per triangle.
+let fromArrays (positions: Point[]) (normals: Vector[]) (uvs: (float * float)[]) (triangles: int[]) (smooth: bool) =
+    fromArraysWith NoTangents null positions normals uvs triangles smooth

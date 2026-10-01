@@ -53,6 +53,8 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
     let point = if didHit then ray.PointAtTime time else ray.GetOrigin
     let mutable shadowPoint = point
     let mutable hasShadowPoint = false
+    let mutable tangent = Unchecked.defaultof<Vector>
+    let mutable bitangent = Unchecked.defaultof<Vector>
 
     // Ray that hit
     member this.Ray: Ray = ray
@@ -83,6 +85,7 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
 
     /// Hanika shadow-terminator corrected point (defaults to Point). Set by smooth meshes.
     member this.ShadowPoint: Point = shadowPoint
+    member this.HasShadowPoint = hasShadowPoint
     member this.WithShadowPoint(corrected: Point) =
         shadowPoint <- corrected
         hasShadowPoint <- true
@@ -90,6 +93,17 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
 
     /// Shadow-ray origin: the terminator-corrected point when the light is on the
     /// shading-normal side, otherwise the plain hit point, nudged off the surface.
+    /// Surface tangent (direction of increasing U) and bitangent (increasing V) at the hit, unnormalised and
+    /// not necessarily orthogonal to the shading normal; set by meshes that carry a tangent frame, so normal
+    /// maps can be applied in the frame they were authored in. Absent (HasTangent = false) otherwise.
+    member this.HasTangent = not (obj.ReferenceEquals(tangent, null))
+    member this.Tangent: Vector = tangent
+    member this.Bitangent: Vector = bitangent
+    member this.WithTangent(t: Vector, b: Vector) =
+        tangent <- t
+        bitangent <- b
+        this
+
     member this.ShadowOrigin(outgoing: Vector): Point =
         if hasShadowPoint && outgoing * shading > 0. then this.OffsetFrom(shadowPoint, outgoing)
         else this.OffsetPoint outgoing
@@ -136,7 +150,8 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
     member this.WithShape(newShape: Shape) =
         let copy = HitPoint(ray, time, geometric, shading, material, newShape, u, v,
                             barycentricBeta, barycentricGamma, didHit)
-        if hasShadowPoint then copy.WithShadowPoint shadowPoint else copy
+        let copy = if hasShadowPoint then copy.WithShadowPoint shadowPoint else copy
+        if this.HasTangent then copy.WithTangent(tangent, bitangent) else copy
 
     // Constructors for rays that hit
     new(ray: Ray, time:float, normal:Vector, material:Material, shape:Shape, u:float, v:float, didHit:bool) =
