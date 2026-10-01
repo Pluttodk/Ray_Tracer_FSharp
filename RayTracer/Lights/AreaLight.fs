@@ -125,6 +125,10 @@ module TransformLight =
             DirectionalLight(directional.BaseColour, directional.Intensity, transformDirectionalLight(directional, transformation)) :> Light
         | :? PointLight as point ->
             PointLight(point.BaseColour, point.Intensity, transformPointLight(point, transformation)) :> Light
+        | :? SphereLight as sphere ->
+            // Moves the lamp; its radius and intensity are not scaled.
+            let position = Transformation.transformPoint(sphere.Position, Transformation.getMatrix transformation)
+            SphereLight(sphere.BaseColour, sphere.Intensity, position, sphere.Radius, sphere.SampleCount) :> Light
         | :? AreaLight as area ->
             let matrix = Transformation.getMatrix transformation
             let inverse = Transformation.getInvMatrix transformation
@@ -158,6 +162,7 @@ module LightSampling =
         match light with
         | :? AreaLight as area -> area.SampleCount
         | :? EnvironmentLight as environment -> environment.Sampler.SampleCount
+        | :? SphereLight as sphere -> sphere.SampleCount
         | _ -> 1
 
     let sampleAt (light: Light) (hit: HitPoint) key index =
@@ -169,6 +174,9 @@ module LightSampling =
               Weight = if distance > 0. then 1. else 0. }
         | :? DirectionalLight as directional ->
             { Direction = directional.Direction; Distance = infinity; Radiance = directional.GetColour hit; Weight = 1. }
+        | :? SphereLight as sphere ->
+            let u1, u2 = sample2D (mixKey key) index
+            sphere.Sample(hit.Point, u1, u2)
         | :? AreaLight as area -> area.SampleAt(hit, key, index)
         | :? EnvironmentLight as environment -> environment.SampleAt(hit, key, index)
         | :? AmbientLight -> invalidArg (nameof light) "Ambient lights must be supplied through the scene ambient-light parameter."
