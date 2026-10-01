@@ -35,6 +35,7 @@
     <Compile Include="GltfTests.fs" />
     <Compile Include="FilmTests.fs" />
     <Compile Include="PostTests.fs" />
+    <Compile Include="TerrainTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
