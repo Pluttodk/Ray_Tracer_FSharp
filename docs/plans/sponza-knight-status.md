@@ -7,3 +7,4 @@
 23:35 v launched (shadowed single-scatter sun shafts)
 23:35 g launched (Cycles ground truth + compare)
 23:35 p launched (profiling / speed)
+00:06 r2 done 1663785..1448a83; merged; lamps offset -0.2 m, HDRI rot 155 by orch; 1638 tests
