@@ -9,3 +9,4 @@ Branch names are `dragon-realism-<ws>`, not `dragon-realism/<ws>`. Git refuses a
 14:28 d on-track launched
 14:28 e on-track launched
 14:29 a done 9d95440 reviewed; merged, build+1430 tests green
+14:31 d done 7fe1a16 reviewed; merged (test-registration conflicts resolved), 1436 tests green. Ridge cause = shadow terminator; core fix -> follow-up d2
