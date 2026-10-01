@@ -14,8 +14,8 @@ type HdrImage =
 /// Radiance RGBE (.hdr) files: reading (flat, old-style run-length and adaptive run-length
 /// scanlines) and writing (flat or run-length).
 ///
-/// Decoding follows Blender's reader: a pixel (r, g, b, e) with e > 0 is
-/// ((r, g, b) + 0.5) * 2^(e - 136), and e = 0 is black. The EXPOSURE header is ignored, as Blender
+/// Decoding matches Blender 4.2 (OpenImageIO) and stb_image, checked pixel for pixel on the Sponza
+/// HDRIs: a pixel (r, g, b, e) with e > 0 is (r, g, b) * 2^(e - 136), and e = 0 is black. The EXPOSURE header is ignored, as Blender
 /// and three.js do, so radiance values match what Cycles renders with the same file.
 [<RequireQualifiedAccess>]
 module HdrImage =
@@ -28,9 +28,9 @@ module HdrImage =
             pixels.[offset] <- 0.f; pixels.[offset + 1] <- 0.f; pixels.[offset + 2] <- 0.f
         else
             let f = Math.ScaleB(1., int e - 136)
-            pixels.[offset] <- float32 ((float r + 0.5) * f)
-            pixels.[offset + 1] <- float32 ((float g + 0.5) * f)
-            pixels.[offset + 2] <- float32 ((float b + 0.5) * f)
+            pixels.[offset] <- float32 (float r * f)
+            pixels.[offset + 1] <- float32 (float g * f)
+            pixels.[offset + 2] <- float32 (float b * f)
 
     /// Decodes the bytes of a .hdr file.
     let decode (bytes: byte[]) : HdrImage =

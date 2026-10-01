@@ -12,7 +12,7 @@ open Tracer.BaseShape
 let private constantImage width height (value: float32) =
     { Width = width; Height = height; Pixels = Array.create (width * height * 3) value }
 
-/// A known RGBE pixel decodes to ((r, g, b) + 0.5) * 2^(e - 136), in both scanline encodings, and
+/// A known RGBE pixel decodes to (r, g, b) * 2^(e - 136), in both scanline encodings, and
 /// encode/decode round-trips within RGBE precision.
 let private hdrRoundTrip () =
     let header = Text.Encoding.ASCII.GetBytes "#?RADIANCE\nFORMAT=32-bit_rle_rgbe\nEXPOSURE=1.0\n\n-Y 1 +X 2\n"
@@ -20,8 +20,8 @@ let private hdrRoundTrip () =
     let image = HdrImage.decode flat
     let f = Math.ScaleB(1., 129 - 136)
     Assert.True(image.Width = 2 && image.Height = 1, "hdr-flat-dimensions")
-    Assert.True(abs (float image.Pixels.[0] - 128.5 * f) < 1e-6 && abs (float image.Pixels.[1] - 64.5 * f) < 1e-6
-                && abs (float image.Pixels.[2] - 32.5 * f) < 1e-6 && image.Pixels.[3] = 0.f,
+    Assert.True(abs (float image.Pixels.[0] - 128. * f) < 1e-6 && abs (float image.Pixels.[1] - 64. * f) < 1e-6
+                && abs (float image.Pixels.[2] - 32. * f) < 1e-6 && image.Pixels.[3] = 0.f,
                 sprintf "hdr-known-pixel (%f %f %f)" image.Pixels.[0] image.Pixels.[1] image.Pixels.[2])
     // A 37x5 image with runs, literals and a wide dynamic range.
     let w, h = 37, 5
@@ -252,12 +252,13 @@ let private selectionMatchesExhaustive () =
     let scene = Scene([ sphere ], manyLights (), AmbientLight(Colour.Black, 0.), 2)
     let previous = LightSelection.ExhaustiveLimit
     try
-        LightSelection.ExhaustiveLimit <- 100
-        let exhaustive = renderCentre scene Path 12
-        LightSelection.ExhaustiveLimit <- 8
-        let selected = renderCentre scene Path 12
-        Assert.True(abs (selected / exhaustive - 1.) < 0.02,
-                    sprintf "selection-matches-exhaustive (%.5f vs %.5f)" selected exhaustive)
+        for integrator in [ Path; Classic ] do
+            LightSelection.ExhaustiveLimit <- 100
+            let exhaustive = renderCentre scene integrator 12
+            LightSelection.ExhaustiveLimit <- 8
+            let selected = renderCentre scene integrator 12
+            Assert.True(abs (selected / exhaustive - 1.) < 0.02,
+                        sprintf "selection-matches-exhaustive-%A (%.5f vs %.5f)" integrator selected exhaustive)
     finally LightSelection.ExhaustiveLimit <- previous
 
 let allTest () =
