@@ -15,8 +15,11 @@ type CameraSpec =
       /// Distance to the plane in focus (thin lens only).
       FocusDistance: float
       /// Optional node the camera keeps aimed at, overriding the node's own rotation.
-      Target: string option }
-    static member Default = { YFov = 0.7; ApertureRadius = 0.; FocusDistance = 10.; Target = None }
+      Target: string option
+      /// Node to autofocus on: the focus distance becomes the distance from the camera to that node at
+      /// mid-shutter, overriding FocusDistance. None keeps the fixed FocusDistance.
+      FocusTarget: string option }
+    static member Default = { YFov = 0.7; ApertureRadius = 0.; FocusDistance = 10.; Target = None; FocusTarget = None }
 
 /// A mesh deformed by a skeleton (glTF skinning). Each vertex follows up to four joints; as in glTF, the
 /// vertices end up in world space and the transform of the node carrying the mesh is ignored.
@@ -177,6 +180,13 @@ module AnimatedScene =
                 | true, targetMatrix -> origin targetMatrix
                 | _ -> invalidArg (nameof scene) $"Camera target {target} does not exist."
             | None -> position + (transformVector (Vector(0., 0., -1.), m)).Normalise
+        let spec =
+            match spec.FocusTarget with
+            | Some focus ->
+                match world.TryGetValue focus with
+                | true, focusMatrix -> { spec with FocusDistance = max 1e-6 (origin focusMatrix - position).Magnitude }
+                | _ -> invalidArg (nameof scene) $"Camera focus target {focus} does not exist."
+            | None -> spec
         { Position = position; LookAt = lookAt; Up = (transformVector (Vector(0., 1., 0.), m)).Normalise; Spec = spec }
 
 /// Per-frame render parameters.
@@ -260,6 +270,11 @@ module Frame =
                 (p - p0).Magnitude > 1e-9 || (l - l0).Magnitude > 1e-9 || (u - u0).Magnitude > 1e-9)
         if moving && pose.Spec.ApertureRadius = 0. then
             MovingPinholeCamera(poses, 1., width, height, settings.Width, settings.Height, multiJittered side 83, shutterOpen, shutterClose)
+            :> Tracer.Basics.Camera
+        elif moving then
+            MovingThinLensCamera(poses, 1., width, height, settings.Width, settings.Height,
+                                 pose.Spec.ApertureRadius, pose.Spec.FocusDistance,
+                                 multiJittered side 83, multiJittered side 89, shutterOpen, shutterClose)
             :> Tracer.Basics.Camera
         elif pose.Spec.ApertureRadius > 0. then
             ThinLensCamera(pose.Position, pose.LookAt, pose.Up, 1., width, height, settings.Width, settings.Height,
