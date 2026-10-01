@@ -26,7 +26,8 @@ module Film =
             invalidOp $"{IO.Path.Combine(assetDirectory, name)} is missing; run scripts/fetch-dragon-assets.sh first.")
 
     let terrainSettings : Terrain.Settings =
-        { Size = 1800.; Resolution = 420; Relief = 60.; FeatureSize = 240.
+        { Size = 1800.; Resolution = 840; // --- d: finer mesh, 2.1 units per cell ---
+          Relief = 60.; FeatureSize = 240.
           Peaks =
             [ { X = 0.; Z = 0.; Height = 170.; Radius = 160. }
               { X = -300.; Z = -230.; Height = 150.; Radius = 170. }
