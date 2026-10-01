@@ -92,7 +92,7 @@ module Film =
         Some { Atmosphere.Default with
                  Density = 3.5e-4; BaseHeight = 0.; ScaleHeight = 200.; HorizonLift = 0.08
                  Tint = Colour(0.85, 1., 1.25)
-                 Anisotropy = 0.7; SkyWeight = 0.9; SunWeight = 1.
+                 Anisotropy = 0.7; SkyWeight = 0.8; SunWeight = 0.6
                  MaxDistance = 7000. }
     // --- c: end ---
 
