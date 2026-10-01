@@ -12,3 +12,4 @@
 00:15 r1 done b1b7f50..692402a; merged (test reg conflicts); 1697 tests; orch: shadow point through transforms
 01:05 p done (7b88cf8..fccdc38 + r1patch 323d63b): 7x less CPU/frame, bit-identical; merged; 1698 tests. Use DOTNET_GCgen0size=0x10000000 for the final render
 01:13 g done (cycles_reference.py, compare.sh): ours/Cycles brightness 1.00-1.11 at t=0,5,9; main gap = speckle noise; merged
+01:38 n done 4841da1: OIDN was never loaded (only copy is Blender's bundle); now resolved + warns. Ours vs Cycles t=9 lum 1.00, t=5 1.06, clean. NB dragon-flight film was not denoised
