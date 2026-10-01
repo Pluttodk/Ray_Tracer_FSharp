@@ -22,6 +22,7 @@
     <Compile Include="SamplingTest.fs" />
     <Compile Include="BsdfTests.fs" />
     <Compile Include="PathTransportTests.fs" />
+    <Compile Include="SkyTests.fs" />
     <Compile Include="ShapeTest.fs" />
     <Compile Include="ImageIOTests.fs" />
     <Compile Include="AccelerationRegressionTests.fs" />

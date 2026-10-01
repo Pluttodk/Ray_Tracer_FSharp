@@ -70,11 +70,15 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
             let etaT, _ = mediumProperties next
             (if List.isEmpty medium.Stack then material.InnerRefractionIndex else etaI), etaT, next
 
-    let background (direction: Vector) =
+    /// Escaped-ray radiance. Camera rays see each environment's `Visible` radiance (a sky's sun
+    /// disc included); secondary rays see only its lighting `Radiance`, because a sun drawn in the
+    /// sky is also a DirectionalLight and would otherwise be counted twice (and as fireflies).
+    let background (direction: Vector) (cameraRay: bool) =
         if environments.Length = 0 then scene.BackgroundColour
         else
             let mutable colour = Colour.Black
-            for light in environments do colour <- colour + light.Radiance direction
+            for light in environments do
+                colour <- colour + (if cameraRay then light.Visible direction else light.Radiance direction)
             colour
 
     let initialMedium (origin: Point) =
@@ -195,7 +199,7 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
         let hit = query.Closest(ray, 0., infinity)
         if not hit.DidHit then
             let _, filter = mediumProperties medium
-            background ray.GetDirection * attenuation filter infinity
+            background ray.GetDirection (depth = scene.MaxBounces) * attenuation filter infinity
         else
             let medium = incomingMedium medium hit
             let _, filter = mediumProperties medium

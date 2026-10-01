@@ -51,26 +51,26 @@ module Film =
             Terrain.height settings x z * 1.6 + wall - 160. * sink
         Terrain.buildWith settings heightAt (Terrain.hazeTexture settings (Colour(0.42, 0.42, 0.58)))
 
-    /// Low sun in the west-south-west, warm; everything below is tuned to it.
-    let sunDirection = Vector(-0.85, 0.2, 0.35).Normalise
+    // --- b: sky and sun ---
+    /// Golden hour: the sun 6 degrees up, at azimuth -130 degrees (atan2(x, z); the north-west,
+    /// towards -x -z). Most shots look that way (establish, summit approach, roar, departure), so the
+    /// dragon is back- or rim-lit and departs into the sun. One fixed sun keeps continuity across cuts.
+    let sunElevation = 6. * Math.PI / 180.
+    let sunAzimuth = -130. * Math.PI / 180.
+    let sunDirection = Vector(cos sunElevation * sin sunAzimuth, sin sunElevation, cos sunElevation * cos sunAzimuth)
 
-    /// Sunset sky: warm haze at the horizon, deep blue overhead, and a glow around the sun.
-    let private sky () =
-        let emissive (c: Colour) = EmissiveMaterial(c, 1.) :> Material
-        let horizon, zenith, glow = Colour(1.05, 0.62, 0.36), Colour(0.12, 0.2, 0.45), Colour(1.6, 0.95, 0.5)
-        let texture =
-            mkTexture (fun u v ->
-                // Inverse of EnvironmentLight's lat-long mapping.
-                let polar = (1. - v) * Math.PI
-                let azimuth = 2. * Math.PI * u
-                let d = Vector(sin polar * sin azimuth, cos polar, sin polar * cos azimuth)
-                let up = max 0. d.Y
-                let t = 1. - exp (-4.5 * up)
-                let baseColour = if d.Y < 0. then horizon * 0.35 else horizon * (1. - t) + zenith * t
-                let sun = max 0. (d * sunDirection)
-                let halo = glow * (0.9 * Math.Pow(sun, 24.) + 0.35 * Math.Pow(sun, 4.) * (1. - t))
-                emissive (baseColour + halo))
-        EnvironmentLight(1e6, texture, multiJittered 2 17) :> Light
+    /// Preetham sky with an attenuated, limb-darkened sun disc. The sun's lighting is a DirectionalLight
+    /// and the disc is drawn only for camera and specular rays, so the sun is counted once (see Sky.fs).
+    let skyModel =
+        Sky.create
+            { SunDirection = sunDirection; Turbidity = 2.2
+              SunIrradiance = 3.0; SunToSky = Some 6. }
+
+    /// The sky as an importance-sampled environment light (2x2 classic samples, 256x128 luminance table).
+    let private sky () = Sky.light skyModel 2 256 :> Light
+
+    let private sunLight () = Sky.sunLight skyModel :> Light
+    // --- end b ---
 
     // ------------------------------------------------------------------ timing
 
@@ -220,7 +220,7 @@ module Film =
         let rig, performance = dragon ()
         let cameraNodes, cameraClip = cameras ()
         let terrain = Node.create "terrain" |> Node.withContent [ Geometry(Terrain.build terrainSettings); Geometry(farTerrain ()) ]
-        let sun = DirectionalLight(Colour(1., 0.78, 0.55), 1.15, sunDirection) :> Light
+        let sun = sunLight ()  // b: sun light
         { Name = "dragon-flight"
           Roots = [ terrain; rig ] @ cameraNodes
           Clips = [ Clip.create "flight" (flightChannels 30.); performance; cameraClip ]
