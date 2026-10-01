@@ -180,6 +180,58 @@ module Sponza =
         sun :: skyLight :: lampLights
         // --- end r2 ---
 
+    // --- v ---
+    /// Haze filling the atrium, for sun shafts through the arches and halos around the lamps. These are the
+    /// defaults; an optional "volume" object in scenes/sponza.json overrides them key by key, and
+    /// "enabled": false turns the haze off. Coefficients are per metre.
+    let hazeDefaults =
+        { Volume.Default with
+            Min = Point(-18., -0.5, -10.); Max = Point(18., 27., 10.)
+            Scattering = Colour(0.015, 0.015, 0.015); Absorption = Colour(0.0015, 0.0015, 0.0015)
+            BaseHeight = 0.; ScaleHeight = infinity
+            SunAnisotropy = 0.45; LampAnisotropy = 0.2
+            SunSamples = 4; LampSamples = 2; ScatterDepth = 0
+            Ambient = Colour(0.03, 0.033, 0.039); SunWeight = 1.; LampWeight = 2.; LampClearance = 0.15 }
+
+    let haze (spec: Spec) : Volume option =
+        match spec.Root.TryGetProperty "volume" with
+        | true, v when v.ValueKind = JsonValueKind.Object ->
+            let has (name: string) = match v.TryGetProperty name with | true, e -> Some e | _ -> None
+            let num name fallback = has name |> Option.map (fun e -> e.GetDouble()) |> Option.defaultValue fallback
+            let int name fallback = has name |> Option.map (fun e -> e.GetInt32()) |> Option.defaultValue fallback
+            let triple (e: JsonElement) =
+                if e.ValueKind = JsonValueKind.Number then let x = e.GetDouble() in x, x, x
+                else let a = e.EnumerateArray() |> Seq.map (fun x -> x.GetDouble()) |> Array.ofSeq in a.[0], a.[1], a.[2]
+            let col name (fallback: Colour) =
+                has name |> Option.map (fun e -> let r, g, b = triple e in Colour(r, g, b)) |> Option.defaultValue fallback
+            let point name (fallback: Point) =
+                has name |> Option.map (fun e -> let x, y, z = triple e in Point(x, y, z)) |> Option.defaultValue fallback
+            let d = hazeDefaults
+            let enabled = has "enabled" |> Option.map (fun e -> e.GetBoolean()) |> Option.defaultValue true
+            if not enabled then None
+            else
+                Some
+                    { Min = point "min" d.Min; Max = point "max" d.Max
+                      Scattering = col "scattering" d.Scattering; Absorption = col "absorption" d.Absorption
+                      BaseHeight = num "baseHeight" d.BaseHeight
+                      ScaleHeight = (match has "scaleHeight" with
+                                     | Some e when e.ValueKind = JsonValueKind.Number -> e.GetDouble()
+                                     | Some _ -> infinity
+                                     | None -> d.ScaleHeight)
+                      SunAnisotropy = num "sunAnisotropy" d.SunAnisotropy
+                      LampAnisotropy = num "lampAnisotropy" d.LampAnisotropy
+                      SunSamples = int "sunSamples" d.SunSamples; LampSamples = int "lampSamples" d.LampSamples
+                      ScatterDepth = int "scatterDepth" d.ScatterDepth
+                      MaxDistance = num "maxDistance" d.MaxDistance
+                      Ambient = col "ambient" d.Ambient
+                      SunWeight = num "sunWeight" d.SunWeight; LampWeight = num "lampWeight" d.LampWeight
+                      LampClearance = num "lampClearance" d.LampClearance }
+        | _ -> Some hazeDefaults
+
+    let atmosphere (spec: Spec) =
+        haze spec |> Option.map (fun v -> { Atmosphere.Default with Density = 0.; Volume = Some v })
+    // --- end v ---
+
     // --- k ---
     /// The animated knight (Knight.fs), placed from the optional "knight" block of sponza.json:
     /// { "enabled": true, "position": [x, y, z], "yawDeg": 0, "start": 0, "speed": 1, "maxTexture": 2048 }.
@@ -243,5 +295,5 @@ module Sponza =
           StaticLights = lights spec lamps
           Ambient = AmbientLight(Colour.White, 0.)
           MaxBounces = 4
-          Atmosphere = None
+          Atmosphere = atmosphere spec
           Duration = spec.Duration }

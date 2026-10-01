@@ -42,6 +42,7 @@
     <Compile Include="PostTests.fs" />
     <Compile Include="TerrainTests.fs" />
     <Compile Include="AtmosphereTests.fs" />
+    <Compile Include="VolumeTests.fs" />
     <Compile Include="ShadowTerminatorTests.fs" />
     <Compile Include="ParticleTests.fs" />
     <Compile Include="KnightTests.fs" />

@@ -183,6 +183,9 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
                         finished <- true
             transmittance
 
+    /// Shadow rays cast from inside the bounded volume, which lies outside any transparent medium.
+    let volumeVisibility = fun (ray: Ray) (distance: float) -> visibility ray distance air
+
     let ambient (hit: HitPoint) key medium =
         let colour = hit.Material.AmbientColour(hit, scene.Ambient)
         if colour.IsBlack then colour
@@ -207,7 +210,11 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
             let escaped = background ray.GetDirection (depth = scene.MaxBounces) * attenuation filter infinity
             match fog with
             | Some fog when List.isEmpty medium.Stack ->
-                fog.ApplyEscaped(ray.GetOrigin, ray.GetDirection.Normalise, escaped)
+                let fogged = fog.ApplyEscaped(ray.GetOrigin, ray.GetDirection.Normalise, escaped)
+                if fog.HasVolume then
+                    fog.ApplyVolume(ray.GetOrigin, ray.GetDirection.Normalise, infinity, ray.ShutterTime, key,
+                                    scene.MaxBounces - depth, volumeVisibility, fogged)
+                else fogged
             | _ -> escaped
         else
             let medium = incomingMedium medium hit
@@ -252,7 +259,12 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
             let shaded = local * segmentAttenuation
             match fog with
             | Some fog when List.isEmpty medium.Stack ->
-                fog.Apply(ray.GetOrigin, ray.GetDirection.Normalise, hit.Time * ray.GetDirection.Magnitude, shaded)
+                let distance = hit.Time * ray.GetDirection.Magnitude
+                let fogged = fog.Apply(ray.GetOrigin, ray.GetDirection.Normalise, distance, shaded)
+                if fog.HasVolume then
+                    fog.ApplyVolume(ray.GetOrigin, ray.GetDirection.Normalise, distance, ray.ShutterTime, key,
+                                    scene.MaxBounces - depth, volumeVisibility, fogged)
+                else fogged
             | _ -> shaded
 
     member _.Trace(ray: Ray, key: uint64) =
