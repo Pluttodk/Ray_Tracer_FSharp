@@ -198,7 +198,27 @@ let private backLitSheet () =
     Assert.True((opaque = 0.), sprintf "path-opaque-sheet-dark-when-back-lit (%g)" opaque)
     Assert.True(sheet > 0.1 && sheet < 0.2, sprintf "path-translucent-sheet-glows-when-back-lit (%g)" sheet)
 
+/// A translucent sheet in a uniform, importance-sampled environment reflects and transmits exactly its
+/// BSDF's total albedo: the MIS weights of light sampling and BSDF sampling must also cover the
+/// hemisphere behind the surface.
+let private translucentFurnace () =
+    let sample = { PbrSample.defaults with BaseColour = Colour(0.6, 0.6, 0.6); Roughness = 0.5; DiffuseTransmission = 0.5 }
+    let wo = Vector(0., 0., 1.)
+    let expected = albedo (surfaceOf sample wo) wo
+    let sheet = Disc(Point(0., 0., 0.), 1., Textures.mkMatTexture (PbrMaterial sample)) :> Shape
+    let envTexture = Textures.mkMatTexture (EmissiveMaterial(Colour.White, 1.))
+    let env = EnvironmentLight(1e6, envTexture, Sampling.multiJittered 4 83, None, None, 32) :> Light
+    let scene = Scene([ sheet ], [ env ], AmbientLight(Colour.Black, 0.), 3)
+    let camera =
+        PinholeCamera(Point(0., 0., 40.), Point(0., 0., 0.), Vector(0., 1., 0.), 2., 0.05, 0.05, 8, 8, Sampling.regular 8)
+    let options = { RenderOptions.Default with Integrator = Path; Threads = 4; Seed = 11 }
+    let film = Render(scene, camera, options).RenderLinear
+    let measured = Array.average film.Pixels
+    Assert.True(abs (measured - expected) < 0.02 * expected,
+                sprintf "path-translucent-furnace (measured %.4f, BSDF albedo %.4f)" measured expected)
+
 let allTest () =
+    translucentFurnace ()
     backLitSheet ()
     bilinearSampling ()
     flatNormalMapIdentity ()
