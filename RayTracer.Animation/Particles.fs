@@ -57,10 +57,10 @@ module Particles =
         float (h >>> 11) / float (1UL <<< 53)
 
     let defaults =
-        { Seed = 5; Start = 15.0; Stop = 18.0; Rate = 30.; PerEvent = 180
+        { Seed = 5; Start = 15.0; Stop = 18.0; Rate = 30.; PerEvent = 450
           ReachHeight = 110.; FullHeight = 45.
           Wind = Vector(6., 0., 2.5)
-          MinLife = 1.; MaxLife = 3.; Radius = 0.4 }
+          MinLife = 1.; MaxLife = 3.; Radius = 0.13 }
 
     /// Upper bound on the particles that can exist at once.
     let maxLive (s: Settings) = int (ceil (s.Rate * s.MaxLife)) * s.PerEvent
