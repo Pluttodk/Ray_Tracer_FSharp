@@ -317,7 +317,7 @@ module Film =
         let camera name yfov target = Node.create name |> Node.withContent [ CameraRig { CameraSpec.Default with YFov = yfov; Target = Some target } ]
         let establishing = camera "cam-establish" 0.5 "aim-establish"
         let tracking = camera "cam-track" 0.62 "aim-dragon"
-        let summit = camera "cam-summit" 0.8 "aim-dragon"  // s: tighter lens for the summit pass
+        let summit = camera "cam-summit" 0.6 "aim-dragon"  // s: tighter lens for the summit pass
         let roar = camera "cam-roar" 0.42 "aim-roar"
         let depart = camera "cam-depart" 0.7 "aim-dragon"
         // Low on a foothill, panning as the dragon crosses in front of the massif.

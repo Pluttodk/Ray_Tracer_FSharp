@@ -12,8 +12,8 @@ cd "$(dirname "$0")/.."
 
 label=${1:?usage: scripts/review-stills.sh LABEL [extra args...]}
 shift
-# 2 s establish, 8 s tracking, 16 s summit pass, 21 s roar, 27 s departure (24 fps).
-frames=${FRAMES:-"48 192 384 504 648"}
+# 2 s establish, 8 s tracking, 15.5 s summit pass (shadow on the face), 21 s roar, 27 s departure (24 fps).
+frames=${FRAMES:-"48 192 372 504 648"}
 out="artifacts/review/$label"
 mkdir -p "$out"
 
