@@ -121,7 +121,7 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
                 else initialMedium origin
 
     let shadowSegment (hit: HitPoint) (sample: LightSample) =
-        let origin = hit.OffsetPoint sample.Direction
+        let origin = hit.ShadowOrigin sample.Direction
         if Double.IsPositiveInfinity sample.Distance then Ray(origin, sample.Direction, hit.Ray.ShutterTime), infinity
         else
             let target = hit.Point + sample.Distance * sample.Direction
