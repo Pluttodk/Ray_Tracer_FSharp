@@ -117,16 +117,24 @@ type Render(scene: Scene, camera: Camera, ?options: RenderOptions) =
         let mutable adaptiveSamplesTaken = 0L
         let albedo = if denoising then Array.zeroCreate<float> (camera.ResX * camera.ResY * 3) else Array.empty
         let normals = if denoising then Array.zeroCreate<float> (camera.ResX * camera.ResY * 3) else Array.empty
-        let tileColumns = (camera.ResX + options.TileSize - 1) / options.TileSize
-        let tileRows = (camera.ResY + options.TileSize - 1) / options.TileSize
+        // Halve the tile until every thread has several to pick from. With only ~4 tiles per thread (480x270
+        // at 16 px on 128 threads) the slowest tiles of the last round leave most cores idle at the end of the
+        // frame. Pixels do not depend on the tiling, so the image is unchanged.
+        let tileSize =
+            let mutable size = options.TileSize
+            let count size = ((camera.ResX + size - 1) / size) * ((camera.ResY + size - 1) / size)
+            while size > 4 && count size < 8 * options.Threads do size <- size / 2
+            size
+        let tileColumns = (camera.ResX + tileSize - 1) / tileSize
+        let tileRows = (camera.ResY + tileSize - 1) / tileSize
         let parallelOptions =
             ParallelOptions(MaxDegreeOfParallelism = options.Threads, CancellationToken = options.CancellationToken)
         watch.Restart()
         Parallel.For(0, tileColumns * tileRows, parallelOptions, fun tile ->
-            let startX = (tile % tileColumns) * options.TileSize
-            let startY = (tile / tileColumns) * options.TileSize
-            let endX = min camera.ResX (startX + options.TileSize)
-            let endY = min camera.ResY (startY + options.TileSize)
+            let startX = (tile % tileColumns) * tileSize
+            let startY = (tile / tileColumns) * tileSize
+            let endX = min camera.ResX (startX + tileSize)
+            let endY = min camera.ResY (startY + tileSize)
             for y = startY to endY - 1 do
                 for x = startX to endX - 1 do
                     let pixel = y * camera.ResX + x
