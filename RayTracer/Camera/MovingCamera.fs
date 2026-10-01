@@ -49,6 +49,12 @@ type MovingPinholeCamera
             let s = (time - ta) / (tb - ta)
             struct (lerpPoint pa pb s, lerpPoint la lb s, ua + s * (ub - ua))
 
+    /// Camera position and orthonormal frame at a shutter time.
+    member this.FrameAt(time: float) =
+        let struct (position, lookat, up) = this.PoseAt time
+        let struct (u, v, w) = frame position lookat up
+        struct (position, u, v, w)
+
     member private this.RayAt(x, y, key, sample) =
         this.CheckPixel x y
         if sample < 0 || sample >= sampler.SampleCount then
@@ -71,3 +77,48 @@ type MovingPinholeCamera
     interface ISampledCamera with
         member _.SampleCount = sampler.SampleCount
         member this.CreateRay(x, y, key, sample) = this.RayAt(x, y, key, sample)
+
+/// A thin-lens camera that also moves while the shutter is open: each ray takes the camera pose at its shutter
+/// time and a point on the lens disc, so a tracking shot gets both motion blur and depth of field. Rays for a
+/// pixel converge on the plane `focus` units in front of the lens (measured along the view axis). With a zero
+/// aperture it reproduces MovingPinholeCamera exactly.
+type MovingThinLensCamera
+    (poses: (float * Point * Point * Vector)[], zoom: float, width: float, height: float,
+     resX: int, resY: int, apertureRadius: float, focus: float,
+     viewSampler: Sampler, lensSampler: Sampler, shutterOpen: float, shutterClose: float) =
+    inherit MovingPinholeCamera(poses, zoom, width, height, resX, resY, viewSampler, shutterOpen, shutterClose)
+    do
+        if not (System.Double.IsFinite apertureRadius) || apertureRadius < 0. then
+            invalidArg (nameof apertureRadius) "Lens radius must be finite and nonnegative."
+        if not (System.Double.IsFinite focus) || focus <= 0. then
+            invalidArg (nameof focus) "Focal distance must be finite and positive."
+    let sampleCount = max viewSampler.SampleCount lensSampler.SampleCount
+
+    member private this.LensRayAt(x, y, key, sample) =
+        this.CheckPixel x y
+        if sample < 0 || sample >= sampleCount then
+            invalidArg (nameof sample) "Camera sample index is out of range."
+        let time = this.ShutterTimeAt(key, sample, sampleCount)
+        let struct (position, u, v, w) = this.FrameAt time
+        let qx, qy = viewSampler.SampleAt(key, sample % viewSampler.SampleCount)
+        let qx = this.Pw * (float x - float resX / 2. + qx)
+        let qy = this.Ph * (float y - float resY / 2. + qy)
+        let px, py = (focus * qx) / zoom, (focus * qy) / zoom
+        let lx, ly = mapToDisc (lensSampler.SampleAt(mixKey (key ^^^ 0x6c656e73UL), sample % lensSampler.SampleCount))
+        let lx, ly = lx * apertureRadius, ly * apertureRadius
+        let origin =
+            Point(position.X + lx * v.X + ly * u.X,
+                  position.Y + lx * v.Y + ly * u.Y,
+                  position.Z + lx * v.Z + ly * u.Z)
+        let direction =
+            Vector((px - lx) * v.X + (py - ly) * u.X - focus * w.X,
+                   (px - lx) * v.Y + (py - ly) * u.Y - focus * w.Y,
+                   (px - lx) * v.Z + (py - ly) * u.Z - focus * w.Z).Normalise
+        Ray(origin, direction, time)
+
+    override this.CreateRays x y = this.CreateRaysAt x y (this.PixelKey x y)
+    override this.CreateRaysAt x y key = Array.init sampleCount (fun sample -> this.LensRayAt(x, y, key, sample))
+
+    interface ISampledCamera with
+        member _.SampleCount = sampleCount
+        member this.CreateRay(x, y, key, sample) = this.LensRayAt(x, y, key, sample)
