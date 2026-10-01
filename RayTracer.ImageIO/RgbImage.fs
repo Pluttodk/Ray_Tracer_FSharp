@@ -99,3 +99,27 @@ type RgbImage private (width: int, height: int, pixels: byte[]) =
     static member Load(path: string) =
         use stream = File.OpenRead path
         RgbImage.Load stream
+
+    /// Decodes PNG/JPEG into RGB8 plus a separate alpha plane (width * height bytes, top-to-bottom rows),
+    /// without closing the caller-owned stream. The plane is empty when the source has no alpha channel,
+    /// which means fully opaque.
+    static member LoadWithAlpha(stream: Stream) : struct (RgbImage * byte[]) =
+        ArgumentNullException.ThrowIfNull stream
+        if not stream.CanRead then invalidArg (nameof stream) "The input stream is not readable."
+        let result = StbImageSharp.ImageResult.FromStream(stream, StbImageSharp.ColorComponents.RedGreenBlueAlpha)
+        let rgbLength = PixelStorage.length result.Width result.Height
+        let count = rgbLength / 3
+        if result.Data.Length <> count * 4 then
+            raise (InvalidDataException("The decoded image has an invalid RGBA pixel count."))
+        let source = result.Data
+        let rgb = Array.zeroCreate<byte> rgbLength
+        let hasAlpha =
+            result.SourceComp = StbImageSharp.ColorComponents.RedGreenBlueAlpha
+            || result.SourceComp = StbImageSharp.ColorComponents.GreyAlpha
+        let alpha = if hasAlpha then Array.zeroCreate<byte> count else Array.empty
+        for i in 0 .. count - 1 do
+            rgb.[3 * i] <- source.[4 * i]
+            rgb.[3 * i + 1] <- source.[4 * i + 1]
+            rgb.[3 * i + 2] <- source.[4 * i + 2]
+            if hasAlpha then alpha.[i] <- source.[4 * i + 3]
+        struct (new RgbImage(result.Width, result.Height, rgb), alpha)

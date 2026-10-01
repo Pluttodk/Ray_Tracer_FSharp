@@ -45,6 +45,8 @@
     <Compile Include="VolumeTests.fs" />
     <Compile Include="ShadowTerminatorTests.fs" />
     <Compile Include="ParticleTests.fs" />
+    <Compile Include="KnightTests.fs" />
+    <Compile Include="AlphaTangentTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

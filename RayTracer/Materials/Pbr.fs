@@ -52,6 +52,25 @@ module PbrShading =
             if candidate.Magnitude > 1e-4 then candidate.Normalise else (project fallbackAxis).Normalise
         struct (t, n % t)
 
+    /// World-space tangent and bitangent at a hit, for normal maps: the mesh's own tangent frame when the
+    /// hit carries one (Gram-Schmidt orthonormalised against the shading normal, keeping the bitangent's
+    /// handedness), otherwise `tangentFrame`. On the back of a double-sided surface, where `hit.Normal` is
+    /// the flipped shading normal, the whole frame flips with it, so the perturbed normal mirrors the
+    /// front side's.
+    let hitTangentFrame (hit: HitPoint) =
+        let n = hit.Normal.Normalise
+        if not hit.HasTangent then tangentFrame n
+        else
+            let front = hit.ShadingNormal
+            let flip = if n * front < 0. then -1. else 1.
+            let t = hit.Tangent - (hit.Tangent * front) * front
+            if not t.IsFinite || t.Magnitude < 1e-12 * (1. + hit.Tangent.Magnitude) then tangentFrame n
+            else
+                let t = t.Normalise
+                let b = front % t
+                let b = if b * hit.Bitangent < 0. then -b else b
+                struct (flip * t, flip * b)
+
     /// Shading normal of `sample` at `hit`, expressed in the local frame the integrators build from
     /// `hit.Normal` (`ShadingFrame.ofNormal`).
     let localNormal (sample: PbrSample) (hit: HitPoint) (frame: ShadingFrame) =
@@ -59,7 +78,7 @@ module PbrShading =
         if n.X = 0. && n.Y = 0. && n.Z = 1. then Vector(0., 0., 1.)
         elif not n.IsFinite || n.IsZero || n.Z <= 0. then Vector(0., 0., 1.)
         else
-            let struct (t, b) = tangentFrame hit.Normal
+            let struct (t, b) = hitTangentFrame hit
             let world = n.X * t + n.Y * b + n.Z * hit.Normal.Normalise
             let local = (frame.ToLocal world).Normalise
             if local.Z > 1e-3 then local else Vector(0., 0., 1.)

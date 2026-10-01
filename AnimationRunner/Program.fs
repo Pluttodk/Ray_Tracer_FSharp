@@ -14,6 +14,8 @@ type Options =
       Settings: FrameSettings
       Start: int
       End: int option
+      /// Renders only these frames (from one scene load), e.g. for review stills.
+      Only: int list option
       Frames: int option
       Seed: int
       FixedNoise: bool
@@ -23,6 +25,7 @@ type Options =
       Denoise: bool option
       Transfer: string option
       Bounces: int option
+      Clamp: float option
       Bloom: float option
       Vignette: float option
       Exposure: float option
@@ -38,8 +41,8 @@ type Options =
       AudioOnly: bool }
 
 let private defaults =
-    { Demo = None; Scene = None; Clip = None; Settings = FrameSettings.Default; Start = 0; End = None; Frames = None
-      Seed = 2026; FixedNoise = false; Spp = None; Integrator = None; Denoise = None; Transfer = None; Bounces = None
+    { Demo = None; Scene = None; Clip = None; Settings = FrameSettings.Default; Start = 0; End = None; Only = None; Frames = None
+      Seed = 2026; FixedNoise = false; Spp = None; Integrator = None; Denoise = None; Transfer = None; Bounces = None; Clamp = None
       Bloom = None; Vignette = None; Exposure = None; Saturation = None; WhiteBalance = None
       Output = None; Resume = true; Video = true; ExportGltf = None; LightScale = 1.; Telegram = false; Audio = true; AudioOnly = false }
 
@@ -48,6 +51,8 @@ let usage () =
   --fps N              frames per second (default 24)
   --frames N           render N frames from --start (default: the whole animation)
   --start S / --end E  frame range [S, E)
+  --only A,B,C         render just these frames, loading the scene once
+  --clamp F            cap indirect contributions at F (path integrator; 0 disables)
   --res WxH            resolution (default 640x360)
   --spp N              samples per pixel (default 16, or the animation's recommendation)
   --integrator K       classic | path (default classic, or the animation's recommendation)
@@ -92,6 +97,7 @@ let parse (argv: string[]) =
         | "--frames" :: v :: rest -> go { options with Frames = Some (integer "frames" v) } rest
         | "--start" :: v :: rest -> go { options with Start = integer "start" v } rest
         | "--end" :: v :: rest -> go { options with End = Some (integer "end" v) } rest
+        | "--only" :: v :: rest -> go { options with Only = Some [ for f in v.Split(',') -> integer "only" f ] } rest
         | "--res" :: v :: rest ->
             match v.ToLowerInvariant().Split('x') with
             | [| w; h |] -> go { options with Settings = { options.Settings with Width = integer "res" w; Height = integer "res" h } } rest
@@ -112,6 +118,7 @@ let parse (argv: string[]) =
         | "--no-denoise" :: rest -> go { options with Denoise = Some false } rest
         | "--transfer" :: v :: rest -> go { options with Transfer = Some v } rest
         | "--bounces" :: v :: rest -> go { options with Bounces = Some (integer "bounces" v) } rest
+        | "--clamp" :: v :: rest -> go { options with Clamp = Some (number "clamp" v) } rest
         | "--bloom" :: v :: rest -> go { options with Bloom = Some (number "bloom" v) } rest
         | "--vignette" :: v :: rest -> go { options with Vignette = Some (number "vignette" v) } rest
         | "--exposure" :: v :: rest -> go { options with Exposure = Some (number "exposure" v) } rest
@@ -151,6 +158,7 @@ type Effective =
       Denoise: bool
       Transfer: string
       Bounces: int option
+      Clamp: float
       Post: Post.PostSettings }
 
 let resolve (options: Options) (scene: AnimatedScene) =
@@ -166,6 +174,7 @@ let resolve (options: Options) (scene: AnimatedScene) =
           Denoise = pick options.Denoise (fun r -> r.Denoise) false
           Transfer = pick options.Transfer (fun r -> r.Transfer) "srgb"
           Bounces = options.Bounces |> Option.orElse (recommended |> Option.map (fun r -> r.MaxBounces))
+          Clamp = pick options.Clamp (fun r -> r.IndirectClamp) 0.
           Post =
             { baseline with
                 Bloom = defaultArg options.Bloom baseline.Bloom
@@ -192,6 +201,7 @@ let private manifest (options: Options) (effective: Effective) (settings: FrameS
         "denoise", string effective.Denoise
         "transfer", effective.Transfer
         "bounces", (match effective.Bounces with Some n -> string n | None -> "")
+        "clamp", string effective.Clamp
         "bloom", $"{effective.Post.Bloom}@{effective.Post.BloomThreshold}"
         "vignette", string effective.Post.Vignette
         "exposure", string effective.Post.Exposure
@@ -241,6 +251,7 @@ let render (options: Options) (scene: AnimatedScene) =
         else None
     let effective, settings = resolve options scene
     let scene = match effective.Bounces with Some n -> { scene with MaxBounces = n } | None -> scene
+    IndirectClamp.Limit <- effective.Clamp
     let mutable delivered = true
     let directory = Path.GetFullPath(defaultArg options.Output (Path.Combine("artifacts", "anim", scene.Name)))
     Directory.CreateDirectory directory |> ignore
@@ -253,7 +264,8 @@ let render (options: Options) (scene: AnimatedScene) =
         settings.SamplesPerPixel settings.Shutter directory
     let timer = Stopwatch.StartNew()
     let mutable rendered = 0
-    for frame in options.Start .. last - 1 do
+    let frames = match options.Only with Some list -> list | None -> [ options.Start .. last - 1 ]
+    for frame in frames do
         let path = Path.Combine(directory, $"frame_%05d{frame}.png")
         if options.Resume && File.Exists path && FileInfo(path).Length > 0L then
             printfn "  frame %5d  exists, skipped" frame

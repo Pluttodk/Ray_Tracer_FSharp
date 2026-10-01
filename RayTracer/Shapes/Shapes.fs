@@ -321,22 +321,29 @@ module Transform =
                         newHigh <- newHigh.Highest p
             BBox(newLow, newHigh)
 
-    let internal intersectLocal (shape: Shape) (owner: Shape) (ray: Ray) minimum maximum inverse (normalMatrix: QuickMatrix) =
+    let internal intersectLocal (shape: Shape) (owner: Shape) (ray: Ray) minimum maximum (forward: QuickMatrix) inverse (normalMatrix: QuickMatrix) =
         // Do not normalize this direction: affine transforms preserve the original ray parameter.
         let localRay = Ray(transformPoint(ray.GetOrigin, inverse), transformVector(ray.GetDirection, inverse), ray.ShutterTime)
         let hit = Geometry.hitWithin shape localRay minimum maximum
         if not hit.DidHit then HitPoint(ray)
         else
-            HitPoint(ray, hit.Time, transformVector(hit.GeometricNormal, normalMatrix),
-                     transformVector(hit.ShadingNormal, normalMatrix), hit.Material, owner,
-                     hit.U, hit.V, hit.BarycentricBeta, hit.BarycentricGamma, true)
+            let world =
+                HitPoint(ray, hit.Time, transformVector(hit.GeometricNormal, normalMatrix),
+                         transformVector(hit.ShadingNormal, normalMatrix), hit.Material, owner,
+                         hit.U, hit.V, hit.BarycentricBeta, hit.BarycentricGamma, true)
+            // Tangents lie in the surface, so they transform like directions (with the forward matrix).
+            let world =
+                if hit.HasTangent then world.WithTangent(transformVector(hit.Tangent, forward), transformVector(hit.Bitangent, forward))
+                else world
+            // The shadow-terminator point is a position on the instance, so it moves with it.
+            if hit.HasShadowPoint then world.WithShadowPoint(transformPoint(hit.ShadowPoint, forward)) else world
 
     let transform (shape: Shape) transformation =
         let matrix, inverse = getMatrix transformation, getInvMatrix transformation
         let normalMatrix = inverse.transpose
         let bounds = lazy (shape.Bounds |> Option.map (transformBoundsBy matrix))
         let intersect (owner: Shape) (ray: Ray) minimum maximum =
-            intersectLocal shape owner ray minimum maximum inverse normalMatrix
+            intersectLocal shape owner ray minimum maximum matrix inverse normalMatrix
         { new Shape() with
             member this.hitFunction ray = intersect this ray 0. infinity
             member _.Bounds = bounds.Value
@@ -377,8 +384,8 @@ module MotionTransform =
                             let pad = 1e-3 * (high - low).Magnitude + 1e-9
                             BBox(low - Vector(pad, pad, pad), high + Vector(pad, pad, pad))))
             let intersect (owner: Shape) (ray: Ray) minimum maximum =
-                let struct (_, inverse) = motion.At ray.ShutterTime
-                Transform.intersectLocal shape owner ray minimum maximum inverse inverse.transpose
+                let struct (matrix, inverse) = motion.At ray.ShutterTime
+                Transform.intersectLocal shape owner ray minimum maximum matrix inverse inverse.transpose
             let midpoint = 0.5 * (motion.Start + motion.End)
             { new Shape() with
                 member this.hitFunction ray = intersect this ray 0. infinity

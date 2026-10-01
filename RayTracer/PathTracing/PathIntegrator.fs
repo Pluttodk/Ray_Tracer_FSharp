@@ -16,6 +16,11 @@ open Tracer.Basics.PathTracing
 /// and depth 5. Here the cost is 2*depth: one continuation ray and one shadow
 /// ray per vertex. Quality comes from tracing more paths, not from branching,
 /// which is both cheaper per unit of noise and makes depth 10-20 affordable.
+/// Firefly control: caps each contribution gathered after the first bounce at this maximum channel value
+/// (0 disables). Biased (it darkens rare bright indirect paths), but it keeps a denoiser's input stable.
+type IndirectClamp() =
+    static member val Limit = 0. with get, set
+
 type PathIntegrator
     (scene: Scene, query: IRayQuery, allOpaque: bool, cancellation: CancellationToken,
      maxDepth: int, rouletteDepth: int) =
@@ -305,6 +310,12 @@ type PathIntegrator
         let mutable guideAlbedo = Colour.Black
         let mutable guideNormal = Vector.Zero
         let mutable guidesCaptured = false
+        let clampLimit = IndirectClamp.Limit
+        let clamped (c: Colour) =
+            if clampLimit <= 0. || depth = 0 then c
+            else
+                let m = max c.R (max c.G c.B)
+                if m > clampLimit then scaleColour c (clampLimit / m) else c
 
         while alive && depth <= maxDepth do
             cancellation.ThrowIfCancellationRequested()
@@ -333,7 +344,7 @@ type PathIntegrator
                     let struct (scattered, transmittance) =
                         fog.VolumeSegment(currentRay.GetOrigin, direction, distance, currentRay.ShutterTime, key, depth,
                                           volumeVisibility)
-                    if not scattered.IsBlack then radiance <- addColour radiance (mulColour throughput scattered)
+                    if not scattered.IsBlack then radiance <- addColour radiance (clamped (mulColour throughput scattered))
                     throughput <- mulColour throughput transmittance
             | _ -> ()
 
@@ -351,7 +362,7 @@ type PathIntegrator
                             let mutable colour = Colour.Black
                             for light in environments do colour <- addColour colour (light.Visible direction)
                             colour
-                    radiance <- addColour radiance (mulColour escaped sky)
+                    radiance <- addColour radiance (clamped (mulColour escaped sky))
                 else
                     // Each environment light was sampled by NEE with its own density about the
                     // shading normal of the vertex the ray left (cos/pi, or the luminance-table
@@ -360,7 +371,7 @@ type PathIntegrator
                         let sky = light.Radiance direction
                         if not sky.IsBlack then
                             let weight = powerHeuristic previousBsdfPdf (light.Pdf(previousNormal, direction))
-                            radiance <- addColour radiance (scaleColour (mulColour escaped sky) weight)
+                            radiance <- addColour radiance (clamped (scaleColour (mulColour escaped sky) weight))
                 alive <- false
             else
                 let segment = hit.Time * currentRay.GetDirection.Magnitude
@@ -382,7 +393,7 @@ type PathIntegrator
                                 let lightPdf = selected * areaLightPdf light previousPoint hit
                                 powerHeuristic previousBsdfPdf lightPdf
                             | _ -> 1.
-                    radiance <- addColour radiance (scaleColour (mulColour throughput emission) weight)
+                    radiance <- addColour radiance (clamped (scaleColour (mulColour throughput emission) weight))
 
                 if MaterialAdapter.isPurelyEmissive hit.Material then alive <- false
                 else
@@ -404,7 +415,7 @@ type PathIntegrator
 
                         radiance <-
                             addColour radiance
-                                (mulColour throughput (directLighting hit surface frame wo vertexKey mediumFilter))
+                                (clamped (mulColour throughput (directLighting hit surface frame wo vertexKey mediumFilter)))
 
                         let uLobe, _ = sample2D vertexKey 0
                         let u1, u2 = sample2D vertexKey 1
