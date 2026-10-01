@@ -12,6 +12,7 @@ let private suites: (string * (unit -> unit)) list =
       "sampling", SamplingTest.allTest
       "bsdf", BsdfTests.allTest
       "path-transport", PathTransportTests.allTest
+      "sky", SkyTests.allTest
       "expr-parse", ExprParseTests.allTest
       "expr-to-poly", ExprToPolyTests.allTest
       "expr-to-poly-2", ExprToPolyTests2.allTest
