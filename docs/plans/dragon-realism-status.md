@@ -14,3 +14,4 @@ Branch names are `dragon-realism-<ws>`, not `dragon-realism/<ws>`. Git refuses a
 14:37 d2 done 4fa101f,ed58243 reviewed; merged, tests green. Open: Transform.intersectLocal drops ShadowPoint (falls back safely; not used by film meshes)
 14:40 b done 89c543f,f131177 reviewed; merged, 1514 tests green; applied B's tracking-camera flip
 14:56 e done fdbe28d..fdc1c6b reviewed; merged, 1577 tests green. Edited PathIntegrator NEE for translucency (reviewed OK). Open: no real tangents for normal maps, no mipmaps
+15:25 s done dad5ccd reviewed; merged; summit YFov 0.8->0.6 by orchestrator; tests green
