@@ -5,6 +5,18 @@ open Tracer.Basics
 open Tracer.Basics.Sampling
 open Tracer.Basics.Textures
 open Tracer.Animation.Stage
+open Tracer.Basics.Post
+
+// --- a: render defaults ---
+/// Render settings an animation recommends; command-line flags override each of them.
+type RenderDefaults =
+    { Integrator: IntegratorKind
+      Denoise: bool
+      Transfer: string
+      SamplesPerPixel: int
+      MaxBounces: int
+      Post: PostSettings }
+// --- end a ---
 
 /// "Dragon flight": a 30-second short in five shots. A dragon (Quaternius, CC0) crosses a sunset mountain
 /// range, sweeps around the summit, hovers to roar, and flies off into the sun.
@@ -26,7 +38,8 @@ module Film =
             invalidOp $"{IO.Path.Combine(assetDirectory, name)} is missing; run scripts/fetch-dragon-assets.sh first.")
 
     let terrainSettings : Terrain.Settings =
-        { Size = 1800.; Resolution = 420; Relief = 60.; FeatureSize = 240.
+        { Size = 1800.; Resolution = 840; // --- d: finer mesh, 2.1 units per cell ---
+          Relief = 60.; FeatureSize = 240.
           Peaks =
             [ { X = 0.; Z = 0.; Height = 170.; Radius = 160. }
               { X = -300.; Z = -230.; Height = 150.; Radius = 170. }
@@ -49,7 +62,7 @@ module Film =
             let sink = Easing.smoothstep (max 0. (min 1. ((inner + 40. - edge) / 80.)))
             let wall = 380. * Easing.smoothstep (max 0. (min 1. ((r - 1400.) / 2600.)))
             Terrain.height settings x z * 1.6 + wall - 160. * sink
-        Terrain.buildWith settings heightAt (Terrain.hazeTexture settings (Colour(0.42, 0.42, 0.58)))
+        Terrain.buildWith settings heightAt (Terrain.farTexture settings)
 
     // --- b: sky and sun ---
     /// Golden hour: the sun 6 degrees up, at azimuth -130 degrees (atan2(x, z); the north-west,
@@ -71,6 +84,17 @@ module Film =
 
     let private sunLight () = Sky.sunLight skyModel :> Light
     // --- end b ---
+
+    // --- c: atmosphere ---
+    /// Height fog for aerial perspective: dense in the valleys, thinning with altitude, glowing around the sun.
+    /// Near ranges stay crisp; each ridge further out is lighter and closer to the horizon colour behind it.
+    let private atmosphere () =
+        Some { Atmosphere.Default with
+                 Density = 3.5e-4; BaseHeight = 0.; ScaleHeight = 200.; HorizonLift = 0.08
+                 Tint = Colour(0.85, 1., 1.25)
+                 Anisotropy = 0.7; SkyWeight = 0.9; SunWeight = 1.
+                 MaxDistance = 7000. }
+    // --- c: end ---
 
     // ------------------------------------------------------------------ timing
 
@@ -230,7 +254,8 @@ module Film =
           StaticLights = [ sun; sky () ]
           Ambient = AmbientLight(Colour.White, 0.)
           MaxBounces = 2
-          Duration = duration }
+          Duration = duration
+          Atmosphere = atmosphere () }
 
 /// The film's soundtrack, derived from the animation itself: wing beats where the wings actually beat,
 /// whooshes where the dragon actually passes the camera, all panned and attenuated from the active camera.
@@ -385,6 +410,16 @@ module Catalog =
               Demos.Demo.Build = Film.build } ]
 
     let tryFind name = all |> List.tryFind (fun demo -> demo.Name = name)
+
+    // --- a: render defaults ---
+    /// Recommended render settings by animation name (none: the runner's own defaults).
+    let renderDefaults (name: string) : RenderDefaults option =
+        match name with
+        | "dragon-flight" ->
+            Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 3
+                   Post = { Bloom = 0.12; BloomThreshold = 1.; Vignette = 0.2; Exposure = 1.; WhiteBalance = 0.1; Saturation = 1.05 } }
+        | _ -> None
+    // --- end a ---
 
     /// Soundtracks by animation name: given the scene and a loader for audio assets (decoded to 48 kHz stereo).
     let soundtrack (name: string) : (AnimatedScene -> (string -> Audio.Buffer) -> Audio.Buffer) option =

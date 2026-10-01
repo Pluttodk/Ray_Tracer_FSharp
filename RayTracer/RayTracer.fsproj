@@ -52,10 +52,12 @@
     <Compile Include="ImplicitSurfaces/PolyToUnipoly.fs" />
     <Compile Include="ImplicitSurfaces/ImplicitSurfaces.fsi" />
     <Compile Include="ImplicitSurfaces/ImplicitSurfaces.fs" />
+    <Compile Include="Atmosphere.fs" />
     <Compile Include="Scene.fs" />
     <Compile Include="ClassicIntegrator.fs" />
     <Compile Include="PathTracing/Denoiser.fs" />
     <Compile Include="PathTracing/PathIntegrator.fs" />
+    <Compile Include="Post\Post.fs" />
     <Compile Include="Render.fs" />
     <Compile Include="API/API.fsi" />
     <Compile Include="API/API.fs" />
