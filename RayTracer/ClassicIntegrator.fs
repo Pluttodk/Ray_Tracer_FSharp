@@ -34,6 +34,8 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
     let lights = List.toArray scene.Lights
     let environments =
         lights |> Array.choose (function :? EnvironmentLight as light -> Some light | _ -> None)
+    /// Height fog over each camera and secondary ray segment outside transparent media (shadow rays skip it).
+    let fog = scene.Fog
     let air = { Stack = []; ExteriorIor = 1.; ExteriorFilter = Colour.White }
     let originMedia = ConcurrentDictionary<struct (float * float * float), Lazy<MediumState>>()
 
@@ -119,7 +121,7 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
                 else initialMedium origin
 
     let shadowSegment (hit: HitPoint) (sample: LightSample) =
-        let origin = hit.OffsetPoint sample.Direction
+        let origin = hit.ShadowOrigin sample.Direction
         if Double.IsPositiveInfinity sample.Distance then Ray(origin, sample.Direction, hit.Ray.ShutterTime), infinity
         else
             let target = hit.Point + sample.Distance * sample.Direction
@@ -195,7 +197,11 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
         let hit = query.Closest(ray, 0., infinity)
         if not hit.DidHit then
             let _, filter = mediumProperties medium
-            background ray.GetDirection * attenuation filter infinity
+            let escaped = background ray.GetDirection * attenuation filter infinity
+            match fog with
+            | Some fog when List.isEmpty medium.Stack ->
+                fog.ApplyEscaped(ray.GetOrigin, ray.GetDirection.Normalise, escaped)
+            | _ -> escaped
         else
             let medium = incomingMedium medium hit
             let _, filter = mediumProperties medium
@@ -228,7 +234,11 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
                         let nextMedium = if child.Transmitted then transmittedMedium else medium
                         let childKey = mixKey (key ^^^ (uint64 index + 0xc0000UL))
                         local <- local + child.Weight * trace child.Ray (depth - 1) nextMedium childKey
-            local * segmentAttenuation
+            let shaded = local * segmentAttenuation
+            match fog with
+            | Some fog when List.isEmpty medium.Stack ->
+                fog.Apply(ray.GetOrigin, ray.GetDirection.Normalise, hit.Time * ray.GetDirection.Magnitude, shaded)
+            | _ -> shaded
 
     member _.Trace(ray: Ray, key: uint64) =
         trace ray scene.MaxBounces (mediumAtOrigin ray.GetOrigin) key

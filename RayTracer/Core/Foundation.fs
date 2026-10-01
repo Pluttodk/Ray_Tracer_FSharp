@@ -51,6 +51,8 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
     let frontFace = ray.GetDirection * geometric < 0.
     let normal = if ray.GetDirection * shading > 0. then -shading else shading
     let point = if didHit then ray.PointAtTime time else ray.GetOrigin
+    let mutable shadowPoint = point
+    let mutable hasShadowPoint = false
 
     // Ray that hit
     member this.Ray: Ray = ray
@@ -62,7 +64,9 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
     member this.Point: Point = point
 
     // Offset along the geometric normal on the outgoing ray's side, then round away from the surface.
-    member this.OffsetPoint(outgoing: Vector): Point =
+    member this.OffsetPoint(outgoing: Vector): Point = this.OffsetFrom(point, outgoing)
+
+    member private this.OffsetFrom(point: Point, outgoing: Vector): Point =
         let n = if outgoing * geometric >= 0. then geometric else -geometric
         let origin = ray.GetOrigin
         let axisError p o = max (abs p) (abs o)
@@ -76,6 +80,19 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
             elif axisNormal < 0. then Math.BitDecrement shifted
             else value
         Point(move point.X n.X, move point.Y n.Y, move point.Z n.Z)
+
+    /// Hanika shadow-terminator corrected point (defaults to Point). Set by smooth meshes.
+    member this.ShadowPoint: Point = shadowPoint
+    member this.WithShadowPoint(corrected: Point) =
+        shadowPoint <- corrected
+        hasShadowPoint <- true
+        this
+
+    /// Shadow-ray origin: the terminator-corrected point when the light is on the
+    /// shading-normal side, otherwise the plain hit point, nudged off the surface.
+    member this.ShadowOrigin(outgoing: Vector): Point =
+        if hasShadowPoint && outgoing * shading > 0. then this.OffsetFrom(shadowPoint, outgoing)
+        else this.OffsetPoint outgoing
 
     member this.SpawnRay(outgoing: Vector) =
         if not outgoing.IsFinite || outgoing.IsZero then
@@ -117,8 +134,9 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
     member this.Shape = shape
 
     member this.WithShape(newShape: Shape) =
-        HitPoint(ray, time, geometric, shading, material, newShape, u, v,
-                 barycentricBeta, barycentricGamma, didHit)
+        let copy = HitPoint(ray, time, geometric, shading, material, newShape, u, v,
+                            barycentricBeta, barycentricGamma, didHit)
+        if hasShadowPoint then copy.WithShadowPoint shadowPoint else copy
 
     // Constructors for rays that hit
     new(ray: Ray, time:float, normal:Vector, material:Material, shape:Shape, u:float, v:float, didHit:bool) =
