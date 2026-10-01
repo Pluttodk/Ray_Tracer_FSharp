@@ -36,7 +36,8 @@ let private suites: (string * (unit -> unit)) list =
       "terrain", TerrainTests.allTest
       "atmosphere", AtmosphereTests.allTest
       "shadow-terminator", ShadowTerminatorTests.allTest
-      "particles", ParticleTests.allTest ]
+      "particles", ParticleTests.allTest
+      "alpha-tangents", AlphaTangentTests.allTest ]
 
 let private usage () =
     printfn "Usage: dotnet run --project UnitTests -- [--suite NAME | --suites NAME,NAME]..."
