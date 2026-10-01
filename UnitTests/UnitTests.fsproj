@@ -31,6 +31,7 @@
     <Compile Include="MeshRegressionTests.fs" />
     <Compile Include="NumericalRegressionTests.fs" />
     <Compile Include="MotionTests.fs" />
+    <Compile Include="DeformingMeshTests.fs" />
     <Compile Include="AnimationTests.fs" />
     <Compile Include="PhysicsTests.fs" />
     <Compile Include="GltfTests.fs" />

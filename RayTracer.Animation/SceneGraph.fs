@@ -38,7 +38,7 @@ type SkinnedMesh =
 module Skinning =
     /// Poses the mesh with the given world matrices and returns it in the frame whose world matrix is `frame`
     /// (so it can be instanced, and motion-blurred, like rigid geometry of that node).
-    let pose (mesh: SkinnedMesh) (world: IDictionary<string, QuickMatrix>) (frame: QuickMatrix) : Shape =
+    let poseArrays (mesh: SkinnedMesh) (world: IDictionary<string, QuickMatrix>) (frame: QuickMatrix) : Point[] * Vector[] =
         let joints = Array.init mesh.JointNodes.Length (fun i -> QuickMatrix.multi (world.[mesh.JointNodes.[i]], mesh.InverseBind.[i]))
         let toFrame = getInvMatrix (ofAffine frame)
         let n = mesh.Positions.Length
@@ -71,6 +71,10 @@ module Skinning =
                     else Vector(m.[0] * q.X + m.[1] * q.Y + m.[2] * q.Z, m.[4] * q.X + m.[5] * q.Y + m.[6] * q.Z, m.[8] * q.X + m.[9] * q.Y + m.[10] * q.Z)
                 // Normals go into the frame by the inverse transpose of its inverse, i.e. the frame's transpose.
                 normals.[v] <- transformVector (worldNormal, (getMatrix (ofAffine frame)).transpose)
+        positions, normals
+
+    let pose (mesh: SkinnedMesh) (world: IDictionary<string, QuickMatrix>) (frame: QuickMatrix) : Shape =
+        let positions, normals = poseArrays mesh world frame
         let hasNormals = mesh.Normals.Length > 0
         (TriangleMesh.fromArrays positions (if hasNormals then normals else [||]) mesh.Uvs mesh.Triangles hasNormals).toShape mesh.Texture
 
@@ -78,7 +82,7 @@ module Skinning =
 type Content =
     /// Built once and re-instanced every frame, so meshes keep their internal acceleration structure.
     | Geometry of Shape
-    /// A skeleton-deformed mesh, re-posed every frame (at mid-shutter).
+    /// A skeleton-deformed mesh, re-posed every frame (at each motion step across the shutter).
     | Skinned of SkinnedMesh
     | LightSource of Light
     | CameraRig of CameraSpec
@@ -220,10 +224,25 @@ module Frame =
                     else
                         shapes.Add(MotionTransform.transform shape (AnimatedTransform(Array.zip times matrices)))
                 | Skinned mesh ->
-                    // Pose the skin at mid-shutter in the node's own frame, then instance it like rigid geometry,
-                    // so the node's (flight) motion still blurs; the deformation itself is not blurred.
-                    let shape = Skinning.pose mesh middle middle.[node.Name]
                     let matrices = worlds |> Array.map (fun world -> world.[node.Name])
+                    // Pose the skin at every motion step in the node's own frame at that step. If it deforms during
+                    // the shutter, the poses become a deforming mesh (vertices interpolated at each ray's time);
+                    // otherwise one mid-shutter pose is instanced like rigid geometry. Either way the node's
+                    // (flight) motion blurs on top.
+                    let posed =
+                        if times.Length < 2 || motionSteps < 2 then None
+                        else
+                            let arrays = Array.init times.Length (fun i -> Skinning.poseArrays mesh worlds.[i] matrices.[i])
+                            let same (a: Point) (b: Point) = a.X = b.X && a.Y = b.Y && a.Z = b.Z
+                            let first = fst arrays.[0]
+                            if arrays |> Array.forall (fun (p, _) -> Array.forall2 same first p) then None else Some arrays
+                    let shape =
+                        match posed with
+                        | None -> Skinning.pose mesh middle middle.[node.Name]
+                        | Some arrays ->
+                            let hasNormals = mesh.Normals.Length > 0
+                            DeformingMesh.DeformingMeshShape.Create(times, arrays |> Array.map fst, arrays |> Array.map snd,
+                                                                    mesh.Uvs, mesh.Triangles, hasNormals, mesh.Texture)
                     if matrices |> Array.forall (closeTo matrices.[0]) then
                         shapes.Add(Transform.transform shape (ofAffine matrices.[0]))
                     else
