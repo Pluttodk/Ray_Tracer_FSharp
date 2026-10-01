@@ -169,9 +169,108 @@ module Film =
           Clip.rotate "dragon" (Sampler.linear orientation)
           Clip.rotate "dragon-pitch" (Sampler.linear pitch) ]
 
+    // --- e: dragon materials ---
+    /// Material overrides that make the stylized model read as a creature: darker, desaturated scales with a
+    /// procedural cellular bump, translucent wing membranes for back light, bone-coloured horns and a wet eye.
+    /// Keyed by the glTF material names in dragon_evolved.glb.
+    module DragonMaterials =
+        /// Scales per unit of generated texture coordinate (one unit spans the model's largest side).
+        let scaleDensity = 64.
+        /// Steepness of the scale bump.
+        let bumpStrength = 0.55
+
+        let private hash (i: int) (j: int) =
+            let mutable h = uint32 i * 0x8DA6B343u ^^^ uint32 j * 0xD8163841u
+            h <- (h ^^^ (h >>> 15)) * 0x2C1B3C6Du
+            h <- (h ^^^ (h >>> 12)) * 0x297A2D39u
+            h ^^^ (h >>> 15)
+
+        let private unit (h: uint32) = float (h >>> 8) / float (1u <<< 24)
+
+        /// Cellular noise at (x, y) in cell units: distance to the nearest feature point, distance to the
+        /// second nearest, and a random value per nearest cell.
+        let voronoi (x: float) (y: float) =
+            let ix, iy = int (floor x), int (floor y)
+            let mutable f1 = infinity
+            let mutable f2 = infinity
+            let mutable cell = 0.
+            for dj in -1 .. 1 do
+                for di in -1 .. 1 do
+                    let h = hash (ix + di) (iy + dj)
+                    let px = float (ix + di) + 0.15 + 0.7 * unit h
+                    let py = float (iy + dj) + 0.15 + 0.7 * unit (h * 0x9E3779B1u + 0x7F4A7C15u)
+                    let d = sqrt ((x - px) * (x - px) + (y - py) * (y - py))
+                    if d < f1 then
+                        f2 <- f1
+                        f1 <- d
+                        cell <- unit (h ^^^ 0xA511E9B3u)
+                    elif d < f2 then f2 <- d
+            struct (f1, f2, cell)
+
+        /// Scale height in [0,1]: a rounded dome per cell with grooves along the cell borders.
+        let height (x: float) (y: float) =
+            let struct (f1, f2, _) = voronoi x y
+            let groove = Easing.smoothstep (min 1. ((f2 - f1) / 0.18))
+            let dome = max 0. (1. - f1 * f1 * 1.6)
+            groove * (0.55 + 0.45 * dome)
+
+        /// Tangent-space normal of the scale relief, by central differences.
+        let scaleNormal (u: float) (v: float) =
+            let x, y = u * scaleDensity, v * scaleDensity
+            let d = 0.04
+            let dx = (height (x + d) y - height (x - d) y) / (2. * d)
+            let dy = (height x (y + d) - height x (y - d)) / (2. * d)
+            Vector(-bumpStrength * dx, -bumpStrength * dy, 1.).Normalise
+
+        /// Albedo modulation: darker grooves and a little per-scale variation, so the pattern also reaches the
+        /// denoiser's albedo guide.
+        let scaleTint (u: float) (v: float) =
+            let x, y = u * scaleDensity, v * scaleDensity
+            let struct (f1, f2, cell) = voronoi x y
+            let groove = Easing.smoothstep (min 1. ((f2 - f1) / 0.18))
+            let k = (0.88 + 0.24 * cell) * (0.68 + 0.32 * groove)
+            Colour(k, k, k)
+
+        let private desaturate (amount: float) (darken: float) (c: Colour) =
+            let l = 0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B
+            let mix x = (x + (l - x) * amount) * darken
+            Colour(mix c.R, mix c.G, mix c.B)
+
+        /// The wing membranes are thin slabs, skin on top and membrane below, so the skin must transmit too
+        /// for back light to come through. Elsewhere the transmitted light enters the closed body and mostly
+        /// dies there, a cheap stand-in for subsurface scattering; the albedo is raised to compensate.
+        let skinTranslucency = 0.2
+
+        let apply (name: string) (p: PbrParams) =
+            match name with
+            | "Dragon_Main" ->
+                { p with
+                    BaseColour = desaturate 0.55 (0.72 / (1. - skinTranslucency)) p.BaseColour
+                    DiffuseTransmission = skinTranslucency; DiffuseTransmissionColour = Colour(0.6, 0.22, 0.1)
+                    BaseColourMap = Some scaleTint
+                    Metallic = 0.; Roughness = 0.55
+                    NormalMap = Some scaleNormal; NormalScale = 1.
+                    Sheen = 0.35; SheenColour = Colour(0.75, 0.68, 0.6) }
+            | "Dragon_Secondary" ->
+                // Wing membranes: thin skin that glows warm when the sun is behind it.
+                { p with
+                    BaseColour = desaturate 0.3 1.1 p.BaseColour
+                    Metallic = 0.; Roughness = 0.6
+                    DiffuseTransmission = 0.5; DiffuseTransmissionColour = Colour(0.95, 0.42, 0.18)
+                    Sheen = 0.2; SheenColour = Colour(0.7, 0.6, 0.6) }
+            | "Dragon_Horn" ->
+                { p with BaseColour = Colour(0.36, 0.32, 0.26); Metallic = 0.; Roughness = 0.42 }
+            | "Eye_White" ->
+                // An amber iris under a wet, nearly mirror-smooth cornea.
+                { p with BaseColour = Colour(0.5, 0.27, 0.04); Metallic = 0.; Roughness = 0.04; Ior = 1.45 }
+            | "Eye_Black" ->
+                { p with BaseColour = Colour(0.01, 0.01, 0.012); Metallic = 0.; Roughness = 0.03; Ior = 1.45 }
+            | _ -> { p with Metallic = 0. }
+    // --- e: end ---
+
     /// The imported dragon under a flight rig, and its performance (wing beats, hover, roar).
     let private dragon () =
-        let imported = (Gltf.load (asset "dragon_evolved.glb") { Gltf.ImportOptions.Default with Clip = None }).Scene
+        let imported = (Gltf.load (asset "dragon_evolved.glb") { Gltf.ImportOptions.Default with Clip = None; MaterialOverride = DragonMaterials.apply (* e *) }).Scene
         let model = imported.Roots |> List.filter (fun node -> node.Name <> imported.ActiveCamera)
         let clip name = imported.Clips |> List.find (fun c -> c.Name = "CharacterArmature|" + name)
         let rest =
