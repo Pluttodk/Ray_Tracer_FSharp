@@ -8,16 +8,25 @@ type WrapMode =
     | ClampToEdge
     | MirroredRepeat
 
-/// A linear-light float image for filtered lookups. Row 0 is the top of the image, which is where
-/// glTF texture coordinate t = 0 points.
+/// A linear-light image for filtered lookups. Row 0 is the top of the image, which is where glTF
+/// texture coordinate t = 0 points.
+///
+/// Texels are stored either as floats (`Data`) or, for 8-bit sources, as the original bytes (`Bytes`)
+/// decoded through a per-channel table (`Lut`) on lookup. A 4K RGB texture is 50 MB as bytes against
+/// 200 MB as floats, and Sponza's 70-odd textures were most of the renderer's memory. Both forms read
+/// back the same float32 values.
 [<NoEquality; NoComparison>]
 type FilterImage =
     { Width: int
       Height: int
       /// Values per texel, 1 to 4.
       Channels: int
-      /// Row-major, `Channels` values per texel.
-      Data: float32[] }
+      /// Row-major, `Channels` values per texel. Empty when the image is byte-encoded.
+      Data: float32[]
+      /// Row-major, `Channels` bytes per texel. Empty unless the image is byte-encoded.
+      Bytes: byte[]
+      /// 256 decoded values per channel: channel c's byte b reads as Lut.[256 * c + b].
+      Lut: float32[] }
 
 /// Bilinear and nearest texture lookups.
 ///
@@ -28,7 +37,16 @@ module TextureFilter =
         if width <= 0 || height <= 0 then invalidArg (nameof width) "A filter image needs a positive size."
         if channels < 1 || channels > 4 then invalidArg (nameof channels) "A filter image has 1 to 4 channels."
         if data.Length <> width * height * channels then invalidArg (nameof data) "Image data does not match its size."
-        { Width = width; Height = height; Channels = channels; Data = data }
+        { Width = width; Height = height; Channels = channels; Data = data; Bytes = [||]; Lut = [||] }
+
+    /// An 8-bit image kept as bytes. `lut` holds 256 values per channel (channel c's byte b decodes to
+    /// lut.[256 * c + b]), so lookups return exactly what `create` with the decoded floats would.
+    let createEncoded (width: int) (height: int) (channels: int) (bytes: byte[]) (lut: float32[]) =
+        if width <= 0 || height <= 0 then invalidArg (nameof width) "A filter image needs a positive size."
+        if channels < 1 || channels > 4 then invalidArg (nameof channels) "A filter image has 1 to 4 channels."
+        if bytes.Length <> width * height * channels then invalidArg (nameof bytes) "Image data does not match its size."
+        if lut.Length <> 256 * channels then invalidArg (nameof lut) "Give 256 decoded values per channel."
+        { Width = width; Height = height; Channels = channels; Data = [||]; Bytes = bytes; Lut = lut }
 
     /// Map an integer texel index into [0, n).
     let wrapIndex (mode: WrapMode) (i: int) (n: int) =
@@ -41,7 +59,9 @@ module TextureFilter =
             if r < n then r else period - 1 - r
 
     let inline private channel (image: FilterImage) x y c =
-        float image.Data.[(y * image.Width + x) * image.Channels + c]
+        let index = (y * image.Width + x) * image.Channels + c
+        if image.Bytes.Length > 0 then float image.Lut.[(c <<< 8) + int image.Bytes.[index]]
+        else float image.Data.[index]
 
     /// The texel as RGBA; missing channels read as the first channel (grey) and alpha as 1.
     let texel (image: FilterImage) (x: int) (y: int) =
