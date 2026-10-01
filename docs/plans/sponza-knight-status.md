@@ -11,3 +11,4 @@
 00:08 k done a9a750c..0c8956f; merged; 1652 tests. Knight = 12.46 s vertex cache: idle guard 0-4.5, crouch 4.5-5.5, sword overhead 5.5-8, swing 8-8.5, spin+advance -X 8.5-12
 00:15 r1 done b1b7f50..692402a; merged (test reg conflicts); 1697 tests; orch: shadow point through transforms
 01:05 p done (7b88cf8..fccdc38 + r1patch 323d63b): 7x less CPU/frame, bit-identical; merged; 1698 tests. Use DOTNET_GCgen0size=0x10000000 for the final render
+01:13 g done (cycles_reference.py, compare.sh): ours/Cycles brightness 1.00-1.11 at t=0,5,9; main gap = speckle noise; merged
