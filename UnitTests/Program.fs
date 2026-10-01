@@ -27,6 +27,7 @@ let private suites: (string * (unit -> unit)) list =
       "animation", AnimationTests.allTest
       "physics", PhysicsTests.allTest
       "gltf", GltfTests.allTest
+      "pbr", PbrTests.allTest
       "film", FilmTests.allTest ]
 
 let private usage () =

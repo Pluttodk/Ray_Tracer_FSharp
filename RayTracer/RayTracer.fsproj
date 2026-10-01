@@ -17,9 +17,11 @@
     <Compile Include="Core/Ray.fs" />
     <Compile Include="Core/BBox.fs" />
     <Compile Include="Core/Foundation.fs" />
+    <Compile Include="Materials/TextureFilter.fs" />
     <Compile Include="PathTracing/Bsdf.fs" />
     <Compile Include="PathTracing/Surface.fs" />
     <Compile Include="Materials/Materials.fs" />
+    <Compile Include="Materials/Pbr.fs" />
     <Compile Include="PathTracing/MaterialAdapter.fs" />
     <Compile Include="Materials/Textures.fsi" />
     <Compile Include="Materials/Textures.fs" />

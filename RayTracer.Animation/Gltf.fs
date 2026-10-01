@@ -24,8 +24,11 @@ module Gltf =
           PointLightScale: float
           /// Multiplier from glTF directional intensity (lux) to this renderer's directional lights.
           DirectionalLightScale: float
-          SmoothShading: bool }
-        static member Default = { Clip = None; PointLightScale = 0.02; DirectionalLightScale = 0.3; SmoothShading = true }
+          SmoothShading: bool
+          /// Edits each material's description, given the glTF material name, before it is built.
+          MaterialOverride: string -> PbrParams -> PbrParams }
+        static member Default =
+            { Clip = None; PointLightScale = 0.02; DirectionalLightScale = 0.3; SmoothShading = true; MaterialOverride = fun _ p -> p }
 
     type ImportResult = { Scene: AnimatedScene; Warnings: string list }
 
@@ -34,10 +37,28 @@ module Gltf =
     let private colour (v: V3) = Colour(float v.X, float v.Y, float v.Z)
     let private clamp01 (v: float) = if Double.IsFinite v then max 0. (min 1. v) else 0.
 
-    /// Phong exponent whose GGX roughness (see MaterialAdapter) matches a glTF roughness.
-    let exponentOfRoughness (roughness: float) =
-        let r = max 0.02 (clamp01 roughness)
-        int (Math.Clamp(2. / (r * r * r * r) - 2., 1., 10000.))
+    /// True when a primitive has no usable texture coordinates: none at all, or every vertex at one point
+    /// (common in palette-coloured low-poly models).
+    let private degenerateUvs (uvs: (float * float)[]) = uvs.Length = 0 || uvs |> Array.forall (fun uv -> uv = uvs.[0])
+
+    /// Texture coordinates for a primitive without usable ones, so procedural material maps have something
+    /// to vary over. Each triangle is projected along the axis its rest-pose normal is closest to, in units
+    /// of `extent`, so every triangle needs vertices of its own: returns, per new vertex, its source vertex
+    /// and its coordinates. The new triangles are simply 0, 1, 2, ...
+    let private projectedUvs (positions: Point[]) (triangles: int[]) (extent: float) =
+        let scale = if extent > 0. && Double.IsFinite extent then 1. / extent else 1.
+        let uvs = Array.zeroCreate triangles.Length
+        for t in 0 .. triangles.Length / 3 - 1 do
+            let a, b, c = positions.[triangles.[3 * t]], positions.[triangles.[3 * t + 1]], positions.[triangles.[3 * t + 2]]
+            let normal = (b - a) % (c - a)
+            let nx, ny, nz = abs normal.X, abs normal.Y, abs normal.Z
+            for k in 0 .. 2 do
+                let p = positions.[triangles.[3 * t + k]]
+                uvs.[3 * t + k] <-
+                    if nx >= ny && nx >= nz then p.Z * scale, p.Y * scale
+                    elif ny >= nz then p.X * scale, p.Z * scale
+                    else p.X * scale, p.Y * scale
+        Array.copy triangles, uvs
 
     // ---------------------------------------------------------------- import
 
@@ -47,7 +68,7 @@ module Gltf =
         let warn (message: string) = if warned.Add message then warnings.Add message
         let names = Dictionary<int, string>()
         let used = HashSet<string>()
-        let textures = Dictionary<int, Texture>()
+        let textures = Dictionary<int, Texture * bool>()
         let meshes = Dictionary<int, Shape list>()
 
         let nameOf (node: SharpGLTF.Schema2.Node) =
@@ -63,76 +84,162 @@ module Gltf =
                 names.[node.LogicalIndex] <- name
                 name
 
-        let imageTexture (channel: SharpGLTF.Schema2.MaterialChannel) =
+        /// Decoded images, keyed by (image index, sRGB).
+        let images = Dictionary<struct (int * bool), FilterImage>()
+
+        let decode (image: SharpGLTF.Schema2.Image) (srgb: bool) =
+            let key = struct (image.LogicalIndex, srgb)
+            match images.TryGetValue key with
+            | true, decoded -> decoded
+            | _ ->
+                use stream = image.Content.Open()
+                use rgb = RgbImage.Load stream
+                let lut = Array.init 256 (fun b -> let v = float b / 255. in float32 (if srgb then TextureFilter.srgbToLinear v else v))
+                let decoded = TextureFilter.create rgb.Width rgb.Height 3 (rgb.Pixels |> Array.map (fun b -> lut.[int b]))
+                images.[key] <- decoded
+                decoded
+
+        let wrapMode (mode: SharpGLTF.Schema2.TextureWrapMode) =
+            match mode with
+            | SharpGLTF.Schema2.TextureWrapMode.CLAMP_TO_EDGE -> ClampToEdge
+            | SharpGLTF.Schema2.TextureWrapMode.MIRRORED_REPEAT -> MirroredRepeat
+            | _ -> Repeat
+
+        /// A filtered lookup for a material channel's texture, over mesh texture coordinates (u, v up).
+        /// Applies KHR_texture_transform and the sampler's wrap modes, filtering bilinearly unless the
+        /// sampler asks for nearest magnification.
+        let channelSampler (channel: SharpGLTF.Schema2.MaterialChannel) (srgb: bool) =
             match channel.Texture with
             | null -> None
             | texture when isNull texture.PrimaryImage -> None
             | texture ->
-                if channel.TextureCoordinate <> 0 then warn "Only TEXCOORD_0 is supported; other texture coordinate sets are ignored."
-                if not (isNull channel.TextureTransform) then warn "KHR_texture_transform is ignored."
-                use stream = texture.PrimaryImage.Content.Open()
-                use image = RgbImage.Load stream
-                let w, h = image.Width, image.Height
-                let pixels = Array.copy image.Pixels
-                // glTF UV (0,0) is the top-left of the image; meshes store v flipped (v up), so undo that here.
-                Some (fun (u: float) (v: float) ->
-                    let wrap (x: float) = x - floor x
-                    let x = min (w - 1) (int (wrap u * float w))
-                    let y = min (h - 1) (int (wrap (1. - v) * float h))
-                    let i = (y * w + x) * 3
-                    let srgb (b: byte) = Math.Pow(float b / 255., 2.2)
-                    Colour(srgb pixels.[i], srgb pixels.[i + 1], srgb pixels.[i + 2]))
+                let image = decode texture.PrimaryImage srgb
+                let transform = channel.TextureTransform
+                let coordinateSet =
+                    if isNull transform || not transform.TextureCoordinateOverride.HasValue then channel.TextureCoordinate
+                    else transform.TextureCoordinateOverride.Value
+                if coordinateSet <> 0 then warn "Only TEXCOORD_0 is supported; other texture coordinate sets are ignored."
+                let sampler = channel.TextureSampler
+                let wrapS, wrapT, nearest =
+                    if isNull sampler then Repeat, Repeat, false
+                    else wrapMode sampler.WrapS, wrapMode sampler.WrapT, sampler.MagFilter = SharpGLTF.Schema2.TextureInterpolationFilter.NEAREST
+                let lookup = if nearest then TextureFilter.nearest image wrapS wrapT else TextureFilter.bilinear image wrapS wrapT
+                // Meshes store v flipped (v up); glTF texture space has t = 0 at the top of the image.
+                if isNull transform then Some (fun (u: float) (v: float) -> lookup u (1. - v))
+                else
+                    // KHR_texture_transform: uv' = T * R * S * uv in glTF texture space.
+                    let ox, oy = float transform.Offset.X, float transform.Offset.Y
+                    let sx, sy = float transform.Scale.X, float transform.Scale.Y
+                    let c, s = cos (float transform.Rotation), sin (float transform.Rotation)
+                    Some (fun (u: float) (v: float) ->
+                        let t = 1. - v
+                        lookup (c * sx * u + s * sy * t + ox) (-s * sx * u + c * sy * t + oy))
 
+        let colourMap (channel: SharpGLTF.Schema2.MaterialChannel) srgb =
+            channelSampler channel srgb
+            |> Option.map (fun lookup -> fun u v -> let struct (r, g, b, _) = lookup u v in Colour(max 0. r, max 0. g, max 0. b))
+
+        let materialName (material: SharpGLTF.Schema2.Material) =
+            if String.IsNullOrWhiteSpace material.Name then $"material{material.LogicalIndex}" else material.Name
+
+        /// The material description of a glTF material, before any override.
+        let describeMaterial (material: SharpGLTF.Schema2.Material) =
+            let channel key = material.FindChannel key |> Option.ofNullable
+            let factor (c: SharpGLTF.Schema2.MaterialChannel) (name: string) fallback =
+                try float (c.GetFactor name) with _ -> fallback
+            let rgb (c: SharpGLTF.Schema2.MaterialChannel) = Colour(max 0. (float c.Color.X), max 0. (float c.Color.Y), max 0. (float c.Color.Z))
+            let mutable p = PbrParams.defaults
+            match channel "BaseColor" with
+            | Some c -> p <- { p with BaseColour = rgb c; BaseColourMap = colourMap c true }
+            | None -> p <- { p with BaseColour = Colour.White }
+            match channel "MetallicRoughness" with
+            | Some c ->
+                let map =
+                    channelSampler c false
+                    |> Option.map (fun lookup -> fun u v -> let struct (_, g, b, _) = lookup u v in struct (b, g))
+                p <- { p with Metallic = factor c "MetallicFactor" 1.; Roughness = factor c "RoughnessFactor" 1.; MetallicRoughnessMap = map }
+            | None -> p <- { p with Metallic = 1.; Roughness = 1. }
+            match channel "Normal" with
+            | Some c ->
+                let map =
+                    channelSampler c false
+                    |> Option.map (fun lookup -> fun u v ->
+                        let struct (r, g, b, _) = lookup u v
+                        Vector(2. * r - 1., 2. * g - 1., 2. * b - 1.))
+                if map.IsSome then
+                    warn "Normal maps use a renderer-chosen tangent frame; meshes do not carry glTF tangents to the hit point yet."
+                p <- { p with NormalMap = map; NormalScale = factor c "NormalScale" 1. }
+            | None -> ()
+            match channel "Occlusion" with
+            | Some c ->
+                let map = channelSampler c false |> Option.map (fun lookup -> fun u v -> let struct (r, _, _, _) = lookup u v in r)
+                p <- { p with OcclusionMap = map; OcclusionStrength = factor c "OcclusionStrength" 1. }
+            | None -> ()
+            match channel "Emissive" with
+            | Some c -> p <- { p with Emissive = rgb c * factor c "EmissiveStrength" 1.; EmissiveMap = colourMap c true }
+            | None -> ()
+            match channel "Transmission" with
+            | Some c ->
+                if not (isNull c.Texture) then warn "Transmission textures are ignored; the factor is used."
+                p <- { p with Transmission = factor c "TransmissionFactor" 0. }
+            | None -> ()
+            match channel "DiffuseTransmissionFactor" with
+            | Some c ->
+                if not (isNull c.Texture) then warn "Diffuse transmission textures are ignored; the factor is used."
+                p <- { p with DiffuseTransmission = factor c "DiffuseTransmissionFactor" 0. }
+            | None -> ()
+            match channel "DiffuseTransmissionColor" with
+            | Some c -> p <- { p with DiffuseTransmissionColour = rgb c }
+            | None -> ()
+            match channel "SheenColor" with
+            | Some c ->
+                let colour = rgb c
+                let peak = max colour.R (max colour.G colour.B)
+                if peak > 0. then p <- { p with Sheen = min 1. peak; SheenColour = colour / peak }
+            | None -> ()
+            if material.Alpha <> SharpGLTF.Schema2.AlphaMode.OPAQUE then warn "Alpha blending and masking are not supported; surfaces render opaque."
+            let ior = let v = float material.IndexOfRefraction in if Double.IsFinite v && v > 0. then v else 1.5
+            { p with Ior = ior }
+
+        /// A material description as a texture. Uniform glTF emitters and clear glass keep their dedicated
+        /// materials, which both integrators treat as lights and refracting media; everything else is a
+        /// `PbrMaterial`.
+        let pbrTexture (p: PbrParams) =
+            let emitter = p.Emissive.R + p.Emissive.G + p.Emissive.B > 0.
+            if PbrParams.isUniform p && emitter then
+                let peak = max p.Emissive.R (max p.Emissive.G p.Emissive.B)
+                mkMatTexture (EmissiveMaterial(p.Emissive / peak, peak))
+            elif PbrParams.isUniform p && p.Transmission > 0.5 && p.Metallic < 0.5 then
+                let c = (PbrParams.sampleAt p 0. 0.).BaseColour
+                mkMatTexture (TransparentMaterial(c, Colour.White, p.Ior, 1.))
+            elif PbrParams.isUniform p then mkMatTexture (PbrMaterial(PbrParams.sampleAt p 0. 0.))
+            else mkTexture (fun u v -> PbrMaterial(PbrParams.sampleAt p u v) :> Tracer.Basics.Material) |> markOpaque
+
+        /// The material's texture, and whether it varies over the surface.
         let convertMaterial (material: SharpGLTF.Schema2.Material) =
-            if isNull material then mkMatTexture (MatteMaterial(Colour(0.8, 0.8, 0.8), 0.2, Colour(0.8, 0.8, 0.8), 0.8)) |> markOpaque
+            if isNull material then mkMatTexture (PbrMaterial({ PbrSample.defaults with Roughness = 0.8 })), false
             else
                 match textures.TryGetValue material.LogicalIndex with
                 | true, texture -> texture
                 | _ ->
-                    let channel key = material.FindChannel key |> Option.ofNullable
-                    let baseFactor, baseImage =
-                        match channel "BaseColor" with
-                        | Some c -> Colour(float c.Color.X, float c.Color.Y, float c.Color.Z), imageTexture c
-                        | None -> Colour.White, None
-                    let metallic, roughness =
-                        match channel "MetallicRoughness" with
-                        | Some c ->
-                            if not (isNull c.Texture) then warn "Metallic-roughness textures are ignored; their factors are used."
-                            float (c.GetFactor "MetallicFactor"), float (c.GetFactor "RoughnessFactor")
-                        | None -> 1., 1.
-                    let emission =
-                        match channel "Emissive" with
-                        | Some c ->
-                            let strength = try float (c.GetFactor "EmissiveStrength") with _ -> 1.
-                            Colour(float c.Color.X, float c.Color.Y, float c.Color.Z) * strength
-                        | None -> Colour.Black
-                    let transmission =
-                        match channel "Transmission" with
-                        | Some c -> float (c.GetFactor "TransmissionFactor")
-                        | None -> 0.
-                    if material.Alpha <> SharpGLTF.Schema2.AlphaMode.OPAQUE then warn "Alpha blending and masking are not supported; surfaces render opaque."
-                    let ior = let v = float material.IndexOfRefraction in if Double.IsFinite v && v > 0. then v else 1.5
-                    let make (c: Colour) : Tracer.Basics.Material =
-                        let c = Colour(clamp01 c.R, clamp01 c.G, clamp01 c.B)
-                        if emission.R + emission.G + emission.B > 0. then
-                            let peak = max emission.R (max emission.G emission.B)
-                            EmissiveMaterial(emission / peak, peak) :> _
-                        elif transmission > 0.5 then TransparentMaterial(c, Colour.White, ior, 1.) :> _
-                        elif metallic >= 0.5 then
-                            if roughness < 0.3 then
-                                PhongReflectiveMaterial(c, 0.1, c, 0.2, c, 0.6, c, 0.9 * (1. - roughness), exponentOfRoughness roughness) :> _
-                            else PhongMaterial(c, 0.15, c, 0.5, c, 0.7 * (1. - roughness) + 0.1, exponentOfRoughness roughness) :> _
-                        elif roughness < 0.6 then
-                            PhongMaterial(c, 0.2, c, 0.8, Colour.White, 0.4 * (1. - roughness), exponentOfRoughness roughness) :> _
-                        else MatteMaterial(c, 0.2, c, 0.8) :> _
-                    if metallic >= 0.5 && roughness >= 0.3 then warn "Rough metals are approximated with Phong highlights."
-                    if transmission > 0. && transmission <= 0.5 then warn "Partial transmission is ignored."
-                    let texture =
-                        match baseImage with
-                        | Some sample -> mkTexture (fun u v -> make (sample u v * baseFactor)) |> markOpaque
-                        | None -> mkMatTexture (make baseFactor)
+                    let p = options.MaterialOverride (materialName material) (describeMaterial material)
+                    let texture = pbrTexture p, not (PbrParams.isUniform p)
                     textures.[material.LogicalIndex] <- texture
                     texture
+
+        /// Largest bounding-box side over all of a mesh's primitives; the unit of generated texture coordinates.
+        let meshExtent (mesh: SharpGLTF.Schema2.Mesh) =
+            let mutable low = V3(Single.PositiveInfinity)
+            let mutable high = V3(Single.NegativeInfinity)
+            for primitive in mesh.Primitives do
+                match primitive.GetVertexAccessor "POSITION" with
+                | null -> ()
+                | accessor ->
+                    for p in accessor.AsVector3Array() do
+                        low <- V3.Min(low, p)
+                        high <- V3.Max(high, p)
+            let size = high - low
+            float (max size.X (max size.Y size.Z))
 
         let convertMesh (mesh: SharpGLTF.Schema2.Mesh) =
             match meshes.TryGetValue mesh.LogicalIndex with
@@ -154,9 +261,16 @@ module Gltf =
                                 | accessor -> accessor.AsVector2Array() |> Seq.map (fun (uv: V2) -> float uv.X, 1. - float uv.Y) |> Array.ofSeq
                             let triangles = primitive.GetTriangleIndices() |> Seq.collect (fun struct (a, b, c) -> [ a; b; c ]) |> Array.ofSeq
                             if triangles.Length > 0 then
+                                let texture, varies = convertMaterial primitive.Material
+                                let positions, normals, uvs, triangles =
+                                    if varies && degenerateUvs uvs then
+                                        let source, generated = projectedUvs positions triangles (meshExtent mesh)
+                                        let pick (values: _[]) = if values.Length = 0 then values else source |> Array.map (fun i -> values.[i])
+                                        pick positions, pick normals, generated, Array.init source.Length id
+                                    else positions, normals, uvs, triangles
                                 let smooth = options.SmoothShading && normals.Length > 0
                                 let baseShape = TriangleMesh.fromArrays positions normals uvs triangles smooth
-                                yield baseShape.toShape (convertMaterial primitive.Material)
+                                yield baseShape.toShape texture
                         | other -> warn $"Primitives of type {other} are skipped; only triangles render." ]
                 meshes.[mesh.LogicalIndex] <- shapes
                 shapes
@@ -194,10 +308,18 @@ module Gltf =
                             | accessor -> accessor.AsVector2Array() |> Seq.map (fun (uv: V2) -> float uv.X, 1. - float uv.Y) |> Array.ofSeq
                         let triangles = primitive.GetTriangleIndices() |> Seq.collect (fun struct (a, b, c) -> [ a; b; c ]) |> Array.ofSeq
                         if triangles.Length > 0 then
+                            let texture, varies = convertMaterial primitive.Material
+                            let positions, normals, uvs, triangles, jointSlots, weights =
+                                if varies && degenerateUvs uvs then
+                                    let source, generated = projectedUvs positions triangles (meshExtent mesh)
+                                    let pick (values: _[]) = if values.Length = 0 then values else source |> Array.map (fun i -> values.[i])
+                                    let pick4 (values: float[]) = source |> Array.collect (fun i -> values.[4 * i .. 4 * i + 3])
+                                    pick positions, pick normals, generated, Array.init source.Length id, pick4 jointSlots, pick4 weights
+                                else positions, normals, uvs, triangles, jointSlots, weights
                             yield Skinned
                                 { Positions = positions; Normals = (if options.SmoothShading then normals else [||]); Uvs = uvs
                                   Triangles = triangles; Joints = jointSlots |> Array.map int; Weights = weights
-                                  JointNodes = jointNames; InverseBind = inverseBind; Texture = convertMaterial primitive.Material }
+                                  JointNodes = jointNames; InverseBind = inverseBind; Texture = texture }
                     | _ -> warn "A skinned primitive lacks JOINTS_0/WEIGHTS_0 and is skipped."
                 | other -> warn $"Primitives of type {other} are skipped; only triangles render." ]
 
@@ -304,6 +426,9 @@ module Gltf =
         let roughnessOf exponent = PathTracing.MaterialAdapter.roughnessOfExponent exponent
         match material with
         | :? EmissiveMaterial as m -> { plain Colour.Black with Emission = m.LightColour * m.LightIntensity }
+        | :? PbrMaterial as m ->
+            let p = m.Sample
+            { Base = p.BaseColour; Emission = p.Emissive; Metallic = p.Metallic; Roughness = p.Roughness; Transmission = p.Transmission }
         | :? TransparentMaterial as m -> { plain m.InnerFilterColour with Roughness = 0.; Transmission = 1. }
         | :? PhongReflectiveMaterial as m ->
             { plain m.MatteColour with Metallic = (if m.ReflectionCoefficient >= 0.5 then 1. else 0.); Roughness = roughnessOf m.SpecularExponent }
