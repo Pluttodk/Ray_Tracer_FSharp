@@ -25,10 +25,16 @@ module Gltf =
           /// Multiplier from glTF directional intensity (lux) to this renderer's directional lights.
           DirectionalLightScale: float
           SmoothShading: bool
-          /// Edits each material's description, given the glTF material name, before it is built.
-          MaterialOverride: string -> PbrParams -> PbrParams }
+          /// Edits each material's description, given the glTF material name, before it is built. Regions
+          /// (see `MaterialRegion`) arrive as "material:region".
+          MaterialOverride: string -> PbrParams -> PbrParams
+          /// Splits skinned primitives into material regions: given the material name and the joint that
+          /// most influences a triangle, the region the triangle belongs to, if any. Lets one glTF material
+          /// be overridden differently on, say, the wings and the body.
+          MaterialRegion: string -> string -> string option }
         static member Default =
-            { Clip = None; PointLightScale = 0.02; DirectionalLightScale = 0.3; SmoothShading = true; MaterialOverride = fun _ p -> p }
+            { Clip = None; PointLightScale = 0.02; DirectionalLightScale = 0.3; SmoothShading = true
+              MaterialOverride = (fun _ p -> p); MaterialRegion = fun _ _ -> None }
 
     type ImportResult = { Scene: AnimatedScene; Warnings: string list }
 
@@ -42,10 +48,12 @@ module Gltf =
     let private degenerateUvs (uvs: (float * float)[]) = uvs.Length = 0 || uvs |> Array.forall (fun uv -> uv = uvs.[0])
 
     /// Texture coordinates for a primitive without usable ones, so procedural material maps have something
-    /// to vary over. Each triangle is projected along the axis its rest-pose normal is closest to, in units
-    /// of `extent`, so every triangle needs vertices of its own: returns, per new vertex, its source vertex
-    /// and its coordinates. The new triangles are simply 0, 1, 2, ...
-    let private projectedUvs (positions: Point[]) (triangles: int[]) (extent: float) =
+    /// to vary over. Each triangle is projected along the axis its rest-pose normal is closest to, taking
+    /// the position relative to the mesh's bounding-box `centre` in units of its largest side `extent`.
+    /// The three projections are laid out as separate charts 4 apart along u, so they never overlap.
+    /// Every triangle needs vertices of its own: returns, per new vertex, its source vertex and its
+    /// coordinates. The new triangles are 0, 1, 2, ...
+    let private projectedUvs (positions: Point[]) (triangles: int[]) (struct (centre: Point, extent: float)) =
         let scale = if extent > 0. && Double.IsFinite extent then 1. / extent else 1.
         let uvs = Array.zeroCreate triangles.Length
         for t in 0 .. triangles.Length / 3 - 1 do
@@ -53,11 +61,11 @@ module Gltf =
             let normal = (b - a) % (c - a)
             let nx, ny, nz = abs normal.X, abs normal.Y, abs normal.Z
             for k in 0 .. 2 do
-                let p = positions.[triangles.[3 * t + k]]
+                let p = positions.[triangles.[3 * t + k]] - centre
                 uvs.[3 * t + k] <-
                     if nx >= ny && nx >= nz then p.Z * scale, p.Y * scale
-                    elif ny >= nz then p.X * scale, p.Z * scale
-                    else p.X * scale, p.Y * scale
+                    elif ny >= nz then 4. + p.X * scale, p.Z * scale
+                    else 8. + p.X * scale, p.Y * scale
         Array.copy triangles, uvs
 
     // ---------------------------------------------------------------- import
@@ -68,7 +76,7 @@ module Gltf =
         let warn (message: string) = if warned.Add message then warnings.Add message
         let names = Dictionary<int, string>()
         let used = HashSet<string>()
-        let textures = Dictionary<int, Texture * bool>()
+        let textures = Dictionary<struct (int * string), Texture * bool>()
         let meshes = Dictionary<int, Shape list>()
 
         let nameOf (node: SharpGLTF.Schema2.Node) =
@@ -216,18 +224,21 @@ module Gltf =
             else mkTexture (fun u v -> PbrMaterial(PbrParams.sampleAt p u v) :> Tracer.Basics.Material) |> markOpaque
 
         /// The material's texture, and whether it varies over the surface.
-        let convertMaterial (material: SharpGLTF.Schema2.Material) =
+        let convertMaterial (material: SharpGLTF.Schema2.Material) (region: string option) =
             if isNull material then mkMatTexture (PbrMaterial({ PbrSample.defaults with Roughness = 0.8 })), false
             else
-                match textures.TryGetValue material.LogicalIndex with
+                let key = struct (material.LogicalIndex, defaultArg region "")
+                match textures.TryGetValue key with
                 | true, texture -> texture
                 | _ ->
-                    let p = options.MaterialOverride (materialName material) (describeMaterial material)
+                    let name = match region with Some r -> $"{materialName material}:{r}" | None -> materialName material
+                    let p = options.MaterialOverride name (describeMaterial material)
                     let texture = pbrTexture p, not (PbrParams.isUniform p)
-                    textures.[material.LogicalIndex] <- texture
+                    textures.[key] <- texture
                     texture
 
-        /// Largest bounding-box side over all of a mesh's primitives; the unit of generated texture coordinates.
+        /// Bounding-box centre and largest side over all of a mesh's primitives: the origin and unit of
+        /// generated texture coordinates.
         let meshExtent (mesh: SharpGLTF.Schema2.Mesh) =
             let mutable low = V3(Single.PositiveInfinity)
             let mutable high = V3(Single.NegativeInfinity)
@@ -239,7 +250,8 @@ module Gltf =
                         low <- V3.Min(low, p)
                         high <- V3.Max(high, p)
             let size = high - low
-            float (max size.X (max size.Y size.Z))
+            let centre = (low + high) * 0.5f
+            struct (Point(float centre.X, float centre.Y, float centre.Z), float (max size.X (max size.Y size.Z)))
 
         let convertMesh (mesh: SharpGLTF.Schema2.Mesh) =
             match meshes.TryGetValue mesh.LogicalIndex with
@@ -261,7 +273,7 @@ module Gltf =
                                 | accessor -> accessor.AsVector2Array() |> Seq.map (fun (uv: V2) -> float uv.X, 1. - float uv.Y) |> Array.ofSeq
                             let triangles = primitive.GetTriangleIndices() |> Seq.collect (fun struct (a, b, c) -> [ a; b; c ]) |> Array.ofSeq
                             if triangles.Length > 0 then
-                                let texture, varies = convertMaterial primitive.Material
+                                let texture, varies = convertMaterial primitive.Material None
                                 let positions, normals, uvs, triangles =
                                     if varies && degenerateUvs uvs then
                                         let source, generated = projectedUvs positions triangles (meshExtent mesh)
@@ -307,8 +319,44 @@ module Gltf =
                             | null -> [||]
                             | accessor -> accessor.AsVector2Array() |> Seq.map (fun (uv: V2) -> float uv.X, 1. - float uv.Y) |> Array.ofSeq
                         let triangles = primitive.GetTriangleIndices() |> Seq.collect (fun struct (a, b, c) -> [ a; b; c ]) |> Array.ofSeq
-                        if triangles.Length > 0 then
-                            let texture, varies = convertMaterial primitive.Material
+                        // Group triangles by material region, each by the joint with the largest summed weight
+                        // over its corners.
+                        let regionOf =
+                            if isNull primitive.Material then fun _ -> None
+                            else
+                                let name = materialName primitive.Material
+                                fun (t: int) ->
+                                    let influence = Dictionary<int, float>()
+                                    for k in 0 .. 2 do
+                                        let v = triangles.[3 * t + k]
+                                        for slot in 0 .. 3 do
+                                            let joint = int jointSlots.[4 * v + slot]
+                                            let w = weights.[4 * v + slot]
+                                            influence.[joint] <- (match influence.TryGetValue joint with | true, x -> x | _ -> 0.) + w
+                                    let joint = influence |> Seq.maxBy (fun kv -> kv.Value) |> fun kv -> kv.Key
+                                    if joint >= 0 && joint < jointNames.Length then options.MaterialRegion name jointNames.[joint] else None
+                        let groups = Array.init (triangles.Length / 3) id |> Array.groupBy regionOf
+                        for region, group in groups do
+                            // Keep only the vertices this group uses.
+                            let used = Dictionary<int, int>()
+                            let source = ResizeArray<int>()
+                            let groupTriangles =
+                                group |> Array.collect (fun t ->
+                                    Array.init 3 (fun k ->
+                                        let v = triangles.[3 * t + k]
+                                        match used.TryGetValue v with
+                                        | true, i -> i
+                                        | _ ->
+                                            used.[v] <- source.Count
+                                            source.Add v
+                                            source.Count - 1))
+                            let source = source.ToArray()
+                            let pick (values: _[]) = if values.Length = 0 then values else source |> Array.map (fun i -> values.[i])
+                            let pick4 (values: float[]) = source |> Array.collect (fun i -> values.[4 * i .. 4 * i + 3])
+                            let positions, normals, uvs, triangles, jointSlots, weights =
+                                if groups.Length = 1 then positions, normals, uvs, triangles, jointSlots, weights
+                                else pick positions, pick normals, pick uvs, groupTriangles, pick4 jointSlots, pick4 weights
+                            let texture, varies = convertMaterial primitive.Material region
                             let positions, normals, uvs, triangles, jointSlots, weights =
                                 if varies && degenerateUvs uvs then
                                     let source, generated = projectedUvs positions triangles (meshExtent mesh)

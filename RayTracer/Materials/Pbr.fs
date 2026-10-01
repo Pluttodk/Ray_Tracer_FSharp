@@ -143,6 +143,8 @@ type PbrParams =
       Transmission: float
       Ior: float
       DiffuseTransmission: float
+      /// Multiplies `DiffuseTransmission`.
+      DiffuseTransmissionMap: (float -> float -> float) option
       DiffuseTransmissionColour: Colour
       Sheen: float
       SheenColour: Colour }
@@ -152,12 +154,13 @@ module PbrParams =
         { BaseColour = Colour(0.8, 0.8, 0.8); BaseColourMap = None; Metallic = 0.; Roughness = 0.5
           MetallicRoughnessMap = None; NormalMap = None; NormalScale = 1.; OcclusionMap = None; OcclusionStrength = 1.
           Emissive = Colour.Black; EmissiveMap = None; Transmission = 0.; Ior = 1.5
-          DiffuseTransmission = 0.; DiffuseTransmissionColour = Colour.White; Sheen = 0.; SheenColour = Colour.White }
+          DiffuseTransmission = 0.; DiffuseTransmissionMap = None; DiffuseTransmissionColour = Colour.White
+          Sheen = 0.; SheenColour = Colour.White }
 
     /// True when no parameter varies over the surface.
     let isUniform (p: PbrParams) =
         p.BaseColourMap.IsNone && p.MetallicRoughnessMap.IsNone && p.NormalMap.IsNone
-        && p.OcclusionMap.IsNone && p.EmissiveMap.IsNone
+        && p.OcclusionMap.IsNone && p.EmissiveMap.IsNone && p.DiffuseTransmissionMap.IsNone
 
     let private clamp01 v = if Double.IsFinite v then max 0. (min 1. v) else 0.
     let private clampColour (c: Colour) = Colour(clamp01 c.R, clamp01 c.G, clamp01 c.B)
@@ -200,7 +203,10 @@ module PbrParams =
           Emissive = nonNegative emissive
           Transmission = clamp01 p.Transmission
           Ior = (if Double.IsFinite p.Ior && p.Ior > 0. then p.Ior else 1.5)
-          DiffuseTransmission = clamp01 p.DiffuseTransmission
+          DiffuseTransmission =
+            match p.DiffuseTransmissionMap with
+            | Some map -> clamp01 (p.DiffuseTransmission * map u v)
+            | None -> clamp01 p.DiffuseTransmission
           DiffuseTransmissionColour = clampColour p.DiffuseTransmissionColour
           Sheen = clamp01 p.Sheen
           SheenColour = clampColour p.SheenColour }

@@ -236,28 +236,33 @@ module Film =
             let mix x = (x + (l - x) * amount) * darken
             Colour(mix c.R, mix c.G, mix c.B)
 
-        /// The wing membranes are thin slabs, skin on top and membrane below, so the skin must transmit too
-        /// for back light to come through. Elsewhere the transmitted light enters the closed body and mostly
-        /// dies there, a cheap stand-in for subsurface scattering; the albedo is raised to compensate.
-        let skinTranslucency = 0.2
+        /// The wing membranes are thin slabs (skin on top, membrane below) bound to the Wing joints; the body
+        /// is a closed shell. Translucency must stay on the wings or the whole torso lights up like a lantern.
+        let region (_: string) (joint: string) = if joint.StartsWith "Wing" then Some "wing" else None
+
+        let private skin (p: PbrParams) =
+            { p with
+                BaseColour = desaturate 0.55 0.72 p.BaseColour
+                BaseColourMap = Some scaleTint
+                Metallic = 0.; Roughness = 0.55
+                NormalMap = Some scaleNormal; NormalScale = 1.
+                Sheen = 0.35; SheenColour = Colour(0.75, 0.68, 0.6) }
+
+        let private membrane (p: PbrParams) =
+            { p with
+                BaseColour = desaturate 0.3 1.1 p.BaseColour
+                Metallic = 0.; Roughness = 0.6
+                Sheen = 0.2; SheenColour = Colour(0.7, 0.6, 0.6) }
 
         let apply (name: string) (p: PbrParams) =
             match name with
-            | "Dragon_Main" ->
-                { p with
-                    BaseColour = desaturate 0.55 (0.72 / (1. - skinTranslucency)) p.BaseColour
-                    DiffuseTransmission = skinTranslucency; DiffuseTransmissionColour = Colour(0.6, 0.22, 0.1)
-                    BaseColourMap = Some scaleTint
-                    Metallic = 0.; Roughness = 0.55
-                    NormalMap = Some scaleNormal; NormalScale = 1.
-                    Sheen = 0.35; SheenColour = Colour(0.75, 0.68, 0.6) }
-            | "Dragon_Secondary" ->
-                // Wing membranes: thin skin that glows warm when the sun is behind it.
-                { p with
-                    BaseColour = desaturate 0.3 1.1 p.BaseColour
-                    Metallic = 0.; Roughness = 0.6
-                    DiffuseTransmission = 0.5; DiffuseTransmissionColour = Colour(0.95, 0.42, 0.18)
-                    Sheen = 0.2; SheenColour = Colour(0.7, 0.6, 0.6) }
+            | "Dragon_Main" -> skin p
+            | "Dragon_Main:wing" ->
+                // Scaled skin on top of the membrane, thin enough to let warm back light through.
+                { skin p with DiffuseTransmission = 0.4; DiffuseTransmissionColour = Colour(0.85, 0.42, 0.22); NormalScale = 0.6 }
+            | "Dragon_Secondary" -> membrane p
+            | "Dragon_Secondary:wing" ->
+                { membrane p with DiffuseTransmission = 0.5; DiffuseTransmissionColour = Colour(0.9, 0.5, 0.28) }
             | "Dragon_Horn" ->
                 { p with BaseColour = Colour(0.36, 0.32, 0.26); Metallic = 0.; Roughness = 0.42 }
             | "Eye_White" ->
@@ -270,7 +275,7 @@ module Film =
 
     /// The imported dragon under a flight rig, and its performance (wing beats, hover, roar).
     let private dragon () =
-        let imported = (Gltf.load (asset "dragon_evolved.glb") { Gltf.ImportOptions.Default with Clip = None; MaterialOverride = DragonMaterials.apply (* e *) }).Scene
+        let imported = (Gltf.load (asset "dragon_evolved.glb") { Gltf.ImportOptions.Default with Clip = None; MaterialOverride = DragonMaterials.apply; MaterialRegion = DragonMaterials.region (* e *) }).Scene
         let model = imported.Roots |> List.filter (fun node -> node.Name <> imported.ActiveCamera)
         let clip name = imported.Clips |> List.find (fun c -> c.Name = "CharacterArmature|" + name)
         let rest =
