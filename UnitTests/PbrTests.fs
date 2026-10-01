@@ -147,6 +147,21 @@ let private bilinearSampling () =
     let struct (rc, _, _, _) = TextureFilter.bilinear image ClampToEdge ClampToEdge -3. 0.
     Assert.True(abs (rc - ra) < 1e-12, "bilinear-clamp-to-edge")
     Assert.True(TextureFilter.wrapIndex MirroredRepeat -1 w = 0 && TextureFilter.wrapIndex MirroredRepeat w w = w - 1, "wrap-mirrored")
+    // A byte-encoded image reads back exactly what the float image of its decoded bytes does.
+    let bytes = Array.init (w * h * 4) (fun i -> byte ((i * 53 + 7) % 256))
+    let lut = Array.init (4 * 256) (fun i -> if i < 768 then float32 (TextureFilter.srgbToLinear (float (i % 256) / 255.)) else float32 (i % 256) / 255.f)
+    let encoded = TextureFilter.createEncoded w h 4 bytes lut
+    let decoded = TextureFilter.create w h 4 (bytes |> Array.mapi (fun i b -> lut.[256 * (i % 4) + int b]))
+    let mutable same = true
+    for mode in [ Repeat; MirroredRepeat ] do
+        for k in 0 .. 40 do
+            let s, t = float k * 0.137 - 1., float k * 0.091 - 0.5
+            let a = TextureFilter.bilinear encoded mode mode s t
+            let b = TextureFilter.bilinear decoded mode mode s t
+            let n = TextureFilter.nearest encoded mode mode s t
+            let m = TextureFilter.nearest decoded mode mode s t
+            same <- same && a = b && n = m
+    Assert.True(same, "byte-encoded-texture-reads-like-floats")
 
 /// The importer builds PBR materials and hands each one to the override hook by name.
 let private importerOverride () =

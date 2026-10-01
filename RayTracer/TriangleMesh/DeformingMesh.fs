@@ -62,6 +62,23 @@ type private DeformingTriangle(keys: Keys, indices: TriangleIndices, index: int,
                 else HitPoint(ray)
     interface IIntervalShape with
         member this.HitWithin(ray, minimum, maximum) = this.hitFunction ray |> Geometry.within minimum maximum
+    /// HitWithin's time without building the HitPoint (see IHitTime).
+    interface IHitTime with
+        member _.HitTime(ray, minimum, maximum) =
+            let struct (k, f) = segment keys.Times ray.ShutterTime
+            let lo, hi = keys.Vertices.[k], keys.Vertices.[k + 1]
+            let a, b, c = blend lo.[indices.A] hi.[indices.A] f, blend lo.[indices.B] hi.[indices.B] f, blend lo.[indices.C] hi.[indices.C] f
+            let normal = (Vector(b.X-a.X,b.Y-a.Y,b.Z-a.Z) % Vector(c.X-a.X,c.Y-a.Y,c.Z-a.Z)).Normalise
+            if not (normal.IsFinite && (normal.X <> 0. || normal.Y <> 0. || normal.Z <> 0.)) then nan
+            else
+                match Geometry.intersectTriangleCoordinates ray a.X a.Y a.Z b.X b.Y b.Z c.X c.Y c.Z with
+                | ValueNone -> nan
+                | ValueSome(struct (time, beta, gamma)) ->
+                    if not (time > minimum && time < maximum) then nan
+                    elif isNull mask
+                         || mask.Covers(a.U + beta * (b.U - a.U) + gamma * (c.U - a.U), a.V + beta * (b.V - a.V) + gamma * (c.V - a.V),
+                                        (if mask.IsStochastic then AlphaHash.sample ray index else 0.)) then time
+                    else nan
 
 type DeformingMeshShape private (keys: Keys, indices: TriangleIndices[], smooth: bool, texture: Texture, mask: AlphaMask) =
     inherit Shape()
@@ -126,3 +143,5 @@ type DeformingMeshShape private (keys: Keys, indices: TriangleIndices[], smooth:
     override this.hitFunction ray = this.Intersect(ray, 0., infinity)
     interface IIntervalShape with
         member this.HitWithin(ray, minimum, maximum) = this.Intersect(ray, minimum, maximum)
+    interface IOccluder with
+        member _.Occludes(ray, minimum, maximum) = Acceleration.anyHit accelerator ray minimum maximum

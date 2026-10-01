@@ -129,6 +129,36 @@ module internal AccelerationCommon =
             axis <- axis + 1
         if overlaps then ValueSome(struct (near, far)) else ValueNone
 
+    /// One axis of `intersectFinite`, written out so the hot loop has no axis dispatch: same arithmetic,
+    /// same widening, same answers.
+    let inline private slab (low: float) (high: float) (origin: float) (direction: float) (inverse: float)
+                            (near: byref<float>) (far: byref<float>) =
+        if direction = 0. then origin >= low && origin <= high
+        else
+            let lowDelta, highDelta = low - origin, high - origin
+            let a =
+                if Double.IsFinite inverse && Double.IsFinite lowDelta then lowDelta * inverse
+                else boundaryTime low origin direction
+            let b =
+                if Double.IsFinite inverse && Double.IsFinite highDelta then highDelta * inverse
+                else boundaryTime high origin direction
+            let first, last = min a b, max a b
+            let first = if Double.IsFinite first then Math.BitDecrement(first - abs first * 6.661338147750943e-16) else first
+            let last = if Double.IsFinite last then Math.BitIncrement(last + abs last * 6.661338147750943e-16) else last
+            near <- max near first
+            far <- min far last
+            near <= far
+
+    /// `intersectFinite` returning only the entry distance, NaN for a miss.
+    let intersectNear (bounds: Bounds) (ray: RayData) minimum maximum =
+        let mutable near = minimum
+        let mutable far = maximum
+        if near <= far
+           && slab bounds.MinX bounds.MaxX ray.X ray.DX ray.InvX &near &far
+           && slab bounds.MinY bounds.MaxY ray.Y ray.DY ray.InvY &near &far
+           && slab bounds.MinZ bounds.MaxZ ray.Z ray.DZ ray.InvZ &near &far then near
+        else nan
+
     let intersect (bounds: Bounds) ray minimum maximum =
         if bounds.IsEmpty then ValueNone
         elif bounds.IsFinite then intersectFinite bounds ray minimum maximum
@@ -152,6 +182,35 @@ module internal AccelerationCommon =
            && (hit.Time < candidate.Distance || (hit.Time = candidate.Distance && index < candidate.Index)) then
             { Distance = hit.Time; Index = index; Hit = hit }
         else candidate
+
+    /// Per-slot fast paths, null where a shape offers none; empty when no shape does.
+    let fastPaths<'T when 'T: null> (shapes: Shape array) =
+        let paths = shapes |> Array.map (fun shape -> match shape :> obj with :? 'T as path -> path | _ -> null)
+        if paths |> Array.forall isNull then [||] else paths
+
+    /// `consider` for a primitive with an allocation-free hit time. The candidate it records carries no
+    /// HitPoint; `materialize` builds the winner's afterwards. Same acceptance test as `consider`.
+    let considerTime (fast: IHitTime) index (ray: Ray) minimum maximum candidate =
+        let primitiveMaximum = min maximum (Math.BitIncrement candidate.Distance)
+        let time = if minimum < primitiveMaximum then fast.HitTime(ray, minimum, primitiveMaximum) else nan
+        if time > minimum && time < maximum && Double.IsFinite time
+           && (time < candidate.Distance || (time = candidate.Distance && index < candidate.Index)) then
+            { Distance = time; Index = index; Hit = Unchecked.defaultof<HitPoint> }
+        else candidate
+
+    /// `consider` for an any-hit query: an occluder answers without shading. The distance it records is
+    /// a placeholder, since an any-hit query stops at the first candidate.
+    let considerOccluder (occluder: IOccluder) index (ray: Ray) minimum maximum candidate =
+        let primitiveMaximum = min maximum (Math.BitIncrement candidate.Distance)
+        if minimum < primitiveMaximum && occluder.Occludes(ray, minimum, primitiveMaximum) then
+            { Distance = minimum; Index = index; Hit = Unchecked.defaultof<HitPoint> }
+        else candidate
+
+    /// The candidate's HitPoint, rebuilt through the shape's own intersection when a fast path skipped it.
+    let materialize (shapes: Shape array) (ray: Ray) minimum maximum (candidate: Candidate) =
+        if not candidate.Found then HitPoint ray
+        elif isNull (box candidate.Hit) then Geometry.hitWithin shapes.[candidate.Index] ray minimum maximum
+        else candidate.Hit
 
     let finish (ray: Ray) (candidate: Candidate) = if candidate.Found then candidate.Hit else HitPoint ray
 
