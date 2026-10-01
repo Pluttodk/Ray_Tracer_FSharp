@@ -219,6 +219,49 @@ module Frame =
 
     let private isIdentity m = closeTo m identityMatrix
 
+    /// Scenes with at least this many static mesh instances get them baked into one world-space BVH (see
+    /// TriangleMesh.BakedMeshes); fewer are instanced as before. Set very high to turn baking off.
+    let mutable flattenThreshold = 16
+
+    /// Nodes that never move: neither they nor any ancestor is driven by a clip.
+    let private staticNodes (scene: AnimatedScene) =
+        let animated = HashSet<string>(scene.Clips |> Seq.collect (fun clip -> clip.Channels) |> Seq.map (fun channel -> channel.Node))
+        let result = HashSet<string>()
+        let rec walk parentStatic (node: Node) =
+            let still = parentStatic && not (animated.Contains node.Name)
+            if still then result.Add node.Name |> ignore
+            for child in node.Children do walk still child
+        for root in scene.Roots do walk true root
+        result
+
+    /// Per scene: the nodes whose meshes were baked, and the baked shape. Built once, reused every frame.
+    let private bakedScenes =
+        System.Runtime.CompilerServices.ConditionalWeakTable<AnimatedScene, Tuple<HashSet<string>, Shape option>>()
+
+    let private bakeStatic (scene: AnimatedScene) (world: Dictionary<string, QuickMatrix>) =
+        lock bakedScenes (fun () ->
+            match bakedScenes.TryGetValue scene with
+            | true, baked -> baked
+            | _ ->
+                let statics = staticNodes scene
+                let instances =
+                    [| for node in AnimatedScene.nodes scene do
+                        if statics.Contains node.Name then
+                            for content in node.Content do
+                                match content with
+                                | Geometry (:? TriangleMesh.MeshShape as mesh) -> yield node.Name, mesh, world.[node.Name]
+                                | _ -> () |]
+                let baked =
+                    if instances.Length < flattenThreshold then Tuple.Create(HashSet<string>(), None)
+                    else
+                        let watch = Diagnostics.Stopwatch.StartNew()
+                        let shape = TriangleMesh.BakedMeshes(instances |> Array.map (fun (_, mesh, matrix) -> mesh, ofAffine matrix))
+                        printfn "%s: baked %d static mesh instances (%d triangles) into one BVH in %.1f s"
+                            scene.Name shape.InstanceCount shape.TriangleCount watch.Elapsed.TotalSeconds
+                        Tuple.Create(HashSet<string>(instances |> Array.map (fun (name, _, _) -> name)), Some (shape :> Shape))
+                bakedScenes.Add(scene, baked)
+                baked)
+
     /// The static scene visible during the shutter interval [shutterOpen, shutterClose].
     let sceneAt (scene: AnimatedScene) (shutterOpen: float) (shutterClose: float) (motionSteps: int) =
         let times =
@@ -230,9 +273,13 @@ module Frame =
         let middle = AnimatedScene.worldMatrices scene (0.5 * (shutterOpen + shutterClose))
         let shapes = ResizeArray<Shape>(scene.StaticShapes)
         let lights = ResizeArray<Light>(scene.StaticLights)
+        let baked = bakeStatic scene middle
+        let bakedNodes = baked.Item1
+        baked.Item2 |> Option.iter shapes.Add
         for node in AnimatedScene.nodes scene do
             for content in node.Content do
                 match content with
+                | Geometry (:? TriangleMesh.MeshShape) when bakedNodes.Contains node.Name -> ()
                 | Geometry shape ->
                     let matrices = worlds |> Array.map (fun world -> world.[node.Name])
                     if matrices |> Array.forall (closeTo matrices.[0]) then

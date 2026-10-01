@@ -229,6 +229,7 @@ type private TrianglePrimitive(vertices: MeshVertex array, indices: TriangleIndi
     let nondegenerate = normal.IsFinite && (normal.X <> 0. || normal.Y <> 0. || normal.Z <> 0.)
     member _.Index = index
     member _.IsDegenerate = not nondegenerate
+    member _.Normal = normal
     // This BLAS has no materials; MeshShape supplies the opacity of each materialized instance.
     override _.IsOpaque = true
     override _.getBoundingBox() = bounds
@@ -363,6 +364,12 @@ type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array a
     member internal this.Intersect(ray: Ray) = this.Intersect(ray, 0., infinity)
     member internal _.Occludes(ray: Ray, minimum: float, maximum: float) =
         Acceleration.anyHit accelerator ray minimum maximum
+    member internal _.Vertices = vertices
+    member internal _.Indices = indices
+    /// The object-space hit the BLAS would report for triangle `index` at (time, beta, gamma) along `ray`.
+    member internal _.TriangleHit(ray: Ray, time: float, beta: float, gamma: float, index: int) =
+        let primitive = primitives.[index] :?> TrianglePrimitive
+        HitPoint(ray, time, primitive.Normal, primitive.Normal, Material.None, primitive, 0., 0., beta, gamma, true)
     member internal _.Shade(hit: HitPoint, texture: Texture, shape: Shape) =
         let triangle = indices.[(hit.Shape :?> TrianglePrimitive).Index]
         let a, b, c = vertices.[triangle.A], vertices.[triangle.B], vertices.[triangle.C]
@@ -429,6 +436,70 @@ type MeshShape internal (geometry: MeshGeometry, texture: Texture) =
     // answers HitWithin(...).DidHit without texturing anything.
     interface IOccluder with
         member _.Occludes(ray, minimum, maximum) = geometry.Occludes(ray, minimum, maximum)
+
+/// A mesh triangle copied into world space, remembering which baked instance it came from.
+type private BakedTriangle(vertices: MeshVertex array, indices: TriangleIndices, index: int, mask: AlphaMask, part: int) =
+    inherit TrianglePrimitive(vertices, indices, index, mask)
+    member _.Part = part
+
+/// Static mesh instances baked into world space under one BVH.
+///
+/// Instanced, a big static scene (Sponza: 462 overlapping instances) sends every ray into the BVH of each
+/// instance whose box it crosses; flattened, it walks a single tree. Only the intersection moves to world
+/// space. Shading maps the hit back onto the source mesh and shades it exactly as an instance would
+/// (object-space normals, tangents, shadow-terminator point and material, then to the world), so the
+/// image differs from instancing only by the rounding of the world-space hit distance.
+type BakedMeshes(instances: (MeshShape * Transformation.Transformation) array) =
+    inherit Shape()
+    let parts =
+        instances |> Array.map (fun (mesh, transformation) ->
+            let forward = Transformation.getMatrix transformation
+            let inverse = Transformation.getInvMatrix transformation
+            struct (mesh, forward, inverse, inverse.transpose))
+    let primitives =
+        let all = ResizeArray<Shape>(instances |> Array.sumBy (fun (mesh, _) -> mesh.Geometry.TriangleCount))
+        parts |> Array.iteri (fun part (struct (mesh, forward, _, _)) ->
+            let geometry = mesh.Geometry
+            let world =
+                geometry.Vertices |> Array.map (fun v ->
+                    let p = Transformation.transformPoint(Point(v.X, v.Y, v.Z), forward)
+                    { v with X = p.X; Y = p.Y; Z = p.Z; Nx = 0.; Ny = 0.; Nz = 0. })
+            let indices = geometry.Indices
+            for index = 0 to indices.Length - 1 do
+                all.Add(BakedTriangle(world, indices.[index], index, geometry.AlphaMask, part)))
+        all.ToArray()
+    let accelerator = Acceleration.buildWith Acceleration.FlatBVH primitives
+    let bounds =
+        let mutable low, high = Point(infinity, infinity, infinity), Point(-infinity, -infinity, -infinity)
+        for shape in primitives do
+            let box = shape.getBoundingBox()
+            low <- low.Lowest box.lowPoint
+            high <- high.Highest box.highPoint
+        BBox(low, high)
+    let opaque = instances |> Array.forall (fun (mesh, _) -> mesh.IsOpaque)
+    member _.InstanceCount = instances.Length
+    member _.TriangleCount = primitives.Length
+    override _.IsOpaque = opaque
+    override _.getBoundingBox() = bounds
+    override _.isInside point =
+        parts |> Array.exists (fun (struct (mesh, _, inverse, _)) -> mesh.isInside(Transformation.transformPoint(point, inverse)))
+    member private this.Intersect(ray: Ray, minimum: float, maximum: float) =
+        let hit = Acceleration.traverseClosest accelerator ray minimum maximum
+        if not hit.DidHit then hit
+        else
+            let triangle = hit.Shape :?> BakedTriangle
+            let struct (mesh, forward, inverse, normalMatrix) = parts.[triangle.Part]
+            let localRay =
+                Ray(Transformation.transformPoint(ray.GetOrigin, inverse),
+                    Transformation.transformVector(ray.GetDirection, inverse), ray.ShutterTime)
+            let local = mesh.Geometry.TriangleHit(localRay, hit.Time, hit.BarycentricBeta, hit.BarycentricGamma, triangle.Index)
+            let shaded = mesh.Geometry.Shade(local, mesh.Texture, this)
+            Transform.toWorld shaded ray this forward normalMatrix
+    override this.hitFunction ray = this.Intersect(ray, 0., infinity)
+    interface IIntervalShape with
+        member this.HitWithin(ray, minimum, maximum) = this.Intersect(ray, minimum, maximum)
+    interface IOccluder with
+        member _.Occludes(ray, minimum, maximum) = Acceleration.anyHit accelerator ray minimum maximum
 
 type BaseMeshShape internal (geometry: MeshGeometry) =
     inherit BaseShape()

@@ -324,22 +324,25 @@ module Transform =
                         newHigh <- newHigh.Highest p
             BBox(newLow, newHigh)
 
+    /// An object-space hit seen from the world: same parameter t (affine maps preserve it), normals by the
+    /// normal matrix, tangents and the shadow-terminator point by the forward matrix.
+    let internal toWorld (hit: HitPoint) (ray: Ray) (owner: Shape) (forward: QuickMatrix) (normalMatrix: QuickMatrix) =
+        let world =
+            HitPoint(ray, hit.Time, transformVector(hit.GeometricNormal, normalMatrix),
+                     transformVector(hit.ShadingNormal, normalMatrix), hit.Material, owner,
+                     hit.U, hit.V, hit.BarycentricBeta, hit.BarycentricGamma, true)
+        // Tangents lie in the surface, so they transform like directions (with the forward matrix).
+        let world =
+            if hit.HasTangent then world.WithTangent(transformVector(hit.Tangent, forward), transformVector(hit.Bitangent, forward))
+            else world
+        // The shadow-terminator point is a position on the instance, so it moves with it.
+        if hit.HasShadowPoint then world.WithShadowPoint(transformPoint(hit.ShadowPoint, forward)) else world
+
     let internal intersectLocal (shape: Shape) (owner: Shape) (ray: Ray) minimum maximum (forward: QuickMatrix) inverse (normalMatrix: QuickMatrix) =
         // Do not normalize this direction: affine transforms preserve the original ray parameter.
         let localRay = Ray(transformPoint(ray.GetOrigin, inverse), transformVector(ray.GetDirection, inverse), ray.ShutterTime)
         let hit = Geometry.hitWithin shape localRay minimum maximum
-        if not hit.DidHit then HitPoint(ray)
-        else
-            let world =
-                HitPoint(ray, hit.Time, transformVector(hit.GeometricNormal, normalMatrix),
-                         transformVector(hit.ShadingNormal, normalMatrix), hit.Material, owner,
-                         hit.U, hit.V, hit.BarycentricBeta, hit.BarycentricGamma, true)
-            // Tangents lie in the surface, so they transform like directions (with the forward matrix).
-            let world =
-                if hit.HasTangent then world.WithTangent(transformVector(hit.Tangent, forward), transformVector(hit.Bitangent, forward))
-                else world
-            // The shadow-terminator point is a position on the instance, so it moves with it.
-            if hit.HasShadowPoint then world.WithShadowPoint(transformPoint(hit.ShadowPoint, forward)) else world
+        if not hit.DidHit then HitPoint(ray) else toWorld hit ray owner forward normalMatrix
 
     /// HitWithin(...).DidHit of `intersectLocal`, without building the hit: the inner shape's occluder
     /// answers when it has one.

@@ -46,9 +46,31 @@ module FlatBVH =
           Count: int
           Right: int }
 
+    /// The traversal copy of a node: float32 bounds rounded outward, so each box contains the exact one and
+    /// a traversal finds exactly the same hits, in 32 bytes instead of 64 (half the memory traffic on a big
+    /// tree). A is the left child or the first primitive; B is the right child, or minus the primitive count
+    /// of a leaf.
+    [<Struct; NoEquality; NoComparison>]
+    type internal PackedNode =
+        { MinX: float32; MinY: float32; MinZ: float32
+          MaxX: float32; MaxY: float32; MaxZ: float32
+          A: int
+          B: int }
+
+    let private lower (x: float) = let f = float32 x in if float f > x then MathF.BitDecrement f else f
+    let private upper (x: float) = let f = float32 x in if float f < x then MathF.BitIncrement f else f
+
+    let internal pack (node: Node) =
+        { MinX = lower node.Bounds.MinX; MinY = lower node.Bounds.MinY; MinZ = lower node.Bounds.MinZ
+          MaxX = upper node.Bounds.MaxX; MaxY = upper node.Bounds.MaxY; MaxZ = upper node.Bounds.MaxZ
+          A = node.First
+          B = if node.Count > 0 then -node.Count else node.Right }
+
     [<Sealed>]
     type FlatBVHStructure internal (nodes: Node array, indices: int array, depth: int, leaves: int) =
+        let packed = Array.map pack nodes
         member internal _.Nodes = nodes
+        member internal _.Packed = packed
         member internal _.Indices = indices
         member _.NodeCount = nodes.Length
         member _.PrimitiveCount = indices.Length
@@ -179,7 +201,7 @@ module FlatBVH =
     /// one entry per level, so MaxDepth + 1 entries always suffice, and a query allocates nothing.
     let internal query (tree: FlatBVHStructure) ray data (shapes: Shape array) (fast: IHitTime array)
                        (occluders: IOccluder array) minimum maximum initial stopAtFirst =
-        let nodes = tree.Nodes
+        let nodes = tree.Packed
         if nodes.Length = 0 || minimum >= maximum then initial
         else
             let capacity = tree.MaxDepth + 2
@@ -187,7 +209,10 @@ module FlatBVH =
             let mutable count = 0
             let mutable result = initial
             let mutable stopped = false
-            let entry = intersectNear nodes.[0].Bounds data minimum result.Distance
+            let inline enter (node: PackedNode) distance =
+                intersectBoxFast (float node.MinX) (float node.MinY) (float node.MinZ)
+                             (float node.MaxX) (float node.MaxY) (float node.MaxZ) data minimum distance
+            let entry = enter nodes.[0] result.Distance
             if not (Double.IsNaN entry) then
                 stack.[0] <- { Node = 0; Entry = entry }
                 count <- 1
@@ -196,9 +221,9 @@ module FlatBVH =
                 let item = stack.[count]
                 if item.Entry <= result.Distance then
                     let node = nodes.[item.Node]
-                    if node.Count > 0 then
-                        let mutable offset = node.First
-                        let finish = offset + node.Count
+                    if node.B < 0 then
+                        let mutable offset = node.A
+                        let finish = offset - node.B
                         while offset < finish && not stopped do
                             let index = tree.Indices.[offset]
                             result <-
@@ -210,22 +235,22 @@ module FlatBVH =
                             stopped <- stopAtFirst && result.Found
                             offset <- offset + 1
                     else
-                        let a = intersectNear nodes.[node.First].Bounds data minimum result.Distance
-                        let b = intersectNear nodes.[node.Right].Bounds data minimum result.Distance
+                        let a = enter nodes.[node.A] result.Distance
+                        let b = enter nodes.[node.B] result.Distance
                         let hitA, hitB = not (Double.IsNaN a), not (Double.IsNaN b)
                         // Push the farther child first so the nearer one is visited next.
                         if hitA && hitB then
                             if a <= b then
-                                stack.[count] <- { Node = node.Right; Entry = b }
-                                stack.[count + 1] <- { Node = node.First; Entry = a }
+                                stack.[count] <- { Node = node.B; Entry = b }
+                                stack.[count + 1] <- { Node = node.A; Entry = a }
                             else
-                                stack.[count] <- { Node = node.First; Entry = a }
-                                stack.[count + 1] <- { Node = node.Right; Entry = b }
+                                stack.[count] <- { Node = node.A; Entry = a }
+                                stack.[count + 1] <- { Node = node.B; Entry = b }
                             count <- count + 2
                         elif hitA then
-                            stack.[count] <- { Node = node.First; Entry = a }
+                            stack.[count] <- { Node = node.A; Entry = a }
                             count <- count + 1
                         elif hitB then
-                            stack.[count] <- { Node = node.Right; Entry = b }
+                            stack.[count] <- { Node = node.B; Entry = b }
                             count <- count + 1
             result

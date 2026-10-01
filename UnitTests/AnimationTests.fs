@@ -96,8 +96,53 @@ let demoTests () =
         let film = Frame.render scene settings RenderOptions.Default (Frame.frameCount settings scene / 2)
         Assert.True(film.Pixels |> Array.forall Double.IsFinite && film.Pixels |> Array.exists (fun p -> p > 0.), $"demo-renders-{demo.Name}")
 
+/// Static mesh instances baked into one world-space BVH hit and shade like the instances they replace.
+let bakedStaticMeshTests () =
+    let grid n =
+        let positions = [| for y in 0 .. n do for x in 0 .. n -> Point(float x / float n - 0.5, 0.2 * sin (float (x + y)), float y / float n - 0.5) |]
+        let uvs = [| for y in 0 .. n do for x in 0 .. n -> float x / float n, float y / float n |]
+        let normals = positions |> Array.map (fun p -> Vector(0.1 * p.X, 1., 0.2 * p.Z).Normalise)
+        let tris = [| for y in 0 .. n - 1 do
+                        for x in 0 .. n - 1 do
+                            let i = y * (n + 1) + x
+                            yield! [| i; i + 1; i + n + 1; i + 1; i + n + 2; i + n + 1 |] |]
+        TriangleMesh.fromArrays positions normals uvs tris true
+    let texture = Textures.mkMatTexture (MatteMaterial(Colour.White, 1., Colour.White, 1.))
+    let meshNode name (x: float) (y: float) (z: float) =
+        let shape = (grid 6).toShape texture
+        Node.create name |> Node.withContent [ Geometry shape ] |> Node.at x y z
+    let camera = Node.create "camera" |> Node.at 0. 0. 10. |> Node.withContent [ CameraRig CameraSpec.Default ]
+    let roots = [ for i in 0 .. 3 -> meshNode $"m{i}" (float i * 0.7 - 1.) (float i * 0.3) (0.2 * float i) ] @ [ camera ]
+    let make () = testScene [] roots |> AnimatedScene.validate
+    let saved = Frame.flattenThreshold
+    let instanced, baked =
+        try
+            Frame.flattenThreshold <- Int32.MaxValue
+            let instanced = Frame.sceneAt (make ()) 0. 0. 2
+            Frame.flattenThreshold <- 1
+            instanced, Frame.sceneAt (make ()) 0. 0. 2
+        finally Frame.flattenThreshold <- saved
+    Assert.True(baked.Shapes.Length = 1 && instanced.Shapes.Length = 4, "baked-static-meshes-replace-instances")
+    let closest (s: Scene) (ray: Ray) =
+        s.Shapes |> List.map (fun shape -> shape.hitFunction ray) |> List.filter (fun h -> h.DidHit)
+        |> List.sortBy (fun h -> h.Time) |> List.tryHead
+    let rng = Random 7
+    let mutable agree, hits = true, 0
+    for _ in 1 .. 400 do
+        let ray = Ray(Point(rng.NextDouble() * 3. - 2., 4., rng.NextDouble() * 2. - 1.), Vector(rng.NextDouble() * 0.4 - 0.2, -1., rng.NextDouble() * 0.4 - 0.2))
+        match closest instanced ray, closest baked ray with
+        | None, None -> ()
+        | Some a, Some b ->
+            hits <- hits + 1
+            agree <- agree && near 1e-9 a.Time b.Time && nearVector 1e-9 a.Normal b.Normal
+                     && nearVector 1e-9 a.ShadingNormal b.ShadingNormal && nearVector 1e-9 a.ShadowPoint.ToVector b.ShadowPoint.ToVector
+                     && near 1e-9 a.U b.U && near 1e-9 a.V b.V
+        | _ -> agree <- false
+    Assert.True(agree && hits > 100, $"baked-static-meshes-hit-and-shade-like-instances ({hits} hits)")
+
 let allTest () =
     samplerTests ()
     easingTests ()
     sceneGraphTests ()
+    bakedStaticMeshTests ()
     demoTests ()
