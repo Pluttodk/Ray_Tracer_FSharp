@@ -149,15 +149,19 @@ module internal AccelerationCommon =
             far <- min far last
             near <= far
 
-    /// `intersectFinite` returning only the entry distance, NaN for a miss.
-    let intersectNear (bounds: Bounds) (ray: RayData) minimum maximum =
+    /// `intersectFinite` on a box given by its corners, returning only the entry distance, NaN for a miss.
+    let intersectBox minX minY minZ maxX maxY maxZ (ray: RayData) minimum maximum =
         let mutable near = minimum
         let mutable far = maximum
         if near <= far
-           && slab bounds.MinX bounds.MaxX ray.X ray.DX ray.InvX &near &far
-           && slab bounds.MinY bounds.MaxY ray.Y ray.DY ray.InvY &near &far
-           && slab bounds.MinZ bounds.MaxZ ray.Z ray.DZ ray.InvZ &near &far then near
+           && slab minX maxX ray.X ray.DX ray.InvX &near &far
+           && slab minY maxY ray.Y ray.DY ray.InvY &near &far
+           && slab minZ maxZ ray.Z ray.DZ ray.InvZ &near &far then near
         else nan
+
+    /// `intersectFinite` returning only the entry distance, NaN for a miss.
+    let intersectNear (bounds: Bounds) (ray: RayData) minimum maximum =
+        intersectBox bounds.MinX bounds.MinY bounds.MinZ bounds.MaxX bounds.MaxY bounds.MaxZ ray minimum maximum
 
     let intersect (bounds: Bounds) ray minimum maximum =
         if bounds.IsEmpty then ValueNone
