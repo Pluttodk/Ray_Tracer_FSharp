@@ -280,11 +280,63 @@ module Demos =
           MaxBounces = 3; Atmosphere = None
           Duration = duration }
 
+    /// Volume test room: a hazy stone hall lit by a low sun through slot windows in one wall, plus a lamp in
+    /// the far corner, so the bounded haze shows shadowed sun shafts and a lamp halo. Slow push-in.
+    let sunShafts () =
+        let stone = solid (matte (rgb 0.62 0.58 0.52))
+        let wall low high = box low high stone
+        let slots = [ -4.6; -2.6; -0.6 ]                 // z of each slot's near edge, 0.45 wide
+        let slotWidth, sill, head = 0.45, 0.9, 3.3
+        let windowWall =
+            [ yield wall (Point(4., 0., -6.)) (Point(4.25, sill, 2.))
+              yield wall (Point(4., head, -6.)) (Point(4.25, 4., 2.))
+              let edges = [ -6. ] @ (slots |> List.collect (fun z -> [ z; z + slotWidth ])) @ [ 2. ]
+              for i in 0 .. 2 .. edges.Length - 2 do
+                  yield wall (Point(4., sill, edges.[i])) (Point(4.25, head, edges.[i + 1])) ]
+        let room =
+            [ wall (Point(-4.25, -0.25, -6.25)) (Point(4.25, 0., 2.25))      // floor
+              wall (Point(-4.25, 4., -6.25)) (Point(4.25, 4.25, 2.25))       // ceiling
+              wall (Point(-4.25, 0., -6.25)) (Point(4.25, 4., -6.))          // back
+              wall (Point(-4.25, 0., 2.)) (Point(4.25, 4., 2.25))            // front
+              wall (Point(-4.25, 0., -6.)) (Point(-4., 4., 2.))              // left
+              box (Point(-1.2, 0., -3.4)) (Point(-0.4, 1.6, -2.6)) (solid (plastic (rgb 0.7 0.2 0.12))) ]
+        let lampAt = Point(-3.3, 2.6, -5.3)
+        let bulb =
+            Node.create "bulb" |> Node.at lampAt.X lampAt.Y lampAt.Z
+            |> Node.withContent [ Geometry(sphere 0.06 (solid (EmissiveMaterial(rgb 1. 0.8 0.5, 3.) :> Material))) ]
+        let focus = Node.create "focus" |> Node.at 1. 1.4 -3.
+        // --- v: volume (sun-shafts demo) ---
+        let haze =
+            { Volume.Default with
+                Min = Point(-4., 0., -6.); Max = Point(4., 4., 2.)
+                Scattering = rgb 0.09 0.09 0.09; Absorption = rgb 0.01 0.01 0.01
+                SunAnisotropy = 0.7; LampAnisotropy = 0.2; SunSamples = 6; LampSamples = 2
+                Ambient = rgb 0.02 0.025 0.03; LampClearance = 0.1 }
+        { Name = "sun-shafts"
+          Roots =
+            [ bulb; focus
+              cameraNode "camera" (Point(-3.4, 1.5, 1.5)) { CameraSpec.Default with YFov = 0.9; Target = Some "focus" } ]
+          Clips =
+            [ Clip.create "push-in"
+                [ Clip.translate "camera" (Smooth.vector [ 0., Vector(-3.4, 1.5, 1.5); 4., Vector(-2.6, 1.4, 0.4) ]) ] ]
+          ActiveCamera = "camera"
+          Cuts = []
+          StaticShapes = room @ windowWall
+          StaticLights =
+            [ DirectionalLight(rgb 1. 0.85 0.65, 4., Vector(1., 0.45, -0.35).Normalise) :> Light
+              PointLight(rgb 1. 0.75 0.45, 0.35, lampAt) :> Light
+              sky (rgb 0.85 0.9 1.) (rgb 0.3 0.5 0.9) 0.6 2 ]
+          Ambient = ambient 0.
+          MaxBounces = 4
+          Atmosphere = Some { Atmosphere.Default with Density = 0.; Volume = Some haze }
+          Duration = 4. }
+
     let all =
         [ { Name = "hop"; Description = "Keyframed ball hopping on cubic-spline arcs; orbiting look-at camera"; Build = hop }
           { Name = "rolling-ball"; Description = "Physics: ball rolls down a ramp and knocks a resting ball"; Build = rollingBall }
           { Name = "bouncing-ball"; Description = "Physics: bouncing ball with squash and stretch and motion blur"; Build = bouncingBall }
           { Name = "camera-dolly"; Description = "Crane-and-dolly camera move around a still life on smooth spline keys"; Build = cameraDolly }
-          { Name = "lamp"; Description = "Luxo-style articulated lamp: anticipation, hop, squash, then nudges a physics ball"; Build = lamp } ]
+          { Name = "lamp"; Description = "Luxo-style articulated lamp: anticipation, hop, squash, then nudges a physics ball"; Build = lamp }
+          { Name = "sun-shafts"; Description = "Hazy stone room: shadowed sun shafts through slot windows and a lamp halo"; Build = sunShafts } ]
 
     let tryFind name = all |> List.tryFind (fun demo -> demo.Name = name)
