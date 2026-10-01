@@ -92,20 +92,54 @@ module Gltf =
                 names.[node.LogicalIndex] <- name
                 name
 
-        /// Decoded images, keyed by (image index, sRGB).
-        let images = Dictionary<struct (int * bool), FilterImage>()
+        /// Decoded images, keyed by (image index, sRGB, with alpha). Only the base colour of alpha-masked
+        /// materials keeps an alpha channel, so other textures stay at three floats per texel.
+        let images = System.Collections.Concurrent.ConcurrentDictionary<struct (int * bool * bool), FilterImage>()
 
-        let decode (image: SharpGLTF.Schema2.Image) (srgb: bool) =
-            let key = struct (image.LogicalIndex, srgb)
-            match images.TryGetValue key with
-            | true, decoded -> decoded
-            | _ ->
-                use stream = image.Content.Open()
+        let decodeImage (image: SharpGLTF.Schema2.Image) (srgb: bool) (alpha: bool) =
+            use stream = image.Content.Open()
+            let lut = Array.init 256 (fun b -> let v = float b / 255. in float32 (if srgb then TextureFilter.srgbToLinear v else v))
+            if alpha then
+                let struct (rgb, coverage) = RgbImage.LoadWithAlpha stream
+                use rgb = rgb
+                if coverage.Length = 0 then TextureFilter.create rgb.Width rgb.Height 3 (rgb.Pixels |> Array.map (fun b -> lut.[int b]))
+                else
+                    let pixels = rgb.Pixels
+                    let data = Array.zeroCreate<float32> (4 * coverage.Length)
+                    for i in 0 .. coverage.Length - 1 do
+                        data.[4 * i] <- lut.[int pixels.[3 * i]]
+                        data.[4 * i + 1] <- lut.[int pixels.[3 * i + 1]]
+                        data.[4 * i + 2] <- lut.[int pixels.[3 * i + 2]]
+                        // Alpha is linear coverage, never sRGB-encoded.
+                        data.[4 * i + 3] <- float32 coverage.[i] / 255.f
+                    TextureFilter.create rgb.Width rgb.Height 4 data
+            else
                 use rgb = RgbImage.Load stream
-                let lut = Array.init 256 (fun b -> let v = float b / 255. in float32 (if srgb then TextureFilter.srgbToLinear v else v))
-                let decoded = TextureFilter.create rgb.Width rgb.Height 3 (rgb.Pixels |> Array.map (fun b -> lut.[int b]))
-                images.[key] <- decoded
-                decoded
+                TextureFilter.create rgb.Width rgb.Height 3 (rgb.Pixels |> Array.map (fun b -> lut.[int b]))
+
+        let decode (image: SharpGLTF.Schema2.Image) (srgb: bool) (alpha: bool) =
+            images.GetOrAdd(struct (image.LogicalIndex, srgb, alpha), fun _ -> decodeImage image srgb alpha)
+
+        /// True for MASK and BLEND materials, whose base colour alpha cuts the surface out.
+        let isMasked (material: SharpGLTF.Schema2.Material) =
+            not (isNull material) && material.Alpha <> SharpGLTF.Schema2.AlphaMode.OPAQUE
+
+        /// Decodes every texture the materials use, in parallel, before meshes are built.
+        let prefetch () =
+            let keys = HashSet<struct (int * bool * bool)>()
+            for material in model.LogicalMaterials do
+                for channel in material.Channels do
+                    let texture = channel.Texture
+                    if not (isNull texture) && not (isNull texture.PrimaryImage) then
+                        match channel.Key with
+                        | "BaseColor" -> keys.Add(struct (texture.PrimaryImage.LogicalIndex, true, isMasked material)) |> ignore
+                        | "Emissive" -> keys.Add(struct (texture.PrimaryImage.LogicalIndex, true, false)) |> ignore
+                        | "MetallicRoughness" | "Normal" | "Occlusion" -> keys.Add(struct (texture.PrimaryImage.LogicalIndex, false, false)) |> ignore
+                        | _ -> ()
+            let work = Array.ofSeq keys
+            let parallelism = max 1 (min 16 (Environment.ProcessorCount / 2))
+            System.Threading.Tasks.Parallel.ForEach(work, System.Threading.Tasks.ParallelOptions(MaxDegreeOfParallelism = parallelism),
+                fun (struct (image, srgb, alpha)) -> decode model.LogicalImages.[image] srgb alpha |> ignore) |> ignore
 
         let wrapMode (mode: SharpGLTF.Schema2.TextureWrapMode) =
             match mode with
@@ -116,12 +150,12 @@ module Gltf =
         /// A filtered lookup for a material channel's texture, over mesh texture coordinates (u, v up).
         /// Applies KHR_texture_transform and the sampler's wrap modes, filtering bilinearly unless the
         /// sampler asks for nearest magnification.
-        let channelSampler (channel: SharpGLTF.Schema2.MaterialChannel) (srgb: bool) =
+        let channelSamplerWith (channel: SharpGLTF.Schema2.MaterialChannel) (srgb: bool) (alpha: bool) =
             match channel.Texture with
             | null -> None
             | texture when isNull texture.PrimaryImage -> None
             | texture ->
-                let image = decode texture.PrimaryImage srgb
+                let image = decode texture.PrimaryImage srgb alpha
                 let transform = channel.TextureTransform
                 let coordinateSet =
                     if isNull transform || not transform.TextureCoordinateOverride.HasValue then channel.TextureCoordinate
@@ -143,6 +177,8 @@ module Gltf =
                         let t = 1. - v
                         lookup (c * sx * u + s * sy * t + ox) (-s * sx * u + c * sy * t + oy))
 
+        let channelSampler channel srgb = channelSamplerWith channel srgb false
+
         let colourMap (channel: SharpGLTF.Schema2.MaterialChannel) srgb =
             channelSampler channel srgb
             |> Option.map (fun lookup -> fun u v -> let struct (r, g, b, _) = lookup u v in Colour(max 0. r, max 0. g, max 0. b))
@@ -158,7 +194,12 @@ module Gltf =
             let rgb (c: SharpGLTF.Schema2.MaterialChannel) = Colour(max 0. (float c.Color.X), max 0. (float c.Color.Y), max 0. (float c.Color.Z))
             let mutable p = PbrParams.defaults
             match channel "BaseColor" with
-            | Some c -> p <- { p with BaseColour = rgb c; BaseColourMap = colourMap c true }
+            | Some c ->
+                // Masked materials share one RGBA decode between colour and coverage.
+                let map =
+                    channelSamplerWith c true (isMasked material)
+                    |> Option.map (fun lookup -> fun u v -> let struct (r, g, b, _) = lookup u v in Colour(max 0. r, max 0. g, max 0. b))
+                p <- { p with BaseColour = rgb c; BaseColourMap = map }
             | None -> p <- { p with BaseColour = Colour.White }
             match channel "MetallicRoughness" with
             | Some c ->
@@ -174,8 +215,6 @@ module Gltf =
                     |> Option.map (fun lookup -> fun u v ->
                         let struct (r, g, b, _) = lookup u v
                         Vector(2. * r - 1., 2. * g - 1., 2. * b - 1.))
-                if map.IsSome then
-                    warn "Normal maps use a renderer-chosen tangent frame; meshes do not carry glTF tangents to the hit point yet."
                 p <- { p with NormalMap = map; NormalScale = factor c "NormalScale" 1. }
             | None -> ()
             match channel "Occlusion" with
@@ -205,7 +244,6 @@ module Gltf =
                 let peak = max colour.R (max colour.G colour.B)
                 if peak > 0. then p <- { p with Sheen = min 1. peak; SheenColour = colour / peak }
             | None -> ()
-            if material.Alpha <> SharpGLTF.Schema2.AlphaMode.OPAQUE then warn "Alpha blending and masking are not supported; surfaces render opaque."
             let ior = let v = float material.IndexOfRefraction in if Double.IsFinite v && v > 0. then v else 1.5
             { p with Ior = ior }
 
@@ -236,6 +274,46 @@ module Gltf =
                     let texture = pbrTexture p, not (PbrParams.isUniform p)
                     textures.[key] <- texture
                     texture
+
+        let masks = Dictionary<int, TriangleMesh.AlphaMask>()
+
+        /// The coverage test of a MASK or BLEND material (null for opaque ones): base colour alpha times
+        /// the base colour factor's alpha. MASK cuts out at alphaCutoff. BLEND is a cut-out at 0.5 too
+        /// (foliage cards are authored as BLEND but are binary in practice), unless the factor itself is
+        /// translucent (a decal or film), which becomes stochastic coverage: each ray keeps the surface with
+        /// probability alpha, so it blends correctly once averaged over samples.
+        let alphaMaskOf (material: SharpGLTF.Schema2.Material) =
+            if not (isMasked material) then null
+            else
+                match masks.TryGetValue material.LogicalIndex with
+                | true, mask -> mask
+                | _ ->
+                    let channel = material.FindChannel "BaseColor" |> Option.ofNullable
+                    let factor = match channel with Some c -> clamp01 (float c.Color.W) | None -> 1.
+                    let lookup = channel |> Option.bind (fun c -> channelSamplerWith c true true)
+                    let coverage =
+                        match lookup with
+                        | Some lookup -> fun u v -> let struct (_, _, _, a) = lookup u v in factor * a
+                        | None -> fun _ _ -> factor
+                    let mask =
+                        if material.Alpha = SharpGLTF.Schema2.AlphaMode.MASK then
+                            let cutoff = let c = float material.AlphaCutoff in if Double.IsFinite c then c else 0.5
+                            if lookup.IsNone && factor >= cutoff then null
+                            else TriangleMesh.AlphaMask.Cutout(coverage, cutoff)
+                        elif factor < 1. then
+                            warn $"BLEND material {materialName material} (alpha {factor:g3}) renders with stochastic coverage."
+                            TriangleMesh.AlphaMask.Stochastic coverage
+                        elif lookup.IsNone then null
+                        else
+                            warn $"BLEND material {materialName material} renders as a cut-out at alpha 0.5."
+                            TriangleMesh.AlphaMask.Cutout(coverage, 0.5)
+                    masks.[material.LogicalIndex] <- mask
+                    mask
+
+        /// Whether a material's (overridden) description has a normal map, so its meshes need tangents.
+        let hasNormalMap (material: SharpGLTF.Schema2.Material) =
+            not (isNull material)
+            && (material.FindChannel "Normal" |> Option.ofNullable |> Option.exists (fun c -> not (isNull c.Texture)))
 
         /// Bounding-box centre and largest side over all of a mesh's primitives: the origin and unit of
         /// generated texture coordinates.
@@ -274,14 +352,27 @@ module Gltf =
                             let triangles = primitive.GetTriangleIndices() |> Seq.collect (fun struct (a, b, c) -> [ a; b; c ]) |> Array.ofSeq
                             if triangles.Length > 0 then
                                 let texture, varies = convertMaterial primitive.Material None
+                                let projected = varies && degenerateUvs uvs
                                 let positions, normals, uvs, triangles =
-                                    if varies && degenerateUvs uvs then
+                                    if projected then
                                         let source, generated = projectedUvs positions triangles (meshExtent mesh)
                                         let pick (values: _[]) = if values.Length = 0 then values else source |> Array.map (fun i -> values.[i])
                                         pick positions, pick normals, generated, Array.init source.Length id
                                     else positions, normals, uvs, triangles
                                 let smooth = options.SmoothShading && normals.Length > 0
-                                let baseShape = TriangleMesh.fromArrays positions normals uvs triangles smooth
+                                // Normal-mapped surfaces carry a tangent frame: the file's own (glTF TANGENT, whose
+                                // bitangent w * (n x t) already points along v up), else one generated from the UVs.
+                                let tangents =
+                                    if not (hasNormalMap primitive.Material) || uvs.Length = 0 then TriangleMesh.NoTangents
+                                    else
+                                        match primitive.GetVertexAccessor "TANGENT" with
+                                        | accessor when not (isNull accessor) && not projected && accessor.Count = positions.Length ->
+                                            accessor.AsVector4Array()
+                                            |> Seq.map (fun (t: V4) -> { TriangleMesh.Tx = t.X; TriangleMesh.Ty = t.Y; TriangleMesh.Tz = t.Z; TriangleMesh.W = (if t.W < 0.f then -1.f else 1.f) })
+                                            |> Array.ofSeq |> TriangleMesh.GivenTangents
+                                        | _ -> TriangleMesh.GenerateTangents
+                                let mask = alphaMaskOf primitive.Material
+                                let baseShape = TriangleMesh.fromArraysWith tangents mask positions normals uvs triangles smooth
                                 yield baseShape.toShape texture
                         | other -> warn $"Primitives of type {other} are skipped; only triangles render." ]
                 meshes.[mesh.LogicalIndex] <- shapes
@@ -423,6 +514,7 @@ module Gltf =
             Clip.create (if String.IsNullOrWhiteSpace animation.Name then $"animation{animation.LogicalIndex}" else animation.Name) channels
 
         member _.Import(sceneName: string) =
+            prefetch ()
             let scene = if isNull model.DefaultScene then model.LogicalScenes.[0] else model.DefaultScene
             let roots = scene.VisualChildren |> Seq.map convertNode |> List.ofSeq
             let clips =

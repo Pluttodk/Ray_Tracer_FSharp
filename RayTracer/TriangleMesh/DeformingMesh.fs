@@ -29,7 +29,7 @@ let inline private blend (a: MeshVertex) (b: MeshVertex) (f: float) : MeshVertex
 
 type private Keys = { Times: float[]; Vertices: MeshVertex[][] }
 
-type private DeformingTriangle(keys: Keys, indices: TriangleIndices, index: int) =
+type private DeformingTriangle(keys: Keys, indices: TriangleIndices, index: int, mask: AlphaMask) =
     inherit Shape()
     let bounds =
         let mutable lx, ly, lz = infinity, infinity, infinity
@@ -54,13 +54,18 @@ type private DeformingTriangle(keys: Keys, indices: TriangleIndices, index: int)
             match Geometry.intersectTriangleCoordinates ray a.X a.Y a.Z b.X b.Y b.Z c.X c.Y c.Z with
             | ValueNone -> HitPoint(ray)
             | ValueSome(struct (time, beta, gamma)) ->
-                HitPoint(ray, time, normal, normal, Material.None, this, 0., 0., beta, gamma, true)
+                let covered =
+                    isNull mask
+                    || mask.Covers(a.U + beta * (b.U - a.U) + gamma * (c.U - a.U), a.V + beta * (b.V - a.V) + gamma * (c.V - a.V),
+                                   (if mask.IsStochastic then AlphaHash.sample ray index else 0.))
+                if covered then HitPoint(ray, time, normal, normal, Material.None, this, 0., 0., beta, gamma, true)
+                else HitPoint(ray)
     interface IIntervalShape with
         member this.HitWithin(ray, minimum, maximum) = this.hitFunction ray |> Geometry.within minimum maximum
 
-type DeformingMeshShape private (keys: Keys, indices: TriangleIndices[], smooth: bool, texture: Texture) =
+type DeformingMeshShape private (keys: Keys, indices: TriangleIndices[], smooth: bool, texture: Texture, mask: AlphaMask) =
     inherit Shape()
-    let primitives = indices |> Array.mapi (fun i t -> DeformingTriangle(keys, t, i) :> Shape)
+    let primitives = indices |> Array.mapi (fun i t -> DeformingTriangle(keys, t, i, mask) :> Shape)
     let accelerator = Acceleration.buildWith Acceleration.FlatBVH primitives
     let bounds =
         let low, high =
@@ -73,8 +78,9 @@ type DeformingMeshShape private (keys: Keys, indices: TriangleIndices[], smooth:
 
     /// Builds the mesh; every array under `positions`/`normals` holds one entry per vertex for the key of the
     /// same index in `times` (strictly increasing, at least two). `normals` may be empty (flat shading).
+    /// `alphaMask` cuts the surface out where it is not covered (none: opaque).
     static member Create(times: float[], positions: Point[][], normals: Vector[][], uvs: (float * float)[],
-                         triangles: int[], smooth: bool, texture: Texture) : Shape =
+                         triangles: int[], smooth: bool, texture: Texture, ?alphaMask: AlphaMask) : Shape =
         if times.Length < 2 then invalidArg (nameof times) "A deforming mesh needs at least two keys."
         if positions.Length <> times.Length then invalidArg (nameof positions) "Give one position array per key."
         if times |> Array.pairwise |> Array.exists (fun (a, b) -> b <= a) then invalidArg (nameof times) "Key times must increase."
@@ -88,7 +94,7 @@ type DeformingMeshShape private (keys: Keys, indices: TriangleIndices[], smooth:
                     let u, v = if uvs.Length > 0 then uvs.[i] else 0., 0.
                     { X = p.X; Y = p.Y; Z = p.Z; Nx = n.X; Ny = n.Y; Nz = n.Z; U = u; V = v }))
         let indices = Array.init (triangles.Length / 3) (fun t -> { A = triangles.[3*t]; B = triangles.[3*t+1]; C = triangles.[3*t+2] })
-        DeformingMeshShape({ Times = times; Vertices = vertices }, indices, hasNormals, texture) :> Shape
+        DeformingMeshShape({ Times = times; Vertices = vertices }, indices, hasNormals, texture, defaultArg alphaMask null) :> Shape
 
     override _.IsOpaque = Textures.isOpaque texture
     override _.getBoundingBox() = bounds
