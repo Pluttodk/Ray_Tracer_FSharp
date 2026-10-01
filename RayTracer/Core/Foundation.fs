@@ -85,6 +85,7 @@ and HitPoint(ray: Ray, time: float, geometricNormal: Vector, shadingNormal: Vect
 
     /// Hanika shadow-terminator corrected point (defaults to Point). Set by smooth meshes.
     member this.ShadowPoint: Point = shadowPoint
+    member this.HasShadowPoint = hasShadowPoint
     member this.WithShadowPoint(corrected: Point) =
         shadowPoint <- corrected
         hasShadowPoint <- true

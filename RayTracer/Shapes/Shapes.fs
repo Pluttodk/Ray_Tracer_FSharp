@@ -332,8 +332,11 @@ module Transform =
                          transformVector(hit.ShadingNormal, normalMatrix), hit.Material, owner,
                          hit.U, hit.V, hit.BarycentricBeta, hit.BarycentricGamma, true)
             // Tangents lie in the surface, so they transform like directions (with the forward matrix).
-            if hit.HasTangent then world.WithTangent(transformVector(hit.Tangent, forward), transformVector(hit.Bitangent, forward))
-            else world
+            let world =
+                if hit.HasTangent then world.WithTangent(transformVector(hit.Tangent, forward), transformVector(hit.Bitangent, forward))
+                else world
+            // The shadow-terminator point is a position on the instance, so it moves with it.
+            if hit.HasShadowPoint then world.WithShadowPoint(transformPoint(hit.ShadowPoint, forward)) else world
 
     let transform (shape: Shape) transformation =
         let matrix, inverse = getMatrix transformation, getInvMatrix transformation
