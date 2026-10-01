@@ -40,6 +40,19 @@
     ],
     "radius": 0.05
   },
+  "volume": {
+    "_comment": "Atrium haze with shadowed single scattering (RayTracer/Atmosphere.fs Volume). Coefficients per metre; omitted keys take the defaults in Sponza.fs; enabled=false turns it off.",
+    "enabled": true,
+    "min": [-18.0, -0.5, -10.0],
+    "max": [18.0, 27.0, 10.0],
+    "scattering": 0.006,
+    "absorption": 0.0006,
+    "sunAnisotropy": 0.6,
+    "lampAnisotropy": 0.2,
+    "sunSamples": 4,
+    "lampSamples": 2,
+    "ambient": [0.03, 0.033, 0.039]
+  },
   "exposure": 3.0,
   "shots": [
     {
