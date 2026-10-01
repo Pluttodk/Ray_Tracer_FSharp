@@ -46,6 +46,7 @@
     <Compile Include="Camera/MovingCamera.fs" />
     <Compile Include="TriangleMesh/PLYParser.fs" />
     <Compile Include="TriangleMesh/TriangleMesh.fs" />
+    <Compile Include="TriangleMesh/DeformingMesh.fs" />
     <Compile Include="ImplicitSurfaces/ExprParse.fsi" />
     <Compile Include="ImplicitSurfaces/ExprParse.fs" />
     <Compile Include="ImplicitSurfaces/ExprToPoly.fsi" />

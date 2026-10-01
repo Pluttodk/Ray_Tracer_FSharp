@@ -25,6 +25,7 @@ let private suites: (string * (unit -> unit)) list =
       "mesh", MeshRegressionTests.allTest
       "numerics", NumericalRegressionTests.allTest
       "motion", MotionTests.allTest
+      "deforming-mesh", DeformingMeshTests.allTest
       "animation", AnimationTests.allTest
       "physics", PhysicsTests.allTest
       "gltf", GltfTests.allTest
