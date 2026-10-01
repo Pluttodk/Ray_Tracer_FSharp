@@ -205,7 +205,9 @@ sun, across five shots with camera cuts.
 
 ```sh
 scripts/fetch-dragon-assets.sh          # CC0/public-domain model and recordings, see assets/dragon/SOURCES.md
-dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --res 960x540 --spp 9
+dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --res 960x540
+# The film recommends path tracing, denoising, ACES, 64 spp and a light bloom/vignette/grade; flags override:
+dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --res 960x540 --spp 16 --bloom 0.2 --vignette 0.3 --exposure 1.1 --saturation 1 --white-balance 0 --integrator classic --no-denoise --transfer srgb
 dotnet run --project AnimationRunner -c Release -- --demo dragon-flight --audio-only   # iterate on the mix
 ```
 
