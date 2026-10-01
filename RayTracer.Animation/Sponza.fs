@@ -26,7 +26,7 @@ module Sponza =
 
     // ------------------------------------------------------------------ shared description
 
-    type Shot = { Name: string; Start: float; YFov: float; Keys: (float * Vector * Vector) list }
+    type Shot = { Name: string; Start: float; YFov: float; Aperture: float; Keys: (float * Vector * Vector) list }
 
     type Spec =
         { Duration: float
@@ -88,6 +88,7 @@ module Sponza =
                 { Name = (get s "name").GetString()
                   Start = num s "start"
                   YFov = radians (num s "yfovDeg")
+                  Aperture = (match s.TryGetProperty "aperture" with | true, v -> v.GetDouble() | _ -> 0.)
                   Keys =
                     [ for k in (get s "keys").EnumerateArray() ->
                         let a = k.EnumerateArray() |> Array.ofSeq
@@ -132,9 +133,13 @@ module Sponza =
     let private cameras (spec: Spec) =
         let nodes =
             spec.Shots |> List.collect (fun shot ->
-                [ Node.create shot.Name
-                  |> Node.withContent [ CameraRig { CameraSpec.Default with YFov = shot.YFov; Target = Some (shot.Name + "-aim") } ]
-                  Node.create (shot.Name + "-aim") ])
+                let aim = shot.Name + "-aim"
+                let rig =
+                    { CameraSpec.Default with
+                        YFov = shot.YFov; Target = Some aim; ApertureRadius = shot.Aperture
+                        FocusTarget = (if shot.Aperture > 0. then Some aim else None) }
+                [ Node.create shot.Name |> Node.withContent [ CameraRig rig ]
+                  Node.create aim ])
         let track (keys: (float * Vector) list) =
             match keys with
             | [ single ] -> Sampler.linear [ single; fst single + 1., snd single ]
