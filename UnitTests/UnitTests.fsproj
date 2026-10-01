@@ -34,6 +34,7 @@
     <Compile Include="AnimationTests.fs" />
     <Compile Include="PhysicsTests.fs" />
     <Compile Include="GltfTests.fs" />
+    <Compile Include="PbrTests.fs" />
     <Compile Include="FilmTests.fs" />
     <Compile Include="PostTests.fs" />
     <Compile Include="TerrainTests.fs" />

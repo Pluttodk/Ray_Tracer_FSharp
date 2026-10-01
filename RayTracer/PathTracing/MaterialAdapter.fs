@@ -37,6 +37,11 @@ module MaterialAdapter =
     let surfaceAt (hit: HitPoint) (exteriorIor: float) =
         let material = hit.Material
         match material with
+        | :? PbrMaterial as pbr ->
+            // Physically based already: no translation, just resolve the
+            // shading normal and the IOR for the side being hit.
+            PbrShading.surfaceAt pbr.Sample hit exteriorIor
+
         | :? TransparentMaterial as glass ->
             // Indices() already orders these by which face was hit, so the
             // integrator does not need to flip anything here.
@@ -109,6 +114,7 @@ module MaterialAdapter =
     let emissionAt (hit: HitPoint) =
         match hit.Material with
         | :? EmissiveMaterial as m when hit.FrontFace -> m.EmisiveRadience
+        | :? PbrMaterial as m when hit.FrontFace -> m.Emission
         | _ -> Colour.Black
 
     /// True when the surface scatters nothing and only emits.

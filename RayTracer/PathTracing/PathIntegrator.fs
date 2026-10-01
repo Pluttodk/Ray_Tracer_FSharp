@@ -148,7 +148,7 @@ type PathIntegrator
     /// that is biased, and measurably so: the furnace test reads 1-3% high with
     /// a regular light sampler and converges to 0.1% once the samples are
     /// decorrelated per vertex, as they are here.
-    let sampleLight (light: Light) (hit: HitPoint) (u1: float) (u2: float) =
+    let sampleLight (light: Light) (hit: HitPoint) (translucent: bool) (u1: float) (u2: float) =
         match light with
         | :? PointLight as point ->
             let difference = point.Position - hit.Point
@@ -174,7 +174,10 @@ type PathIntegrator
             // Luminance-table sampling mixed with cosine sampling; Weight is 1/pdf (solid angle),
             // which directLighting inverts back into the density for MIS.
             let struct (direction, pdf) = environment.SampleDirection(hit.Normal, u1, u2)
-            if pdf <= 0. || direction * hit.Normal <= 0. then ValueNone
+            // The table also picks directions below the surface. A translucent
+            // surface receives light from there, and the MIS weight of an escaping
+            // transmitted ray assumes NEE could have chosen it, so keep them.
+            if pdf <= 0. || (direction * hit.Normal <= 0. && not translucent) then ValueNone
             else
                 ValueSome { Direction = direction; Distance = infinity
                             Radiance = environment.Radiance direction; Weight = 1. / pdf }
@@ -194,6 +197,7 @@ type PathIntegrator
     let directLighting (hit: HitPoint) (surface: SurfaceParams) (frame: ShadingFrame)
                        (wo: Vector) (key: uint64) (mediumFilter: Colour) =
         let mutable total = Colour.Black
+        let translucent = Bsdf.hasDiffuseTransmission surface
         for lightIndex = 0 to lights.Length - 1 do
             let light = lights.[lightIndex]
             let sampleCount = LightSampling.sampleCount light
@@ -201,12 +205,14 @@ type PathIntegrator
             let mutable contribution = Colour.Black
             for sampleIndex = 0 to sampleCount - 1 do
                 let u1, u2 = sample2D lightKey (sampleIndex + 3)
-                match sampleLight light hit u1 u2 with
+                match sampleLight light hit translucent u1 u2 with
                 | ValueNone -> ()
                 | ValueSome sample ->
                 if sample.Weight > 0. && not sample.Radiance.IsBlack then
                     let wi = frame.ToLocal sample.Direction
-                    if wi.Z > 0. then
+                    // Lights behind the surface only reach it through a
+                    // diffuse transmission lobe (thin translucent sheets).
+                    if wi.Z > 0. || (wi.Z < 0. && translucent) then
                         let f = Bsdf.evalLocal surface wo wi
                         if not f.IsBlack then
                             let weight =
