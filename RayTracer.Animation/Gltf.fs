@@ -1,4 +1,4 @@
-﻿namespace Tracer.Animation
+namespace Tracer.Animation
 
 open System
 open System.Collections.Generic
@@ -120,9 +120,7 @@ module Gltf =
         let decode (image: SharpGLTF.Schema2.Image) (srgb: bool) (alpha: bool) =
             images.GetOrAdd(struct (image.LogicalIndex, srgb, alpha), fun _ -> decodeImage image srgb alpha)
 
-        /// glTF alphaMode as this renderer handles it: MASK cuts out at alphaCutoff; BLEND is a cut-out at
-        /// 0.5 too, unless the material's base colour factor is itself translucent (a decal or glass-like
-        /// film), which becomes stochastic coverage.
+        /// True for MASK and BLEND materials, whose base colour alpha cuts the surface out.
         let isMasked (material: SharpGLTF.Schema2.Material) =
             not (isNull material) && material.Alpha <> SharpGLTF.Schema2.AlphaMode.OPAQUE
 
@@ -280,7 +278,10 @@ module Gltf =
         let masks = Dictionary<int, TriangleMesh.AlphaMask>()
 
         /// The coverage test of a MASK or BLEND material (null for opaque ones): base colour alpha times
-        /// the base colour factor's alpha.
+        /// the base colour factor's alpha. MASK cuts out at alphaCutoff. BLEND is a cut-out at 0.5 too
+        /// (foliage cards are authored as BLEND but are binary in practice), unless the factor itself is
+        /// translucent (a decal or film), which becomes stochastic coverage: each ray keeps the surface with
+        /// probability alpha, so it blends correctly once averaged over samples.
         let alphaMaskOf (material: SharpGLTF.Schema2.Material) =
             if not (isMasked material) then null
             else

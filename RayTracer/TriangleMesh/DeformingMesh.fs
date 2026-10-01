@@ -1,4 +1,4 @@
-﻿module Tracer.Basics.DeformingMesh
+module Tracer.Basics.DeformingMesh
 
 open System
 open Tracer.Basics

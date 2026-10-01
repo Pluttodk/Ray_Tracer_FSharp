@@ -233,18 +233,22 @@ type private TrianglePrimitive(vertices: MeshVertex array, indices: TriangleIndi
     override _.IsOpaque = true
     override _.getBoundingBox() = bounds
     override _.isInside _ = false
-    override this.hitFunction ray =
+    /// Intersection within (minimum, maximum). The alpha test runs only on hits inside the interval, so a
+    /// traversal that has already found a closer hit does not pay for texture lookups behind it.
+    member private this.Hit(ray: Ray, minimum: float, maximum: float) =
         let a, b, c = vertices.[indices.A], vertices.[indices.B], vertices.[indices.C]
         match (if nondegenerate then Geometry.intersectTriangleCoordinates ray a.X a.Y a.Z b.X b.Y b.Z c.X c.Y c.Z else ValueNone) with
         | ValueNone -> HitPoint(ray)
         | ValueSome(struct (time, beta, gamma)) ->
-            if isNull mask
-               || mask.Covers(interpolateUv a.U b.U c.U beta gamma, interpolateUv a.V b.V c.V beta gamma,
-                              (if mask.IsStochastic then AlphaHash.sample ray index else 0.)) then
+            if isNull mask then HitPoint(ray, time, normal, normal, material, this, 0., 0., beta, gamma, true)
+            elif not (time > minimum && time < maximum) then HitPoint(ray)
+            elif mask.Covers(interpolateUv a.U b.U c.U beta gamma, interpolateUv a.V b.V c.V beta gamma,
+                             (if mask.IsStochastic then AlphaHash.sample ray index else 0.)) then
                 HitPoint(ray, time, normal, normal, material, this, 0., 0., beta, gamma, true)
             else HitPoint(ray)
+    override this.hitFunction ray = this.Hit(ray, -infinity, infinity)
     interface IIntervalShape with
-        member this.HitWithin(ray, minimum, maximum) = this.hitFunction ray |> Geometry.within minimum maximum
+        member this.HitWithin(ray, minimum, maximum) = this.Hit(ray, minimum, maximum) |> Geometry.within minimum maximum
 
 module private Tangents =
     /// Per-vertex tangents from texture coordinates (Lengyel's accumulation, then Gram-Schmidt against the
