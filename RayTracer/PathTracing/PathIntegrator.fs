@@ -52,13 +52,6 @@ type PathIntegrator
                    (if filter.B = 1. then 1. else 0.))
         else MaterialTransport.absorption filter distance
 
-    let background (direction: Vector) =
-        if environments.Length = 0 then scene.BackgroundColour
-        else
-            let mutable colour = Colour.Black
-            for light in environments do colour <- colour + light.Radiance direction
-            colour
-
     /// Power heuristic with beta = 2 (Veach & Guibas 1995). Squaring suppresses
     /// the low-density strategy harder than the balance heuristic, which is what
     /// keeps glossy-under-area-light from fireflying.
@@ -177,6 +170,14 @@ type PathIntegrator
                     let cosine = max 0. (surface.Normal.Normalise * -direction)
                     ValueSome { Direction = direction; Distance = distance; Radiance = area.GetColour hit
                                 Weight = cosine / (distance * distance * surface.AreaPdf) }
+        | :? EnvironmentLight as environment when environment.IsImportanceSampled ->
+            // Luminance-table sampling mixed with cosine sampling; Weight is 1/pdf (solid angle),
+            // which directLighting inverts back into the density for MIS.
+            let struct (direction, pdf) = environment.SampleDirection(hit.Normal, u1, u2)
+            if pdf <= 0. || direction * hit.Normal <= 0. then ValueNone
+            else
+                ValueSome { Direction = direction; Distance = infinity
+                            Radiance = environment.Radiance direction; Weight = 1. / pdf }
         | :? EnvironmentLight as environment ->
             let x, y, z = mapToHemisphere (u1, u2) 1.
             let frame = ShadingFrame.ofNormal hit.Normal
@@ -298,21 +299,27 @@ type PathIntegrator
             if not hit.DidHit then
                 let travelled = infinity
                 let escaped = mulColour throughput (attenuation mediumFilter travelled)
-                let sky = background currentRay.GetDirection
-                if not sky.IsBlack then
-                    let weight =
-                        if previousWasSpecular || environments.Length = 0 then 1.
+                let direction = currentRay.GetDirection
+                if previousWasSpecular || environments.Length = 0 then
+                    // Camera rays and delta-lobe chains cannot have been light sampled, so they
+                    // take the environment in full - including what is only `Visible`, such as a
+                    // sky's sun disc whose lighting a DirectionalLight carries (see Sky.fs).
+                    let sky =
+                        if environments.Length = 0 then scene.BackgroundColour
                         else
-                            // EnvironmentLight samples the cosine hemisphere
-                            // about the shading normal of the vertex the ray
-                            // left, so its density is cos/pi measured against
-                            // THAT normal - not a constant. Every environment
-                            // light shares this density, so one weight covers
-                            // however many of them the scene has.
-                            let cosine = max 0. (currentRay.GetDirection.Normalise * previousNormal)
-                            let envPdf = cosine / Math.PI
-                            powerHeuristic previousBsdfPdf envPdf
-                    radiance <- addColour radiance (scaleColour (mulColour escaped sky) weight)
+                            let mutable colour = Colour.Black
+                            for light in environments do colour <- addColour colour (light.Visible direction)
+                            colour
+                    radiance <- addColour radiance (mulColour escaped sky)
+                else
+                    // Each environment light was sampled by NEE with its own density about the
+                    // shading normal of the vertex the ray left (cos/pi, or the luminance-table
+                    // mixture), so each gets its own MIS weight.
+                    for light in environments do
+                        let sky = light.Radiance direction
+                        if not sky.IsBlack then
+                            let weight = powerHeuristic previousBsdfPdf (light.Pdf(previousNormal, direction))
+                            radiance <- addColour radiance (scaleColour (mulColour escaped sky) weight)
                 alive <- false
             else
                 let segment = hit.Time * currentRay.GetDirection.Magnitude
