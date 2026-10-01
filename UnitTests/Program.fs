@@ -35,6 +35,7 @@ let private suites: (string * (unit -> unit)) list =
       "post", PostTests.allTest
       "terrain", TerrainTests.allTest
       "atmosphere", AtmosphereTests.allTest
+      "volume", VolumeTests.allTest
       "shadow-terminator", ShadowTerminatorTests.allTest
       "particles", ParticleTests.allTest ]
 

@@ -124,6 +124,9 @@ type PathIntegrator
                         finished <- true
             transmittance
 
+    /// Shadow rays cast from inside the bounded volume, which lies outside any transparent medium.
+    let volumeVisibility = fun (ray: Ray) (distance: float) -> visibility ray distance Colour.White
+
     /// Solid-angle density that light sampling would have used for `direction`
     /// arriving at `hit` from area light `light`.
     let areaLightPdf (light: AreaLight) (origin: Point) (lightHit: HitPoint) =
@@ -296,6 +299,14 @@ type PathIntegrator
                     let s = fog.InScatter direction
                     let scattered = Colour((1. - transmittance.R) * s.R, (1. - transmittance.G) * s.G, (1. - transmittance.B) * s.B)
                     radiance <- addColour radiance (mulColour throughput scattered)
+                    throughput <- mulColour throughput transmittance
+                // Bounded haze with shadowed single scattering (sun shafts, lamp halos).
+                if fog.HasVolume then
+                    let distance = if hit.DidHit then hit.Time * currentRay.GetDirection.Magnitude else infinity
+                    let struct (scattered, transmittance) =
+                        fog.VolumeSegment(currentRay.GetOrigin, direction, distance, currentRay.ShutterTime, key, depth,
+                                          volumeVisibility)
+                    if not scattered.IsBlack then radiance <- addColour radiance (mulColour throughput scattered)
                     throughput <- mulColour throughput transmittance
             | _ -> ()
 
