@@ -45,6 +45,7 @@ module Sponza =
           LampIntensity: float
           LampColour: Colour
           LampRadius: float
+          LampOffset: Vector
           Shots: Shot list
           Root: JsonElement }
 
@@ -81,6 +82,7 @@ module Sponza =
           LampIntensity = num lamps "intensity"
           LampColour = col (get lamps "colour")
           LampRadius = num lamps "radius"
+          LampOffset = (match lamps.TryGetProperty "offset" with | true, v -> vec v | _ -> Vector.Zero)
           Shots =
             [ for s in (get root "shots").EnumerateArray() ->
                 { Name = (get s "name").GetString()
@@ -153,9 +155,25 @@ module Sponza =
     let private lights (spec: Spec) (lamps: Point list) =
         let sky = skyModel spec
         let sun = DirectionalLight(spec.SunColour, spec.SunIrradiance, sunDirection spec) :> Light
-        // Lamps wait for an attenuated point light (workstream R2); PointLight has no falloff.
-        ignore lamps
-        [ sun; Sky.light sky 2 512 :> Light ]
+        // --- r2 ---
+        // The HDRI's own sun is clamped out of the map (camera rays see the clamped map too) so the
+        // spec's analytic sun is the only sun; without an HDRI the Preetham sky stands in.
+        let skyLight =
+            match spec.SkyHdri with
+            | Some file ->
+                let image = HdrImage.load (asset file)
+                let clamped, hdriSun = HdrEnvironment.extractSun image spec.SkyRotation None 5.
+                let d = hdriSun.Direction
+                eprintfn "sponza: HDRI sun clamped (%d px, %.0f%% of the map's power) at azimuth %.1f, elevation %.1f deg"
+                    hdriSun.Pixels (100. * hdriSun.PowerFraction) (Math.Atan2(d.X, d.Z) * 180. / Math.PI) (Math.Asin d.Y * 180. / Math.PI)
+                HdrEnvironment.light clamped None spec.SkyRotation spec.SkyIntensity 2 1024 :> Light
+            | None -> Sky.light sky 2 512 :> Light
+        let lampLights =
+            if spec.LampsEnabled then
+                lamps |> List.map (fun p -> SphereLight(spec.LampColour, spec.LampIntensity, p + spec.LampOffset, spec.LampRadius) :> Light)
+            else []
+        sun :: skyLight :: lampLights
+        // --- end r2 ---
 
     // --- v ---
     /// Haze filling the atrium, for sun shafts through the arches and halos around the lamps. These are the

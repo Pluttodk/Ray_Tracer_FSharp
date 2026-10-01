@@ -25,20 +25,25 @@
   },
   "sky": {
     "hdri": "main_sponza/textures/kloppenheim_05_4k.hdr",
-    "rotationDeg": 0.0,
+    "rotationDeg": 155.0,
     "intensity": 1.0,
     "turbidity": 2.5,
     "sunToSky": 6.0
   },
   "lamps": {
-    "enabled": false,
+    "enabled": true,
     "intensity": 2.0,
     "colour": [
       1.0,
       0.456,
       0.114
     ],
-    "radius": 0.05
+    "radius": 0.05,
+    "offset": [
+      0.0,
+      -0.2,
+      0.0
+    ]
   },
   "volume": {
     "_comment": "Atrium haze with shadowed single scattering (RayTracer/Atmosphere.fs Volume). Coefficients per metre; omitted keys take the defaults in Sponza.fs; enabled=false turns it off.",
@@ -253,5 +258,6 @@
         ]
       ]
     }
-  ]
+  ],
+  "_lamps": "Lamp lights sit inside opaque lanterns in the file; offset moves them just below the lanterns."
 }
