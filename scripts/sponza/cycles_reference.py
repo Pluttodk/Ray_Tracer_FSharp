@@ -40,7 +40,7 @@ MATCHING CHOICES
   * Lamps: when lamps.enabled, Cycles point lights (sphere radius lamps.radius, invisible to the camera
     like our SphereLight) at the main file's lamp_light_* positions + lamps.offset.
   * Sun: delta light by default (`--sun-angle 0`, like our DirectionalLight); 0.53 gives the real penumbra.
-  * Bounces 4 (Sponza MaxBounces), transparent bounces 64, no clamping, no motion blur (ours has a 0.5
+  * Bounces 4 (Sponza MaxBounces), transparent bounces 64, no clamping, no glossy filter, no motion blur (ours has a 0.5
     frame shutter; the cameras move slowly), Blackman-Harris pixel filter, OIDN with albedo + normal.
   * Post: our sponza render defaults (Film.fs renderDefaults: bloom 0.1 above 1.5, vignette 0.15,
     saturation 1.05, exposure = json exposure, ACES); `--post none` for the bare exposure + transfer.
@@ -108,6 +108,8 @@ def parse_args(argv):
     p.add_argument("--lamps", default="auto", choices=["auto", "on", "off"], help="auto follows json lamps.enabled")
     p.add_argument("--no-denoise", action="store_true")
     p.add_argument("--clamp", type=float, default=0.0, help="Cycles indirect clamp (0 = off, unbiased)")
+    p.add_argument("--blur-glossy", type=float, default=0.0,
+                   help="Cycles' Filter Glossy (default 0 = unbiased; Blender's own default of 1 hides caustic fireflies)")
     # Post chain; defaults are Film.fs renderDefaults "sponza".
     p.add_argument("--exposure", type=float, default=None, help="default: json exposure, else 3")
     p.add_argument("--bloom", type=float, default=0.1)
@@ -125,6 +127,8 @@ def parse_args(argv):
     p.add_argument("--force-opaque", default="",
                    help="diagnostic: comma-separated material name prefixes to render with alpha 1 (e.g. dirt_decal,LeafSpring)")
     p.add_argument("--hdri-keep-sun", action="store_true", help="diagnostic: use the HDRI unclamped (its own sun too)")
+    p.add_argument("--single-scatter", action="store_true",
+                   help="diagnostic: Principled BSDFs use single-scattering GGX (no multiscatter energy compensation)")
     p.add_argument("--no-cache", action="store_true", help="re-import the glTF parts instead of using the .blend cache")
     p.add_argument("--calib", default=None, choices=["sun", "lamp"], help="render a calibration scene instead")
     p.add_argument("--write-calib-gltf", default=None, help="(plain python) write the calibration scene as glTF")
@@ -873,6 +877,13 @@ def blender_main(a):
         info["camera"] = {"shot": shot, "position": pos, "target": target, "yfovDeg": math.degrees(yfov), "aperture": aperture}
         print(f"[gt] t={a.time}: {shot} at {pos} -> {target}, yfov {math.degrees(yfov):.1f}")
 
+    if a.single_scatter:
+        for mat in bpy.data.materials:
+            if mat.use_nodes:
+                for node in mat.node_tree.nodes:
+                    if node.type == "BSDF_PRINCIPLED":
+                        node.distribution = "GGX"
+
     # -------------------------------------------------------------- render settings
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
@@ -922,6 +933,9 @@ def blender_main(a):
     scene.cycles.transparent_max_bounces = 64  # alpha-cut leaves and curtains
     scene.cycles.sample_clamp_direct = 0
     scene.cycles.sample_clamp_indirect = a.clamp
+    scene.cycles.blur_glossy = a.blur_glossy
+    scene.cycles.caustics_reflective = True
+    scene.cycles.caustics_refractive = True
     scene.cycles.seed = 2026
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.render.resolution_percentage = 100
