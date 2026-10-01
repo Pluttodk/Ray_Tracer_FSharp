@@ -13,7 +13,7 @@
 #
 # Environment: RES (default 480x270), SPP (ours; default: the demo's recommendation), CYCLES_SPP (256),
 # OURS_ARGS / CYCLES_ARGS (extra args), SKIP_OURS=1 / SKIP_CYCLES=1 (reuse an existing image),
-# NO_BUILD=1 (skip the Release build), POST=ours (keep bloom, vignette and saturation on both sides; by default
+# NO_BUILD=1 (skip the Release build), CLAMP (ours' indirect clamp, default 0 like Cycles), POST=ours (keep bloom, vignette and saturation on both sides; by default
 # both get only exposure + ACES: ours with --bloom 0 --vignette 0 --saturation 1, Cycles with --post none).
 # Our side renders one frame (frame = round(time * 24)).
 set -euo pipefail
@@ -35,6 +35,8 @@ else
   ours_post=(--bloom 0 --vignette 0 --saturation 1)
   cycles_post=(--post none)
 fi
+# The sponza defaults clamp indirect light at 8 (fewer fireflies, biased); Cycles runs unclamped.
+ours_post+=(--clamp "${CLAMP:-0}")
 ours="$out/$label-ours.png"
 cycles="$out/$label-cycles.png"
 

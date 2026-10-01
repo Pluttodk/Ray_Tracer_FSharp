@@ -68,9 +68,12 @@ Knight / extra geometry. Every part listed in the json's `include` is imported b
 `--extra FILE` adds more. The knight's vertex cache (assets/sponza/knight/knight.cache, written by
 scripts/sponza/convert-knight.py, played by Knight.fs) is read directly and posed at the render time when
 the json has a `knight` object (or with `--knight CACHE`), mirroring Knight.placeAt / Knight.clock:
-    "knight": {"cache": "knight/knight.cache", "position": [x, y, z], "yawDeg": 0, "start": 0, "speed": 1}
-(animation time = (t - start) * speed; at yaw 0 the knight faces -X). Rename the keys here if Sponza.fs
-ends up using different ones.
+    "knight": {"enabled": true, "position": [x, y, z], "yawDeg": 0, "start": 0, "speed": 1}
+(animation time = (t - start) * speed, linear between the cache's 24 fps frames, clamped; at yaw 0 the
+knight faces -X; optional "cache", default knight/knight.cache). Using the cache rather than the USD gives
+exactly the geometry our renderer sees (same points, same smooth normals across UV seams). Its materials
+follow Knight.describe (base colour x map, roughness = red channel of the roughness map, tangent-space
+normal map); maxTexture is ignored (full-resolution maps).
 """
 
 import argparse
@@ -214,7 +217,7 @@ def camera_at(spec, t):
             active = s
     position = evaluate_track([(k[0], k[1]) for k in active["keys"]], t)
     target = evaluate_track([(k[0], k[2]) for k in active["keys"]], t)
-    return active["name"], position, target, math.radians(active["yfovDeg"])
+    return active["name"], position, target, math.radians(active["yfovDeg"]), active.get("aperture", 0.0)
 
 
 def gltf_node_world_positions(path, prefix):
@@ -611,7 +614,7 @@ def blender_main(a):
         bpy.context.scene.collection.objects.link(obj)
         return obj
 
-    def add_camera(position_ours, target_ours, yfov):
+    def add_camera(position_ours, target_ours, yfov, aperture=0.0):
         data = bpy.data.cameras.new("camera")
         data.sensor_fit = "VERTICAL"
         data.sensor_height = 24.0
@@ -624,6 +627,12 @@ def blender_main(a):
         obj.location = p
         obj.rotation_mode = "QUATERNION"
         obj.rotation_quaternion = (q - p).to_track_quat("-Z", "Y")
+        if aperture > 0:
+            # Sponza.cameras: thin lens of radius `aperture` (m) focused on the aim point. Cycles' aperture
+            # radius is lens / (2 f-stop) in scene units, with the lens in mm.
+            data.dof.use_dof = True
+            data.dof.focus_distance = (q - p).length
+            data.dof.aperture_fstop = (data.lens * 1e-3) / (2 * aperture)
         bpy.context.scene.camera = obj
         return obj
 
@@ -849,18 +858,19 @@ def blender_main(a):
             info["lamps"] = len(positions)
 
         # ---------------------------------------------------------- camera
-        shot, pos, target, yfov = camera_at(spec, a.time)
-        add_camera(pos, target, yfov)
+        shot, pos, target, yfov, aperture = camera_at(spec, a.time)
+        add_camera(pos, target, yfov, aperture)
         knight = spec.get("knight")
         if a.knight:
-            knight = dict(knight or {}, cache=a.knight)
-        if knight:
+            knight = dict(knight or {}, cache=a.knight, enabled=True)
+        if knight and knight.get("enabled", True):
+            knight.setdefault("cache", "knight/knight.cache")
             # Knight.fs: placeAt position yaw, clock start speed (animation time = (t - start) * speed).
             import_knight_cache(asset(knight["cache"]) if not os.path.isabs(knight["cache"]) else knight["cache"],
                                 (a.time - knight.get("start", 0.0)) * knight.get("speed", 1.0),
                                 knight.get("position", [0, 0, 0]), knight.get("yawDeg", 0.0))
             info["knight"] = knight
-        info["camera"] = {"shot": shot, "position": pos, "target": target, "yfovDeg": math.degrees(yfov)}
+        info["camera"] = {"shot": shot, "position": pos, "target": target, "yfovDeg": math.degrees(yfov), "aperture": aperture}
         print(f"[gt] t={a.time}: {shot} at {pos} -> {target}, yfov {math.degrees(yfov):.1f}")
 
     # -------------------------------------------------------------- render settings
