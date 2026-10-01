@@ -254,18 +254,31 @@ type AtmosphereMedium(atmosphere: Atmosphere, lights: Light list) =
 
     let volume = atmosphere.Volume |> Option.filter Volume.isActive
     let luminance (c: Colour) = 0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B
-    /// Point lights with how their radiance falls with distance, probed once: lights whose radiance follows
-    /// an inverse square are importance sampled equiangularly, constant ones by transmittance.
+    /// Radiance a point or sphere lamp delivers at `p` (its colour times its distance falloff).
+    let lampRadiance (light: Light) (p: Point) =
+        let hit = HitPoint(p)
+        light.GetColour hit * light.GetGeometricFactor hit
+    /// Point and sphere lamps (position, falloff, power, shadow-ray clearance), with how their radiance falls
+    /// with distance probed once: lights following an inverse square are importance sampled equiangularly,
+    /// constant ones by transmittance.
     let lamps =
-        lights |> List.choose (function
-            | :? PointLight as lamp ->
-                let at d = luminance (lamp.GetColour(HitPoint(lamp.Position + Vector(0., d, 0.))))
-                let near, far = at 1., at 4.
+        lights |> List.choose (fun light ->
+            let lamp =
+                match light with
+                | :? PointLight as point -> Some (point.Position, 0.)
+                | :? SphereLight as sphere -> Some (sphere.Position, sphere.Radius)
+                | _ -> None
+            match lamp with
+            | None -> None
+            | Some (position, radius) ->
+                let at d = luminance (lampRadiance light (position + Vector(0., d, 0.)))
+                let near, far = at (max 1. (2. * radius)), at (4. * max 1. (2. * radius))
                 if not (near > 0.) && not (far > 0.) then None
                 else
                     let inverseSquare = far < 0.5 * near
-                    Some struct (lamp :> Light, lamp.Position, inverseSquare, (if inverseSquare then near else max near far))
-            | _ -> None)
+                    let scale = max 1. (2. * radius)
+                    let power = if inverseSquare then near * scale * scale else max near far
+                    Some struct (light, position, inverseSquare, power, radius))
         |> Array.ofList
     let lampWeights = new ThreadLocal<float[]>(fun () -> Array.zeroCreate lamps.Length)
 
@@ -353,12 +366,12 @@ type AtmosphereMedium(atmosphere: Atmosphere, lights: Light list) =
                 let weights = lampWeights.Value
                 let mutable total = 0.
                 for j = 0 to lamps.Length - 1 do
-                    let struct (_, position, inverseSquare, power) = lamps.[j]
+                    let struct (_, position, inverseSquare, power, radius) = lamps.[j]
                     let w =
                         if inverseSquare then
                             let toLamp = position - start
                             let along = toLamp * direction
-                            let d = max 1e-4 (sqrt (max 0. (toLamp.MagnitudeSquared - along * along)))
+                            let d = max (max 1e-4 radius) (sqrt (max 0. (toLamp.MagnitudeSquared - along * along)))
                             power * (atan ((length - along) / d) - atan (-along / d)) / d
                         else power * length
                     let w = if Double.IsFinite w && w > 0. then w else 0.
@@ -377,11 +390,11 @@ type AtmosphereMedium(atmosphere: Atmosphere, lights: Light list) =
                             target <- target - weights.[j]
                             j <- j + 1
                         if weights.[j] > 0. then
-                            let struct (light, position, inverseSquare, _) = lamps.[j]
+                            let struct (light, position, inverseSquare, _, radius) = lamps.[j]
                             let pick = weights.[j] / total
                             let toLamp = position - start
                             let along = toLamp * direction
-                            let d = max 1e-4 (sqrt (max 0. (toLamp.MagnitudeSquared - along * along)))
+                            let d = max (max 1e-4 radius) (sqrt (max 0. (toLamp.MagnitudeSquared - along * along)))
                             let thetaA = atan (-along / d)
                             let thetaB = atan ((length - along) / d)
                             let equiangularShare = if inverseSquare && thetaB > thetaA then 0.75 else 0.
@@ -403,10 +416,10 @@ type AtmosphereMedium(atmosphere: Atmosphere, lights: Light list) =
                                 let distance = offset.Magnitude
                                 if distance > 0. then
                                     let toLight = offset.Normalise
-                                    let incoming = light.GetColour(HitPoint(p))
+                                    let incoming = lampRadiance light p
                                     accumulate s incoming toLight distance v.LampAnisotropy
                                         (v.LampWeight / (pick * pdf * float n))
-                                        (max 0. (distance - max v.LampClearance (1e-6 * distance)))
+                                        (max 0. (distance - max (max v.LampClearance radius) (1e-6 * distance)))
         struct (Colour(r, g, b), across)
 
     /// Whether a bounded volume is present and can change any ray.

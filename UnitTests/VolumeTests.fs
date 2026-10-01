@@ -65,12 +65,14 @@ let private slabMatchesAnalytic () =
     Assert.True(allShadowed.IsBlack, "volume-fully-shadowed-is-black")
 
 /// Lamps inside the slab against a fine quadrature of the single-scatter integral, for an inverse-square lamp
-/// (equiangular mixture) and a constant one (transmittance sampling), with the slab thinning with height.
+/// (equiangular mixture), a constant one (transmittance sampling) and a sphere lamp, with the slab thinning
+/// with height.
 let private lampsMatchQuadrature () =
     let position = Point(1.5, 0.4, 0.3)
     let volume = { slab with ScaleHeight = 0.8; BaseHeight = -0.2 }
     for lamp, name in [ InverseSquareLamp(Colour(1., 0.8, 0.6), 2., position) :> Light, "inverse-square"
-                        PointLight(Colour(1., 0.8, 0.6), 0.5, position) :> Light, "constant" ] do
+                        PointLight(Colour(1., 0.8, 0.6), 0.5, position) :> Light, "constant"
+                        SphereLight(Colour(1., 0.8, 0.6), 2., position, 0.05) :> Light, "sphere" ] do
         let steps = 400000
         let a, length = 10., 20.
         let ds = length / float steps
@@ -85,7 +87,7 @@ let private lampsMatchQuadrature () =
             let rho = Volume.density volume 0.
             let tauLight = Volume.densityIntegral volume p.Y toLight.Y r
             let tauView = rho * s
-            let incoming = lamp.GetColour(HitPoint(p))
+            let incoming = let h = HitPoint(p) in lamp.GetColour h * lamp.GetGeometricFactor h
             let phase = Atmosphere.henyeyGreenstein volume.LampAnisotropy (toLight * Vector(1., 0., 0.))
             let term (scatter: float) (extinction: float) (li: float) =
                 scatter * rho * phase * li * exp (-extinction * (tauView + tauLight)) * ds
