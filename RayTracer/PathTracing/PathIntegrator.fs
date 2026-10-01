@@ -193,6 +193,7 @@ type PathIntegrator
     let directLighting (hit: HitPoint) (surface: SurfaceParams) (frame: ShadingFrame)
                        (wo: Vector) (key: uint64) (mediumFilter: Colour) =
         let mutable total = Colour.Black
+        let translucent = Bsdf.hasDiffuseTransmission surface
         for lightIndex = 0 to lights.Length - 1 do
             let light = lights.[lightIndex]
             let sampleCount = LightSampling.sampleCount light
@@ -205,7 +206,9 @@ type PathIntegrator
                 | ValueSome sample ->
                 if sample.Weight > 0. && not sample.Radiance.IsBlack then
                     let wi = frame.ToLocal sample.Direction
-                    if wi.Z > 0. then
+                    // Lights behind the surface only reach it through a
+                    // diffuse transmission lobe (thin translucent sheets).
+                    if wi.Z > 0. || (wi.Z < 0. && translucent) then
                         let f = Bsdf.evalLocal surface wo wi
                         if not f.IsBlack then
                             let weight =

@@ -5,6 +5,7 @@ open Assert
 open Tracer.Basics
 open Tracer.Basics.PathTracing
 open Tracer.Animation
+open Tracer.Basics.Render
 
 let private lcg (state: uint64 ref) =
     state.Value <- state.Value * 6364136223846793005UL + 1442695040888963407UL
@@ -179,7 +180,26 @@ let private importerOverride () =
     finally
         try IO.File.Delete path with _ -> ()
 
+/// End to end through the path tracer: a sun behind a thin sheet lights its visible face only when the
+/// sheet transmits diffusely (next-event estimation has to look behind the surface).
+let private backLitSheet () =
+    let render (sample: PbrSample) =
+        let sheet = Disc(Point(0., 0., 0.), 1., Textures.mkMatTexture (PbrMaterial sample)) :> Shape
+        let sun = DirectionalLight(Colour.White, 1., Vector(0.2, 0., -1.).Normalise) :> Light
+        let scene = Scene([ sheet ], [ sun ], AmbientLight(Colour.Black, 0.), 3)
+        let camera =
+            PinholeCamera(Point(0., 0., 4.), Point(0., 0., 0.), Vector(0., 1., 0.), 2., 0.5, 0.5, 8, 8, Sampling.regular 2)
+        let options = { RenderOptions.Default with Integrator = Path; Threads = 2; Seed = 3 }
+        let film = Render(scene, camera, options).RenderLinear
+        Array.average film.Pixels
+    let opaque = render { PbrSample.defaults with BaseColour = Colour(0.5, 0.5, 0.5) }
+    let sheet = render { PbrSample.defaults with BaseColour = Colour(0.5, 0.5, 0.5); DiffuseTransmission = 0.5 }
+    // Lambertian transmission: 0.5 * (1 - specular albedo) * cos / pi of the unit sun, about 0.15.
+    Assert.True((opaque = 0.), sprintf "path-opaque-sheet-dark-when-back-lit (%g)" opaque)
+    Assert.True(sheet > 0.1 && sheet < 0.2, sprintf "path-translucent-sheet-glows-when-back-lit (%g)" sheet)
+
 let allTest () =
+    backLitSheet ()
     bilinearSampling ()
     flatNormalMapIdentity ()
     diffuseTransmission ()
