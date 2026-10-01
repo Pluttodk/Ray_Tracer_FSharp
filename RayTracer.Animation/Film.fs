@@ -111,9 +111,17 @@ module Film =
               3.5, Vector(330., 166., -55.)
               7.0, Vector(170., 172., -140.)
               10.0, Vector(-40., 190., -175.)
-              13.0, Vector(-170., 185., -40.)
-              15.5, Vector(-60., 222., 42.)
-              17.5, Vector(70., 214., 95.)
+              // --- s: summit pass skims the sunlit south-west face ---
+              // Cut in lower and further south (was (-170, 185, -40)), dive to 50-60 units over the face that
+              // rises away from the 6-degree sun, so the dragon's shadow races up the slope 40-70 units ahead
+              // of it (about 14.2-16.5 s); then over the ridge east of the summit and down to the hover.
+              13.0, Vector(-170., 180., -55.)
+              14.41, Vector(-137., 149., -49.)
+              15.42, Vector(-89., 163., -64.)
+              16.33, Vector(-27., 196., -56.)
+              17.12, Vector(23., 219., -15.)
+              18.4, Vector(83., 220., 89.)
+              // --- s: end ---
               19.5, Vector(96., 210., 128.)
               24.5, Vector(92., 212., 131.)
               26.5, Vector(40., 222., 150.)
@@ -309,7 +317,7 @@ module Film =
         let camera name yfov target = Node.create name |> Node.withContent [ CameraRig { CameraSpec.Default with YFov = yfov; Target = Some target } ]
         let establishing = camera "cam-establish" 0.5 "aim-establish"
         let tracking = camera "cam-track" 0.62 "aim-dragon"
-        let summit = camera "cam-summit" 1.05 "aim-dragon"
+        let summit = camera "cam-summit" 0.8 "aim-dragon"  // s: tighter lens for the summit pass
         let roar = camera "cam-roar" 0.42 "aim-roar"
         let depart = camera "cam-depart" 0.7 "aim-dragon"
         // Low on a foothill, panning as the dragon crosses in front of the massif.
@@ -324,10 +332,11 @@ module Film =
                 let u = float i / 12.
                 t, p - (40. - 10. * u) * side - (12. - 20. * u) * v + Vector(0., 7. - 3. * u, 0.) ]
         let roarPath = Smooth.vector [ 19., roarCamera + Vector(6., -1., 12.); 21., roarCamera; 25., roarCamera + Vector(-2., 0., -3.) ]
-        // Just below and beside the dragon's line over the summit, so it roars past overhead.
-        let summitCamera =
-            let p = dragonPosition 16.4 + Vector(4., -12., 7.)
-            Vector(p.X, max p.Y (ground p.X p.Z + 2.), p.Z)
+        // --- s: summit camera ---
+        // High off the south face, drifting east with the climb: it looks down on the sunlit slope, so the
+        // dragon and its shadow racing up the face share the frame, with the low sun off to the left.
+        let summitPath = Smooth.vector [ 13., Vector(-70., 212., -150.); 19., Vector(-20., 220., -140.) ]
+        // --- s: end ---
         let departPath = Smooth.vector [ 25., Vector(150., 222., 205.); 30., Vector(135., 228., 190.) ]
         let aims =
             [ Node.create "aim-establish"; Node.create "aim-dragon"; Node.create "aim-roar" ]
@@ -336,7 +345,7 @@ module Film =
               Clip.translate "aim-establish" (Smooth.vector [ 0., Vector(390., 168., 10.); 7., Vector(130., 176., -115.) ])
               Clip.translate "cam-track" (Smooth.vector trackKeys)
               Clip.translate "aim-dragon" (Sampler.linear [ for i in 0 .. int (duration * 30.) -> let t = float i / 30. in t, dragonPosition t ])
-              Clip.translate "cam-summit" (Sampler.linear [ 0., summitCamera; duration, summitCamera ])
+              Clip.translate "cam-summit" summitPath  // s: summit camera path
               Clip.translate "cam-roar" roarPath
               Clip.translate "aim-roar" (Smooth.vector [ 19., hoverPoint + Vector(2., 1., -2.); 21.3, hoverPoint + Vector(0., 1., 1.); 25., hoverPoint + Vector(-2., 2., 1.) ])
               Clip.translate "cam-depart" departPath ]
