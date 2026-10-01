@@ -303,8 +303,8 @@ module Demos =
         let lampAt = Point(-3.3, 2.6, -5.3)
         let bulb =
             Node.create "bulb" |> Node.at lampAt.X lampAt.Y lampAt.Z
-            |> Node.withContent [ Geometry(sphere 0.06 (solid (EmissiveMaterial(rgb 1. 0.8 0.5, 3.) :> Material))) ]
-        let focus = Node.create "focus" |> Node.at 1. 1.4 -3.
+            |> Node.withContent [ Geometry(sphere 0.04 (solid (EmissiveMaterial(rgb 1. 0.8 0.5, 3.) :> Material))) ]
+        let focus = Node.create "focus" |> Node.at 0. 1.5 -3.5
         // --- v: volume (sun-shafts demo) ---
         let haze =
             { Volume.Default with
@@ -324,7 +324,7 @@ module Demos =
           StaticShapes = room @ windowWall
           StaticLights =
             [ DirectionalLight(rgb 1. 0.85 0.65, 4., Vector(1., 0.45, -0.35).Normalise) :> Light
-              PointLight(rgb 1. 0.75 0.45, 0.35, lampAt) :> Light
+              SphereLight(rgb 1. 0.75 0.45, 3., lampAt, 0.05) :> Light
               sky (rgb 0.85 0.9 1.) (rgb 0.3 0.5 0.9) 0.6 2 ]
           Ambient = ambient 0.
           MaxBounces = 4
