@@ -32,6 +32,9 @@ type private MediumState =
 
 type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancellation: CancellationToken) =
     let lights = List.toArray scene.Lights
+    /// Every light while there are few local ones; otherwise global lights plus one selected
+    /// local light per hit, divided by its selection probability (see LightSelection).
+    let selection = LightSelection(lights)
     let environments =
         lights |> Array.choose (function :? EnvironmentLight as light -> Some light | _ -> None)
     /// Height fog over each camera and secondary ray segment outside transparent media (shadow rays skip it).
@@ -212,7 +215,7 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
             let segmentAttenuation = attenuation filter (hit.Time * ray.GetDirection.Magnitude)
             let mutable local = MaterialTransport.emission hit + ambient hit (mixKey (key ^^^ 0xa0UL)) medium
             if not (hit.Material :? TransparentMaterial || hit.Material :? EmissiveMaterial) then
-                for lightIndex = 0 to lights.Length - 1 do
+                let lightContribution lightIndex =
                     let light = lights.[lightIndex]
                     let count = LightSampling.sampleCount light
                     let lightKey = mixKey (key ^^^ (uint64 lightIndex + 0x10000UL))
@@ -223,7 +226,15 @@ type ClassicIntegrator(scene: Scene, query: IRayQuery, allOpaque: bool, cancella
                         if not unoccluded.IsBlack then
                             let shadowRay, maximum = shadowSegment hit sample
                             contribution <- contribution + unoccluded * visibility shadowRay maximum medium
-                    local <- local + contribution / float count
+                    contribution / float count
+                let always = selection.Always
+                for k = 0 to always.Length - 1 do
+                    local <- local + lightContribution always.[k]
+                if not selection.IsExhaustive then
+                    let u, _ = sample2D (mixKey (key ^^^ 0x5E1EC7EDUL)) 0
+                    let struct (index, probability) = selection.Select(hit.Point, hit.Normal, false, u)
+                    if index >= 0 && probability > 0. then
+                        local <- local + lightContribution index * (1. / probability)
             if depth > 0 && hit.Material.IsRecursive then
                 let etaI, etaT, transmittedMedium =
                     match hit.Material with
