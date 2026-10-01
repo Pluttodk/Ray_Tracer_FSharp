@@ -701,6 +701,7 @@ module Gltf =
                     if spec.ApertureRadius > 0. then warn "Depth of field is not part of glTF and is not exported."
                 | Skinned _ -> warn "Skinned meshes are not exported."
                 | Procedural _ -> warn "Procedural content is not exported."
+                | Deforming _ -> warn "Deforming content is not exported."
                 | Geometry _ -> ()
             for child in node.Children do exportNode (Choice2Of2 target) child
 

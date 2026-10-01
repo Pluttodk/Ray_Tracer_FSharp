@@ -92,6 +92,10 @@ type Content =
     /// Shapes built for a given time (the shutter midpoint), in world space, for time-varying content such as
     /// particles; the node's transform is ignored.
     | Procedural of (float -> Shape list)
+    /// Time-varying shapes in the node's local frame, such as a vertex-cached mesh: built for the frame's
+    /// motion-step times (one entry, mid-shutter, when the frame has no motion blur). Return a deforming
+    /// shape keyed at those times to blur the deformation; the node's own transform and motion apply on top.
+    | Deforming of (float[] -> Shape list)
 
 type Node =
     { Name: string
@@ -266,6 +270,15 @@ module Frame =
                     lights.Add(if isIdentity m then light else TransformLight.transformLight light (ofAffine m))
                 | CameraRig _ -> ()
                 | Procedural make -> shapes.AddRange(make (0.5 * (shutterOpen + shutterClose)))
+                | Deforming make ->
+                    let matrices = worlds |> Array.map (fun world -> world.[node.Name])
+                    let keyed = if times.Length < 2 || motionSteps < 2 then [| 0.5 * (shutterOpen + shutterClose) |] else times
+                    for shape in make keyed do
+                        if matrices |> Array.forall (closeTo matrices.[0]) then
+                            if isIdentity matrices.[0] then shapes.Add shape
+                            else shapes.Add(Transform.transform shape (ofAffine matrices.[0]))
+                        else
+                            shapes.Add(MotionTransform.transform shape (AnimatedTransform(Array.zip times matrices)))
         Scene(List.ofSeq shapes, List.ofSeq lights, scene.Ambient, scene.MaxBounces, ?atmosphere = scene.Atmosphere)
 
     let camera (scene: AnimatedScene) (settings: FrameSettings) (shutterOpen: float) (shutterClose: float) =
