@@ -115,6 +115,8 @@ def parse_args(argv):
     p.add_argument("--extra", action="append", default=[], help="extra geometry file(s) to import (glb/gltf/usd/fbx)")
     p.add_argument("--knight", default=None,
                    help="knight vertex cache (relative to assets/sponza or absolute); placement from json `knight`")
+    p.add_argument("--force-opaque", default="",
+                   help="diagnostic: comma-separated material name prefixes to render with alpha 1 (e.g. dirt_decal,LeafSpring)")
     p.add_argument("--no-cache", action="store_true", help="re-import the glTF parts instead of using the .blend cache")
     p.add_argument("--calib", default=None, choices=["sun", "lamp"], help="render a calibration scene instead")
     p.add_argument("--write-calib-gltf", default=None, help="(plain python) write the calibration scene as glTF")
@@ -426,6 +428,22 @@ def display(img, transfer):
     return (np.clip(e, 0, 1) * 255).astype(np.uint8)
 
 
+def write_hdr(path, rgb_rows_bottom_up):
+    """Radiance RGBE (.hdr), flat scanlines. (Blender's Image.save() sRGB-encodes a generated float image even
+    as EXR, so the sky is written here instead.)"""
+    rgb = np.ascontiguousarray(rgb_rows_bottom_up[::-1], dtype=np.float64)
+    h, w, _ = rgb.shape
+    m = rgb.max(-1)
+    mant, exp = np.frexp(m)
+    scale = np.where(m > 1e-32, mant * 256.0 / np.maximum(m, 1e-300), 0)
+    rgbe = np.zeros((h, w, 4), np.uint8)
+    rgbe[..., :3] = np.clip(np.floor(rgb * scale[..., None]), 0, 255)
+    rgbe[..., 3] = np.where(m > 1e-32, exp + 128, 0)
+    with open(path, "wb") as f:
+        f.write(f"#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y {h} +X {w}\n".encode())
+        f.write(rgbe.tobytes())
+
+
 def write_png(path, rgb8):
     h, w, _ = rgb8.shape
     raw = b"".join(b"\x00" + rgb8[y].tobytes() for y in range(h))
@@ -588,16 +606,6 @@ def blender_main(a):
         world.cycles.sampling_method = "MANUAL"
         world.cycles.sample_map_resolution = 2048
 
-    def save_float_exr(path, rgb_rows_bottom_up):
-        h, w, _ = rgb_rows_bottom_up.shape
-        img = bpy.data.images.new(os.path.basename(path), w, h, float_buffer=True, alpha=False)
-        rgba = np.concatenate([rgb_rows_bottom_up, np.ones((h, w, 1))], -1).astype(np.float32)
-        img.pixels.foreach_set(rgba.ravel())
-        img.filepath_raw = path
-        img.file_format = "OPEN_EXR"
-        img.save()
-        bpy.data.images.remove(img)
-
     def import_knight_cache(path, anim_time, position, yaw_deg):
         """The knight's vertex cache (scripts/sponza/convert-knight.py, Knight.fs) posed at `anim_time` seconds
         (linear between cache frames, clamped), placed like Knight.placeAt (origin at `position`, yaw about +Y)."""
@@ -732,6 +740,16 @@ def blender_main(a):
         for w in list(bpy.data.worlds):
             bpy.data.worlds.remove(w)
 
+        prefixes = [x for x in a.force_opaque.split(",") if x]
+        for mat in bpy.data.materials:
+            if mat.use_nodes and any(mat.name.startswith(x) for x in prefixes):
+                for node in mat.node_tree.nodes:
+                    if node.type == "BSDF_PRINCIPLED":
+                        for link in list(node.inputs["Alpha"].links):
+                            mat.node_tree.links.remove(link)
+                        node.inputs["Alpha"].default_value = 1.0
+                print(f"[gt] forced opaque: {mat.name}")
+
         # ---------------------------------------------------------- lights
         sun = spec["sun"]
         towards = sun_direction(spec)
@@ -748,9 +766,9 @@ def blender_main(a):
         info["sky"] = mode
         if mode == "preetham":
             model = Preetham(towards, sky.get("turbidity", 2.5), sun["irradiance"], sky.get("sunToSky"))
-            sky_exr = os.path.join(cache_dir, f"preetham-{hashlib.sha1(json.dumps([towards, sky, sun]).encode()).hexdigest()[:12]}.exr")
+            sky_exr = os.path.join(cache_dir, f"preetham-{hashlib.sha1(json.dumps([towards, sky, sun]).encode()).hexdigest()[:12]}.hdr")
             if not os.path.exists(sky_exr):
-                save_float_exr(sky_exr, bake_equirect(model))
+                write_hdr(sky_exr, bake_equirect(model))
             world_background(image_path=sky_exr, rotation_deg=0.0, strength=1.0)
         elif mode == "hdri":
             world_background(image_path=asset(sky["hdri"]), rotation_deg=sky.get("rotationDeg", 0.0),
