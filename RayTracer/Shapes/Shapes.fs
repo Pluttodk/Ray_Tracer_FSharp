@@ -76,23 +76,26 @@ module internal Geometry =
     let intersectTriangleCoordinates (ray: Ray) ax ay az bx by bz cx cy cz =
         if not ray.IsValid then ValueNone
         else
+            // Written without local closures: this runs for every triangle a ray is tested against, and the
+            // closures it used to build were allocated on each call. Same arithmetic, same results.
             let d = ray.GetDirection
+            let dx, dy, dz = d.X, d.Y, d.Z
             let kz =
-                if abs d.X >= abs d.Y && abs d.X >= abs d.Z then 0
-                elif abs d.Y >= abs d.Z then 1 else 2
-            let coordinate axis x y z = if axis = 0 then x elif axis = 1 then y else z
-            let dc axis = if axis = 0 then d.X elif axis = 1 then d.Y else d.Z
+                if abs dx >= abs dy && abs dx >= abs dz then 0
+                elif abs dy >= abs dz then 1 else 2
+            let inline coordinate axis (x: float) (y: float) (z: float) = if axis = 0 then x elif axis = 1 then y else z
+            let dkz = coordinate kz dx dy dz
             let kx0, ky0 = (kz + 1) % 3, (kz + 2) % 3
-            let kx, ky = if dc kz < 0. then ky0, kx0 else kx0, ky0
-            let sx, sy = -dc kx / dc kz, -dc ky / dc kz
+            let kx, ky = if dkz < 0. then ky0, kx0 else kx0, ky0
+            let sx, sy = -(coordinate kx dx dy dz) / dkz, -(coordinate ky dx dy dz) / dkz
             let o = ray.GetOrigin
-            let vertex x y z =
-                let depth = coordinate kz x y z - coordinate kz o.X o.Y o.Z
-                struct (coordinate kx x y z - coordinate kx o.X o.Y o.Z + sx*depth,
-                        coordinate ky x y z - coordinate ky o.X o.Y o.Z + sy*depth, depth / dc kz)
-            let struct (ax, ay, az) = vertex ax ay az
-            let struct (bx, by, bz) = vertex bx by bz
-            let struct (cx, cy, cz) = vertex cx cy cz
+            let ox, oy, oz = coordinate kx o.X o.Y o.Z, coordinate ky o.X o.Y o.Z, coordinate kz o.X o.Y o.Z
+            let depthA = coordinate kz ax ay az - oz
+            let depthB = coordinate kz bx by bz - oz
+            let depthC = coordinate kz cx cy cz - oz
+            let ax, ay, az = coordinate kx ax ay az - ox + sx*depthA, coordinate ky ax ay az - oy + sy*depthA, depthA / dkz
+            let bx, by, bz = coordinate kx bx by bz - ox + sx*depthB, coordinate ky bx by bz - oy + sy*depthB, depthB / dkz
+            let cx, cy, cz = coordinate kx cx cy cz - ox + sx*depthC, coordinate ky cx cy cz - oy + sy*depthC, depthC / dkz
             let ea, eb, ec = bx*cy - by*cx, cx*ay - cy*ax, ax*by - ay*bx
             if (ea < 0. || eb < 0. || ec < 0.) && (ea > 0. || eb > 0. || ec > 0.) then ValueNone
             else
@@ -338,6 +341,14 @@ module Transform =
             // The shadow-terminator point is a position on the instance, so it moves with it.
             if hit.HasShadowPoint then world.WithShadowPoint(transformPoint(hit.ShadowPoint, forward)) else world
 
+    /// HitWithin(...).DidHit of `intersectLocal`, without building the hit: the inner shape's occluder
+    /// answers when it has one.
+    let internal occludesLocal (shape: Shape) (ray: Ray) minimum maximum inverse =
+        let localRay = Ray(transformPoint(ray.GetOrigin, inverse), transformVector(ray.GetDirection, inverse), ray.ShutterTime)
+        match shape :> obj with
+        | :? IOccluder as occluder -> minimum < maximum && occluder.Occludes(localRay, minimum, maximum)
+        | _ -> (Geometry.hitWithin shape localRay minimum maximum).DidHit
+
     let transform (shape: Shape) transformation =
         let matrix, inverse = getMatrix transformation, getInvMatrix transformation
         let normalMatrix = inverse.transpose
@@ -352,7 +363,9 @@ module Transform =
                 bounds.Value |> Option.defaultWith (fun () -> invalidOp "An unbounded transformed shape has no finite bounding box.")
             member _.isInside p = shape.isInside(transformPoint(p, inverse))
           interface IIntervalShape with
-            member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum }
+            member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum
+          interface IOccluder with
+            member _.Occludes(ray, minimum, maximum) = occludesLocal shape ray minimum maximum inverse }
 
 /// Instancing whose transform changes during the shutter: each ray is intersected against the pose at its
 /// ShutterTime, which is what produces motion blur.
@@ -398,7 +411,11 @@ module MotionTransform =
                     let struct (_, inverse) = motion.At midpoint
                     shape.isInside(transformPoint(p, inverse))
               interface IIntervalShape with
-                member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum }
+                member this.HitWithin(ray, minimum, maximum) = intersect (this :?> Shape) ray minimum maximum
+              interface IOccluder with
+                member _.Occludes(ray, minimum, maximum) =
+                    let struct (_, inverse) = motion.At ray.ShutterTime
+                    Transform.occludesLocal shape ray minimum maximum inverse }
 
 type SolidCylinder(center: Point, radius: float, height: float, cylinder: Texture, top: Texture, bottom: Texture) =
     inherit Shape()

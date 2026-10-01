@@ -249,6 +249,18 @@ type private TrianglePrimitive(vertices: MeshVertex array, indices: TriangleIndi
     override this.hitFunction ray = this.Hit(ray, -infinity, infinity)
     interface IIntervalShape with
         member this.HitWithin(ray, minimum, maximum) = this.Hit(ray, minimum, maximum) |> Geometry.within minimum maximum
+    /// HitWithin's time without building the HitPoint (see IHitTime): same intersection, interval and alpha test.
+    interface IHitTime with
+        member _.HitTime(ray, minimum, maximum) =
+            let a, b, c = vertices.[indices.A], vertices.[indices.B], vertices.[indices.C]
+            match (if nondegenerate then Geometry.intersectTriangleCoordinates ray a.X a.Y a.Z b.X b.Y b.Z c.X c.Y c.Z else ValueNone) with
+            | ValueNone -> nan
+            | ValueSome(struct (time, beta, gamma)) ->
+                if not (time > minimum && time < maximum) then nan
+                elif isNull mask then time
+                elif mask.Covers(interpolateUv a.U b.U c.U beta gamma, interpolateUv a.V b.V c.V beta gamma,
+                                 (if mask.IsStochastic then AlphaHash.sample ray index else 0.)) then time
+                else nan
 
 module private Tangents =
     /// Per-vertex tangents from texture coordinates (Lengyel's accumulation, then Gram-Schmidt against the
@@ -349,6 +361,8 @@ type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array a
     member internal _.Intersect(ray: Ray, minimum: float, maximum: float) =
         Acceleration.traverseClosest accelerator ray minimum maximum
     member internal this.Intersect(ray: Ray) = this.Intersect(ray, 0., infinity)
+    member internal _.Occludes(ray: Ray, minimum: float, maximum: float) =
+        Acceleration.anyHit accelerator ray minimum maximum
     member internal _.Shade(hit: HitPoint, texture: Texture, shape: Shape) =
         let triangle = indices.[(hit.Shape :?> TrianglePrimitive).Index]
         let a, b, c = vertices.[triangle.A], vertices.[triangle.B], vertices.[triangle.C]
@@ -411,6 +425,10 @@ type MeshShape internal (geometry: MeshGeometry, texture: Texture) =
     override this.hitFunction ray = this.Intersect(ray, 0., infinity)
     interface IIntervalShape with
         member this.HitWithin(ray, minimum, maximum) = this.Intersect(ray, minimum, maximum)
+    // Shading never turns a geometric hit into a miss (the alpha test is in the BLAS), so the BLAS any-hit
+    // answers HitWithin(...).DidHit without texturing anything.
+    interface IOccluder with
+        member _.Occludes(ray, minimum, maximum) = geometry.Occludes(ray, minimum, maximum)
 
 type BaseMeshShape internal (geometry: MeshGeometry) =
     inherit BaseShape()

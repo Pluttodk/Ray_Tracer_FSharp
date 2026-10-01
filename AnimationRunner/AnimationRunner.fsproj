@@ -5,6 +5,22 @@
     <RootNamespace>AnimationRunner</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+  <!-- Garbage collector settings for rendering big scenes on a big, shared machine.
+
+       Measured 2026-10-01 on the 128-core box (Sponza, ~27 GB heap, 480x270/16spp, other renders running):
+       with the defaults, render threads spent ~70% of their sampled time parked in GC polls and the
+       process used ~19 of 128 cores.
+       - NoAffinitize: server GC pins one GC thread to each core. When another process is busy on a
+         core, that GC thread waits for it and every render thread waits for the GC. Unpinned, the OS
+         schedules GC threads wherever there is room.
+       - DynamicAdaptationMode=0 turns off DATAS (on by default for server GC since .NET 9), which
+         starts with few heaps and small gen0 budgets and re-tunes the heap count during the render;
+         its gen0 collections were frequent and each one long. With it off, every core keeps its own
+         heap with the full cache-sized gen0 budget. -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.GC.NoAffinitize" Value="true" />
+    <RuntimeHostConfigurationOption Include="System.GC.DynamicAdaptationMode" Value="0" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="Encode.fs" />
     <Compile Include="Telegram.fs" />
