@@ -45,6 +45,7 @@ module Sponza =
           LampIntensity: float
           LampColour: Colour
           LampRadius: float
+          LampOffset: Vector
           Shots: Shot list
           Root: JsonElement }
 
@@ -81,6 +82,7 @@ module Sponza =
           LampIntensity = num lamps "intensity"
           LampColour = col (get lamps "colour")
           LampRadius = num lamps "radius"
+          LampOffset = (match lamps.TryGetProperty "offset" with | true, v -> vec v | _ -> Vector.Zero)
           Shots =
             [ for s in (get root "shots").EnumerateArray() ->
                 { Name = (get s "name").GetString()
@@ -168,7 +170,7 @@ module Sponza =
             | None -> Sky.light sky 2 512 :> Light
         let lampLights =
             if spec.LampsEnabled then
-                lamps |> List.map (fun p -> SphereLight(spec.LampColour, spec.LampIntensity, p, spec.LampRadius) :> Light)
+                lamps |> List.map (fun p -> SphereLight(spec.LampColour, spec.LampIntensity, p + spec.LampOffset, spec.LampRadius) :> Light)
             else []
         sun :: skyLight :: lampLights
         // --- end r2 ---
