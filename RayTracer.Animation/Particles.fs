@@ -57,7 +57,7 @@ module Particles =
         float (h >>> 11) / float (1UL <<< 53)
 
     let defaults =
-        { Seed = 5; Start = 15.0; Stop = 18.0; Rate = 30.; PerEvent = 260
+        { Seed = 5; Start = 15.0; Stop = 18.0; Rate = 30.; PerEvent = 180
           ReachHeight = 110.; FullHeight = 45.
           Wind = Vector(6., 0., 2.5)
           MinLife = 1.; MaxLife = 3.; Radius = 0.4 }
