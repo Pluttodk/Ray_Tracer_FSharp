@@ -12,3 +12,4 @@ Branch names are `dragon-realism-<ws>`, not `dragon-realism/<ws>`. Git refuses a
 14:31 d done 7fe1a16 reviewed; merged (test-registration conflicts resolved), 1436 tests green. Ridge cause = shadow terminator; core fix -> follow-up d2
 14:34 c done d2f29af,e75aaca reviewed; merged, 1447 tests green. No god rays. B must retune SkyWeight/SunWeight
 14:37 d2 done 4fa101f,ed58243 reviewed; merged, tests green. Open: Transform.intersectLocal drops ShadowPoint (falls back safely; not used by film meshes)
+14:40 b done 89c543f,f131177 reviewed; merged, 1514 tests green; applied B's tracking-camera flip
