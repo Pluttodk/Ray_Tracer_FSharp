@@ -210,7 +210,7 @@ module Film =
         let depart = camera "cam-depart" 0.7 "aim-dragon"
         // Low on a foothill, panning as the dragon crosses in front of the massif.
         let establishPath = Smooth.vector [ 0., above 330. 250. 30.; 7., above 318. 232. 30. ]
-        // Tracking: beside and slightly behind the dragon, drifting forward along its flank.
+        // Tracking: beside and slightly behind the dragon on its far flank, looking into the sun for rim light.
         let trackKeys =
             [ for i in 0 .. 12 ->
                 let t = 7. + 6. * float i / 12.
@@ -218,7 +218,7 @@ module Film =
                 let v = (dragonPosition (t + 0.1) - dragonPosition (t - 0.1)).Normalise
                 let side = (v % Vector(0., 1., 0.)).Normalise
                 let u = float i / 12.
-                t, p + (40. - 10. * u) * side - (12. - 20. * u) * v + Vector(0., 7. - 3. * u, 0.) ]
+                t, p - (40. - 10. * u) * side - (12. - 20. * u) * v + Vector(0., 7. - 3. * u, 0.) ]
         let roarPath = Smooth.vector [ 19., roarCamera + Vector(6., -1., 12.); 21., roarCamera; 25., roarCamera + Vector(-2., 0., -3.) ]
         // Just below and beside the dragon's line over the summit, so it roars past overhead.
         let summitCamera =
