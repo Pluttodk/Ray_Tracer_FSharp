@@ -18,6 +18,7 @@
     <Compile Include="Audio.fs" />
     <Compile Include="Particles.fs" />
     <Compile Include="Knight.fs" />
+    <Compile Include="Sponza.fs" />
     <Compile Include="Film.fs" />
   </ItemGroup>
   <ItemGroup>
