@@ -210,7 +210,7 @@ module FlatBVH =
             let mutable result = initial
             let mutable stopped = false
             let inline enter (node: PackedNode) distance =
-                intersectBox (float node.MinX) (float node.MinY) (float node.MinZ)
+                intersectBoxFast (float node.MinX) (float node.MinY) (float node.MinZ)
                              (float node.MaxX) (float node.MaxY) (float node.MaxZ) data minimum distance
             let entry = enter nodes.[0] result.Distance
             if not (Double.IsNaN entry) then

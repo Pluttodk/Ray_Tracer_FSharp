@@ -74,7 +74,9 @@ module internal AccelerationCommon =
     type RayData =
         { X: float; Y: float; Z: float
           DX: float; DY: float; DZ: float
-          InvX: float; InvY: float; InvZ: float }
+          InvX: float; InvY: float; InvZ: float
+          /// No zero direction component and finite inverses: `intersectBoxFast` may take its fast path.
+          Fast: bool }
         member r.Origin axis = match axis with 0 -> r.X | 1 -> r.Y | _ -> r.Z
         member r.Direction axis = match axis with 0 -> r.DX | 1 -> r.DY | _ -> r.DZ
         member r.Inverse axis = match axis with 0 -> r.InvX | 1 -> r.InvY | _ -> r.InvZ
@@ -82,7 +84,11 @@ module internal AccelerationCommon =
     let rayData (ray: Ray) =
         { X = ray.GetOrigin.X; Y = ray.GetOrigin.Y; Z = ray.GetOrigin.Z
           DX = ray.GetDirection.X; DY = ray.GetDirection.Y; DZ = ray.GetDirection.Z
-          InvX = 1. / ray.GetDirection.X; InvY = 1. / ray.GetDirection.Y; InvZ = 1. / ray.GetDirection.Z }
+          InvX = 1. / ray.GetDirection.X; InvY = 1. / ray.GetDirection.Y; InvZ = 1. / ray.GetDirection.Z
+          Fast =
+            let d = ray.GetDirection
+            d.X <> 0. && d.Y <> 0. && d.Z <> 0.
+            && Double.IsFinite(1. / d.X) && Double.IsFinite(1. / d.Y) && Double.IsFinite(1. / d.Z) }
 
     let validateQuery (ray: Ray) minimum maximum =
         if Double.IsNaN minimum || Double.IsNaN maximum then
@@ -158,6 +164,28 @@ module internal AccelerationCommon =
            && slab minY maxY ray.Y ray.DY ray.InvY &near &far
            && slab minZ maxZ ray.Z ray.DZ ray.InvZ &near &far then near
         else nan
+
+    /// `intersectBox` for the common case, cheaper: the plain slab test without per-axis special cases,
+    /// widened once at the end by twice the relative margin (plus 1e-300) that `intersectBox` applies per
+    /// axis. Its interval therefore contains intersectBox's, so it accepts every box intersectBox accepts
+    /// (and a hair more), and a traversal finds the same hits. Anything non-finite takes intersectBox.
+    let intersectBoxFast minX minY minZ maxX maxY maxZ (ray: RayData) minimum maximum =
+        if not ray.Fast then intersectBox minX minY minZ maxX maxY maxZ ray minimum maximum
+        else
+            let inline lesser (a: float) (b: float) = if a < b then a else b
+            let inline greater (a: float) (b: float) = if a > b then a else b
+            let ax, bx = (minX - ray.X) * ray.InvX, (maxX - ray.X) * ray.InvX
+            let ay, by = (minY - ray.Y) * ray.InvY, (maxY - ray.Y) * ray.InvY
+            let az, bz = (minZ - ray.Z) * ray.InvZ, (maxZ - ray.Z) * ray.InvZ
+            let first = greater (lesser ax bx) (greater (lesser ay by) (lesser az bz))
+            let last = lesser (greater ax bx) (lesser (greater ay by) (greater az bz))
+            if Double.IsFinite first && Double.IsFinite last then
+                let first = first - (abs first * 1.3322676295501878e-15 + 1e-300)
+                let last = last + (abs last * 1.3322676295501878e-15 + 1e-300)
+                let near = max minimum first
+                let far = min maximum last
+                if near <= far then near else nan
+            else intersectBox minX minY minZ maxX maxY maxZ ray minimum maximum
 
     /// `intersectFinite` returning only the entry distance, NaN for a miss.
     let intersectNear (bounds: Bounds) (ray: RayData) minimum maximum =
