@@ -175,6 +175,51 @@ module Sponza =
         sun :: skyLight :: lampLights
         // --- end r2 ---
 
+    // --- k ---
+    /// The animated knight (Knight.fs), placed from the optional "knight" block of sponza.json:
+    /// { "enabled": true, "position": [x, y, z], "yawDeg": 0, "start": 0, "speed": 1, "maxTexture": 2048 }.
+    /// Defaults: on the atrium floor (y = 0) at (8, 0, 0), yaw 0, starting at scene time 0. It starts in a
+    /// guard stance and later walks ~2.9 m towards -X along the long axis, stopping about 2 m short of the
+    /// cypress add-on's ground cover (the 15 m tree stands at the origin, with ground cover to |x|, |z| = 3.1).
+    /// Skipped with a message when assets/sponza/knight/knight.cache has not been baked.
+    type KnightSetup = { Enabled: bool; Position: Vector; Yaw: float; Start: float; Speed: float; MaxTexture: int }
+
+    let knightSetup (spec: Spec) =
+        let fallback = { Enabled = true; Position = Vector(8., 0., 0.); Yaw = 0.; Start = 0.; Speed = 1.; MaxTexture = 2048 }
+        match spec.Root.TryGetProperty "knight" with
+        | true, k ->
+            let num name fallback = match k.TryGetProperty(name: string) with | true, v -> v.GetDouble() | _ -> fallback
+            { Enabled = (match k.TryGetProperty "enabled" with | true, v -> v.GetBoolean() | _ -> true)
+              Position =
+                (match k.TryGetProperty "position" with
+                 | true, v -> let a = v.EnumerateArray() |> Seq.map (fun x -> x.GetDouble()) |> Array.ofSeq in Vector(a.[0], a.[1], a.[2])
+                 | _ -> fallback.Position)
+              Yaw = radians (num "yawDeg" 0.)
+              Start = num "start" fallback.Start
+              Speed = num "speed" fallback.Speed
+              MaxTexture = int (num "maxTexture" (float fallback.MaxTexture)) }
+        | _ -> fallback
+
+    /// The knight's placement and clock (scene time to animation time), for camera helpers such as
+    /// `Knight.headAt cache placement clock t`.
+    let knightPlacement (setup: KnightSetup) =
+        Knight.placeAt setup.Position.X setup.Position.Y setup.Position.Z setup.Yaw, Knight.clock setup.Start setup.Speed
+
+    /// The knight cache, if it has been baked (loaded once per process).
+    let knightCache = lazy (searchUp (Path.Combine(assetDirectory, "knight", "knight.cache")) |> Option.map Knight.load)
+
+    let private knightNodes (spec: Spec) =
+        let setup = knightSetup spec
+        match setup.Enabled, knightCache.Force() with
+        | false, _ -> []
+        | true, None ->
+            eprintfn "sponza: knight cache missing (run scripts/fetch-sponza-assets.sh knight); rendering without the knight."
+            []
+        | true, Some cache ->
+            let placement, clock = knightPlacement setup
+            [ Knight.node "knight" cache (Knight.textures cache setup.MaxTexture (fun _ p -> p)) placement clock ]
+    // --- end k ---
+
     // ------------------------------------------------------------------ scene
 
     let build () =
@@ -185,7 +230,7 @@ module Sponza =
         let cameraNodes, cameraClip = cameras spec
         let shots = spec.Shots |> List.sortBy (fun s -> s.Start)
         { Name = "sponza"
-          Roots = geometry @ cameraNodes
+          Roots = geometry @ cameraNodes @ knightNodes spec // --- k ---
           Clips = [ cameraClip ]
           ActiveCamera = shots.Head.Name
           Cuts = [ for s in shots.Tail -> s.Start, s.Name ]
