@@ -15,6 +15,8 @@ type RenderDefaults =
       Transfer: string
       SamplesPerPixel: int
       MaxBounces: int
+      /// Cap on indirect contributions (0: none), see PathIntegrator's IndirectClamp.
+      IndirectClamp: float
       Post: PostSettings }
 // --- end a ---
 
@@ -560,10 +562,10 @@ module Catalog =
     let renderDefaults (name: string) : RenderDefaults option =
         match name with
         | "dragon-flight" ->
-            Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 3
+            Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 3; IndirectClamp = 0.
                    Post = { Bloom = 0.12; BloomThreshold = 1.; Vignette = 0.2; Exposure = 1.; WhiteBalance = 0.; Saturation = 1.1 } }
         | "sponza" ->
-            Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 4
+            Some { Integrator = Path; Denoise = true; Transfer = "aces"; SamplesPerPixel = 64; MaxBounces = 4; IndirectClamp = 8.
                    Post = { Bloom = 0.1; BloomThreshold = 1.5; Vignette = 0.15; Exposure = 3.; WhiteBalance = 0.; Saturation = 1.05 } }
         | _ -> None
     // --- end a ---
