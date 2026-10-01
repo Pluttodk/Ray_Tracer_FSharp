@@ -82,6 +82,9 @@ type Content =
     | Skinned of SkinnedMesh
     | LightSource of Light
     | CameraRig of CameraSpec
+    /// Shapes built for a given time (the shutter midpoint), in world space, for time-varying content such as
+    /// particles; the node's transform is ignored.
+    | Procedural of (float -> Shape list)
 
 type Node =
     { Name: string
@@ -233,6 +236,7 @@ module Frame =
                     let m = middle.[node.Name]
                     lights.Add(if isIdentity m then light else TransformLight.transformLight light (ofAffine m))
                 | CameraRig _ -> ()
+                | Procedural make -> shapes.AddRange(make (0.5 * (shutterOpen + shutterClose)))
         Scene(List.ofSeq shapes, List.ofSeq lights, scene.Ambient, scene.MaxBounces, ?atmosphere = scene.Atmosphere)
 
     let camera (scene: AnimatedScene) (settings: FrameSettings) (shutterOpen: float) (shutterClose: float) =

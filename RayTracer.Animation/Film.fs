@@ -351,6 +351,23 @@ module Film =
               Clip.translate "cam-depart" departPath ]
         [ establishing; tracking; summit; roar; depart ] @ aims, Clip.create "cameras" channels
 
+    // --- fx: particles ---
+    /// Snow spindrift lifted by the downwash while the dragon skims the sunlit face (summit pass).
+    module Spindrift =
+        let private source : Particles.Source =
+            { Position = dragonPosition
+              Ground = ground
+              Snow = fun x z ->
+                  // The terrain texture's own snow mask (specular = 0.02 + 0.2 x snow cover).
+                  let h = 1.
+                  let nx = (ground (x + h) z - ground (x - h) z) / (2. * h)
+                  let nz = (ground x (z + h) - ground x (z - h)) / (2. * h)
+                  let steepness = 1. - 1. / sqrt (1. + nx * nx + nz * nz)
+                  let _, specular = Terrain.surfaceAt terrainSettings x z (ground x z) steepness
+                  max 0. (min 1. ((specular - 0.02) / 0.2)) }
+        let shapes t = Particles.shapes Particles.defaults source t
+    // --- fx: end ---
+
     // ------------------------------------------------------------------ scene
 
     let build () =
@@ -358,8 +375,11 @@ module Film =
         let cameraNodes, cameraClip = cameras ()
         let terrain = Node.create "terrain" |> Node.withContent [ Geometry(Terrain.build terrainSettings); Geometry(farTerrain ()) ]
         let sun = sunLight ()  // b: sun light
+        // --- fx: particles ---
+        let particles = Node.create "spindrift" |> Node.withContent [ Procedural Spindrift.shapes ]
+        // --- fx: end ---
         { Name = "dragon-flight"
-          Roots = [ terrain; rig ] @ cameraNodes
+          Roots = [ terrain; rig; particles ] @ cameraNodes
           Clips = [ Clip.create "flight" (flightChannels 30.); performance; cameraClip ]
           ActiveCamera = snd shots.Head
           Cuts = shots.Tail
