@@ -81,10 +81,70 @@ module Denoiser =
     [<Literal>]
     let private QualityHigh = 6
 
+    /// Where the library was found when the default probing (LD_LIBRARY_PATH, the
+    /// application directory, the system paths) misses it: OIDN_LIBRARY_PATH (a file
+    /// or a directory), then common install prefixes and Blender bundles, which ship
+    /// OIDN with its CPU and CUDA devices. Without this the denoiser silently never
+    /// ran on a machine whose only OIDN is Blender's, and every "denoised" frame was
+    /// the raw 64 spp film.
+    let private candidates () =
+        let names =
+            if OperatingSystem.IsWindows() then [ "OpenImageDenoise.dll" ]
+            elif OperatingSystem.IsMacOS() then [ "libOpenImageDenoise.dylib"; "libOpenImageDenoise.2.dylib" ]
+            else [ "libOpenImageDenoise.so"; "libOpenImageDenoise.so.2" ]
+        let inDirectory (directory: string) =
+            names |> List.map (fun name -> IO.Path.Combine(directory, name))
+        let home = Environment.GetFolderPath Environment.SpecialFolder.UserProfile
+        let subdirectories (root: string) (pattern: string) =
+            try
+                if String.IsNullOrEmpty root || not (IO.Directory.Exists root) then []
+                else IO.Directory.GetDirectories(root, pattern) |> Array.sortDescending |> List.ofArray
+            with _ -> []
+        let explicit =
+            match Environment.GetEnvironmentVariable "OIDN_LIBRARY_PATH" with
+            | null | "" -> []
+            | path when IO.File.Exists path -> [ path ]
+            | path -> inDirectory path @ inDirectory (IO.Path.Combine(path, "lib"))
+        let prefixes =
+            [ IO.Path.Combine(home, ".local", "lib"); "/usr/local/lib"; "/opt/homebrew/lib" ]
+            @ (subdirectories home "oidn*" |> List.map (fun d -> IO.Path.Combine(d, "lib")))
+            @ (subdirectories "/opt" "oidn*" |> List.map (fun d -> IO.Path.Combine(d, "lib")))
+            @ (subdirectories home "blender*" @ subdirectories "/opt" "blender*"
+               |> List.map (fun d -> IO.Path.Combine(d, "lib")))
+        explicit @ List.collect inDirectory prefixes
+
+    /// Resolve "OpenImageDenoise" for this assembly's P/Invokes. Installed once, before the
+    /// first native call.
+    let private resolver =
+        lazy (
+            try
+                NativeLibrary.SetDllImportResolver(
+                    Reflection.Assembly.GetExecutingAssembly(),
+                    DllImportResolver(fun name assembly searchPath ->
+                        if name <> Library then 0n
+                        else
+                            let mutable handle = 0n
+                            let explicitFirst =
+                                // An explicit OIDN_LIBRARY_PATH file wins over the default probe.
+                                match Environment.GetEnvironmentVariable "OIDN_LIBRARY_PATH" with
+                                | null | "" -> false
+                                | _ -> true
+                            if not explicitFirst then NativeLibrary.TryLoad(name, assembly, searchPath, &handle) |> ignore
+                            if handle = 0n then
+                                for path in candidates () do
+                                    if handle = 0n && IO.File.Exists path then
+                                        NativeLibrary.TryLoad(path, &handle) |> ignore
+                            if handle = 0n && explicitFirst then
+                                NativeLibrary.TryLoad(name, assembly, searchPath, &handle) |> ignore
+                            handle))
+            with :? InvalidOperationException -> () // a resolver was already set for this assembly
+        )
+
     /// Whether the native library can actually be loaded. Probed once; a failure
     /// is remembered rather than retried per frame.
     let available =
         lazy (
+            resolver.Force()
             try
                 let device = oidnNewDevice 0
                 if device = 0n then false
@@ -93,6 +153,14 @@ module Denoiser =
                     true
             with
             | :? DllNotFoundException | :? EntryPointNotFoundException | :? BadImageFormatException -> false)
+
+    let mutable private warned = 0
+
+    /// Print (once per process) that requested denoising did not run: a silently undenoised
+    /// film looks exactly like a noisy renderer.
+    let warnOnce (message: string) =
+        if Threading.Interlocked.Exchange(&warned, 1) = 0 then
+            eprintfn "warning: denoising was requested but did not run (%s); frames are raw. Set OIDN_LIBRARY_PATH to the OIDN library or its directory." message
 
     let private deviceError device =
         let mutable message = 0n

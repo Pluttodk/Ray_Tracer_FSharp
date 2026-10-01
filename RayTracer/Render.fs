@@ -230,7 +230,9 @@ type Render(scene: Scene, camera: Camera, ?options: RenderOptions) =
                     // The denoiser can return small negatives; Colour rejects
                     // those, and negative radiance is meaningless anyway.
                     pixels.[index] <- if Double.IsFinite value && value > 0. then value else 0.
-            | Error message -> denoiseNote <- Some message
+            | Error message ->
+                denoiseNote <- Some message
+                Denoiser.warnOnce message
         let film =
             { Width = camera.ResX; Height = camera.ResY; Pixels = pixels
               BuildMilliseconds = buildMilliseconds; TraceMilliseconds = watch.Elapsed.TotalMilliseconds }
