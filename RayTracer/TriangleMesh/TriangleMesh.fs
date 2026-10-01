@@ -241,8 +241,27 @@ type MeshGeometry internal (inputVertices: Vertex array, inputFaces: int array a
                        alpha*a.Nz + beta*b.Nz + gamma*c.Nz)
             else hit.GeometricNormal
         let u, v = interpolateUv a.U b.U c.U beta gamma, interpolateUv a.V b.V c.V beta gamma
-        HitPoint(hit.Ray, hit.Time, hit.GeometricNormal, shading, getFunc texture u v,
-                 shape, u, v, beta, gamma, true)
+        let shaded =
+            HitPoint(hit.Ray, hit.Time, hit.GeometricNormal, shading, getFunc texture u v,
+                     shape, u, v, beta, gamma, true)
+        if smooth then shaded.WithShadowPoint(MeshGeometry.TerminatorPoint(hit.Point, hit.GeometricNormal, shading, a, b, c, alpha, beta, gamma))
+        else shaded
+
+    /// Hanika 2021 shadow-terminator point: project p onto each vertex's tangent plane
+    /// when it lies below it, then blend with the barycentrics.
+    static member TerminatorPoint(p: Point, geometric: Vector, shading: Vector, a: MeshVertex, b: MeshVertex, c: MeshVertex,
+                                  alpha: float, beta: float, gamma: float) : Point =
+        // Vertex normals follow the same flip HitPoint applies to the interpolated normal.
+        let flip = if shading * geometric < 0. then -1. else 1.
+        let corner (v: MeshVertex) =
+            let nx, ny, nz = flip * v.Nx, flip * v.Ny, flip * v.Nz
+            let d = (p.X - v.X) * nx + (p.Y - v.Y) * ny + (p.Z - v.Z) * nz
+            if d >= 0. then struct (p.X, p.Y, p.Z)
+            else struct (p.X - d * nx, p.Y - d * ny, p.Z - d * nz)
+        let struct (ax, ay, az) = corner a
+        let struct (bx, by, bz) = corner b
+        let struct (cx, cy, cz) = corner c
+        Point(alpha*ax + beta*bx + gamma*cx, alpha*ay + beta*by + gamma*cy, alpha*az + beta*bz + gamma*cz)
 
 type MeshShape internal (geometry: MeshGeometry, texture: Texture) =
     inherit Shape()

@@ -214,7 +214,7 @@ type PathIntegrator
                                     let bsdfPdf = Bsdf.pdfLocal surface wo wi
                                     powerHeuristic lightPdf bsdfPdf
                             if weight > 0. then
-                                let origin = hit.OffsetPoint sample.Direction
+                                let origin = hit.ShadowOrigin sample.Direction
                                 let maximum =
                                     if Double.IsPositiveInfinity sample.Distance then infinity
                                     else
