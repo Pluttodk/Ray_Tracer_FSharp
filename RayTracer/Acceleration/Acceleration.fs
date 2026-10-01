@@ -72,6 +72,8 @@ module Acceleration =
         | Flat tree -> Some(Tracer.Basics.FlatBVH.export tree accel.Fallback accel.Empty)
         | _ -> None
 
+    let private noOccluders: IOccluder array = Array.Empty<IOccluder>()
+
     let private query (accel: IAcceleration) ray minimum maximum stopAtFirst =
         let data = validateQuery ray minimum maximum
         let mutable result = noCandidate maximum
@@ -88,7 +90,7 @@ module Acceleration =
                     | Grid grid -> RegularGrids.query grid ray data accel.Shapes minimum maximum result stopAtFirst
                     | Flat tree ->
                         Tracer.Basics.FlatBVH.query tree ray data accel.Shapes accel.Fast
-                            (if stopAtFirst then accel.Occluders else [||]) minimum maximum result stopAtFirst
+                            (if stopAtFirst then accel.Occluders else noOccluders) minimum maximum result stopAtFirst
                     | Linear -> result
         result
 
