@@ -129,6 +129,36 @@ module internal AccelerationCommon =
             axis <- axis + 1
         if overlaps then ValueSome(struct (near, far)) else ValueNone
 
+    /// One axis of `intersectFinite`, written out so the hot loop has no axis dispatch: same arithmetic,
+    /// same widening, same answers.
+    let inline private slab (low: float) (high: float) (origin: float) (direction: float) (inverse: float)
+                            (near: byref<float>) (far: byref<float>) =
+        if direction = 0. then origin >= low && origin <= high
+        else
+            let lowDelta, highDelta = low - origin, high - origin
+            let a =
+                if Double.IsFinite inverse && Double.IsFinite lowDelta then lowDelta * inverse
+                else boundaryTime low origin direction
+            let b =
+                if Double.IsFinite inverse && Double.IsFinite highDelta then highDelta * inverse
+                else boundaryTime high origin direction
+            let first, last = min a b, max a b
+            let first = if Double.IsFinite first then Math.BitDecrement(first - abs first * 6.661338147750943e-16) else first
+            let last = if Double.IsFinite last then Math.BitIncrement(last + abs last * 6.661338147750943e-16) else last
+            near <- max near first
+            far <- min far last
+            near <= far
+
+    /// `intersectFinite` returning only the entry distance, NaN for a miss.
+    let intersectNear (bounds: Bounds) (ray: RayData) minimum maximum =
+        let mutable near = minimum
+        let mutable far = maximum
+        if near <= far
+           && slab bounds.MinX bounds.MaxX ray.X ray.DX ray.InvX &near &far
+           && slab bounds.MinY bounds.MaxY ray.Y ray.DY ray.InvY &near &far
+           && slab bounds.MinZ bounds.MaxZ ray.Z ray.DZ ray.InvZ &near &far then near
+        else nan
+
     let intersect (bounds: Bounds) ray minimum maximum =
         if bounds.IsEmpty then ValueNone
         elif bounds.IsFinite then intersectFinite bounds ray minimum maximum

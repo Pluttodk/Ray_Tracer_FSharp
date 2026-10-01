@@ -1,8 +1,10 @@
 namespace Tracer.Basics
 
+#nowarn "9" // stackalloc for the traversal stack
+
 module FlatBVH =
     open System
-    open System.Buffers
+    open Microsoft.FSharp.NativeInterop
     open AccelerationCommon
 
     [<Struct>]
@@ -172,61 +174,58 @@ module FlatBVH =
         { Node: int
           Entry: float }
 
-    let private push (pool: ArrayPool<StackEntry>) (stack: byref<StackEntry array>) (count: byref<int>) node entry =
-        if count = stack.Length then
-            let larger = pool.Rent(stack.Length * 2)
-            Array.Copy(stack, larger, count)
-            pool.Return stack
-            stack <- larger
-        stack.[count] <- { Node = node; Entry = entry }
-        count <- count + 1
-
     /// `fast` and `occluders` are per-slot fast paths (see AccelerationCommon.fastPaths), or empty.
+    /// The traversal stack lives on the call stack: pushing both children and popping one grows it by at most
+    /// one entry per level, so MaxDepth + 1 entries always suffice, and a query allocates nothing.
     let internal query (tree: FlatBVHStructure) ray data (shapes: Shape array) (fast: IHitTime array)
                        (occluders: IOccluder array) minimum maximum initial stopAtFirst =
         let nodes = tree.Nodes
         if nodes.Length = 0 || minimum >= maximum then initial
         else
-            let pool = ArrayPool<StackEntry>.Shared
-            let mutable stack = pool.Rent(min 64 (tree.MaxDepth + 1))
+            let capacity = tree.MaxDepth + 2
+            let stack = Span<StackEntry>(NativePtr.toVoidPtr (NativePtr.stackalloc<StackEntry> capacity), capacity)
             let mutable count = 0
             let mutable result = initial
             let mutable stopped = false
-            try
-                match intersectFinite nodes.[0].Bounds data minimum result.Distance with
-                | ValueSome(struct (entry, _)) -> push pool &stack &count 0 entry
-                | ValueNone -> ()
-                while count > 0 && not stopped do
-                    count <- count - 1
-                    let item = stack.[count]
-                    if item.Entry <= result.Distance then
-                        let node = nodes.[item.Node]
-                        if node.Count > 0 then
-                            let mutable offset = node.First
-                            let finish = offset + node.Count
-                            while offset < finish && not stopped do
-                                let index = tree.Indices.[offset]
-                                result <-
-                                    if occluders.Length > 0 && not (isNull occluders.[index]) then
-                                        considerOccluder occluders.[index] index ray minimum maximum result
-                                    elif fast.Length > 0 && not (isNull fast.[index]) then
-                                        considerTime fast.[index] index ray minimum maximum result
-                                    else consider shapes index ray minimum maximum result
-                                stopped <- stopAtFirst && result.Found
-                                offset <- offset + 1
-                        else
-                            match intersectFinite nodes.[node.First].Bounds data minimum result.Distance,
-                                  intersectFinite nodes.[node.Right].Bounds data minimum result.Distance with
-                            | ValueSome(struct (a, _)), ValueSome(struct (b, _)) ->
-                                if a <= b then
-                                    push pool &stack &count node.Right b
-                                    push pool &stack &count node.First a
-                                else
-                                    push pool &stack &count node.First a
-                                    push pool &stack &count node.Right b
-                            | ValueSome(struct (a, _)), ValueNone -> push pool &stack &count node.First a
-                            | ValueNone, ValueSome(struct (b, _)) -> push pool &stack &count node.Right b
-                            | _ -> ()
-                result
-            finally
-                pool.Return stack
+            let entry = intersectNear nodes.[0].Bounds data minimum result.Distance
+            if not (Double.IsNaN entry) then
+                stack.[0] <- { Node = 0; Entry = entry }
+                count <- 1
+            while count > 0 && not stopped do
+                count <- count - 1
+                let item = stack.[count]
+                if item.Entry <= result.Distance then
+                    let node = nodes.[item.Node]
+                    if node.Count > 0 then
+                        let mutable offset = node.First
+                        let finish = offset + node.Count
+                        while offset < finish && not stopped do
+                            let index = tree.Indices.[offset]
+                            result <-
+                                if occluders.Length > 0 && not (isNull occluders.[index]) then
+                                    considerOccluder occluders.[index] index ray minimum maximum result
+                                elif fast.Length > 0 && not (isNull fast.[index]) then
+                                    considerTime fast.[index] index ray minimum maximum result
+                                else consider shapes index ray minimum maximum result
+                            stopped <- stopAtFirst && result.Found
+                            offset <- offset + 1
+                    else
+                        let a = intersectNear nodes.[node.First].Bounds data minimum result.Distance
+                        let b = intersectNear nodes.[node.Right].Bounds data minimum result.Distance
+                        let hitA, hitB = not (Double.IsNaN a), not (Double.IsNaN b)
+                        // Push the farther child first so the nearer one is visited next.
+                        if hitA && hitB then
+                            if a <= b then
+                                stack.[count] <- { Node = node.Right; Entry = b }
+                                stack.[count + 1] <- { Node = node.First; Entry = a }
+                            else
+                                stack.[count] <- { Node = node.First; Entry = a }
+                                stack.[count + 1] <- { Node = node.Right; Entry = b }
+                            count <- count + 2
+                        elif hitA then
+                            stack.[count] <- { Node = node.First; Entry = a }
+                            count <- count + 1
+                        elif hitB then
+                            stack.[count] <- { Node = node.Right; Entry = b }
+                            count <- count + 1
+            result
