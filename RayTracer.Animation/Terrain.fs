@@ -131,14 +131,17 @@ module Terrain =
         let bottom = get i (j + 1) * (1. - fx) + get (i + 1) (j + 1) * fx
         top * (1. - fz) + bottom * fz
 
-    /// Distant ranges seen through haze: pale, blue-shifted and low in contrast, so they recede.
-    let hazeTexture (settings: Settings) (haze: Colour) =
+    /// Distant ranges: the normal colouring, slightly desaturated and with a matte finish. Haze and
+    /// distance come from the scene's atmosphere, not from the texture.
+    let farTexture (settings: Settings) =
         let tones =
             Array2D.init 32 32 (fun i j ->
                 let altitude = (float i + 0.5) / 32. * settings.SnowLine * 1.5
                 let slope = (float j + 0.5) / 32.
-                let c = colourAt settings altitude slope * 0.6 + haze * 0.4
-                MatteMaterial(c, 0.35, c, 0.8) :> Material)
+                let c = colourAt settings altitude slope
+                let grey = (c.R + c.G + c.B) / 3.
+                let c = c * 0.8 + Colour(grey, grey, grey) * 0.2
+                MatteMaterial(c, 0.3, c, 0.85) :> Material)
         mkTexture (fun u v -> tones.[max 0 (min 31 (int (u * 32.))), max 0 (min 31 (int (v * 32.)))])
         |> markOpaque
 

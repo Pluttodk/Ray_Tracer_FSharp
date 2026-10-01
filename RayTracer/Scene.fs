@@ -55,7 +55,7 @@ type RenderOptions =
           AdaptiveThreshold = 0.; AdaptiveMinSamples = 16; Exposure = 1.
           CancellationToken = CancellationToken.None }
 
-type Scene(shapes: Shape list, lights: Light list, ambient : AmbientLight, maxBounces : int) = 
+type Scene(shapes: Shape list, lights: Light list, ambient : AmbientLight, maxBounces : int, ?atmosphere: Atmosphere) = 
 
     do
         if maxBounces < 0 || maxBounces > 32 then invalidArg (nameof maxBounces) "Bounce depth must be between 0 and 32."
@@ -82,3 +82,7 @@ type Scene(shapes: Shape list, lights: Light list, ambient : AmbientLight, maxBo
     member this.Lights = lights
     member this.BackgroundColour = backgroundColour 
     member this.MaxBounces = maxBounces
+    /// Height fog / aerial perspective. None leaves rays in vacuum, exactly as before it existed.
+    member this.Atmosphere = atmosphere
+    /// The atmosphere bound to this scene's lights (sky lookup and suns), built once.
+    member val Fog = atmosphere |> Option.map (fun a -> AtmosphereMedium(a, lights))

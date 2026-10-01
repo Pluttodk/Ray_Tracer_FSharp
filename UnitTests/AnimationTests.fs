@@ -62,7 +62,7 @@ let private sphereNode name =
 
 let private testScene clips roots =
     { Name = "test"; Roots = roots; Clips = clips; ActiveCamera = "camera"; Cuts = []
-      StaticShapes = []; StaticLights = []; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Duration = 1. }
+      StaticShapes = []; StaticLights = []; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Atmosphere = None; Duration = 1. }
 
 let sceneGraphTests () =
     let child = sphereNode "child" |> Node.at 1. 0. 0.

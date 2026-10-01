@@ -24,6 +24,9 @@ type PathIntegrator
     let environments =
         lights |> Array.choose (function :? EnvironmentLight as light -> Some light | _ -> None)
 
+    /// Height fog over each camera and secondary ray segment outside transparent media (shadow rays skip it).
+    let fog = scene.Fog
+
     /// Area lights are geometry, so a BSDF ray can land on one directly. MIS
     /// needs to recognize that and ask what the light-sampling density would
     /// have been, which means mapping the hit shape back to its light.
@@ -273,6 +276,21 @@ type PathIntegrator
                 match media with
                 | material :: _ -> material.InnerFilterColour
                 | [] -> Colour.White
+
+            // Aerial perspective over this segment: add the haze in-scattered along it, then attenuate
+            // whatever lies beyond (the surface, or the sky for an escaping ray).
+            match fog with
+            | Some fog when List.isEmpty media ->
+                let direction = currentRay.GetDirection.Normalise
+                let distance =
+                    if hit.DidHit then hit.Time * currentRay.GetDirection.Magnitude else fog.Settings.MaxDistance
+                let transmittance = fog.Transmittance(currentRay.GetOrigin, direction, distance)
+                if not (transmittance.R = 1. && transmittance.G = 1. && transmittance.B = 1.) then
+                    let s = fog.InScatter direction
+                    let scattered = Colour((1. - transmittance.R) * s.R, (1. - transmittance.G) * s.G, (1. - transmittance.B) * s.B)
+                    radiance <- addColour radiance (mulColour throughput scattered)
+                    throughput <- mulColour throughput transmittance
+            | _ -> ()
 
             if not hit.DidHit then
                 let travelled = infinity

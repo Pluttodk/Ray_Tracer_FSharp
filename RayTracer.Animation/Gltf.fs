@@ -283,7 +283,7 @@ module Gltf =
             let duration = clips |> List.map (fun clip -> clip.Duration) |> List.fold max 0.
             let scene =
                 { Name = sceneName; Roots = roots; Clips = clips; ActiveCamera = activeCamera; Cuts = []; StaticShapes = []
-                  StaticLights = lights; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 4
+                  StaticLights = lights; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 4; Atmosphere = None
                   Duration = if duration > 0. then duration else 1. }
             { Scene = AnimatedScene.validate scene; Warnings = List.ofSeq warnings }
 

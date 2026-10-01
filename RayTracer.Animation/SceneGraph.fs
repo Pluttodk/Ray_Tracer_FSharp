@@ -112,6 +112,8 @@ type AnimatedScene =
       StaticLights: Light list
       Ambient: AmbientLight
       MaxBounces: int
+      /// Height fog / aerial perspective applied to every frame; None for none.
+      Atmosphere: Atmosphere option
       /// Natural length of the animation in seconds.
       Duration: float }
 
@@ -231,7 +233,7 @@ module Frame =
                     let m = middle.[node.Name]
                     lights.Add(if isIdentity m then light else TransformLight.transformLight light (ofAffine m))
                 | CameraRig _ -> ()
-        Scene(List.ofSeq shapes, List.ofSeq lights, scene.Ambient, scene.MaxBounces)
+        Scene(List.ofSeq shapes, List.ofSeq lights, scene.Ambient, scene.MaxBounces, ?atmosphere = scene.Atmosphere)
 
     let camera (scene: AnimatedScene) (settings: FrameSettings) (shutterOpen: float) (shutterClose: float) =
         let pose = AnimatedScene.cameraPose scene (0.5 * (shutterOpen + shutterClose))

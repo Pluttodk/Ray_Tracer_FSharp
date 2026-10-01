@@ -81,7 +81,7 @@ let bakeTests () =
     let camera = Node.create "camera" |> Node.at 0. 0. 10. |> Node.withContent [ CameraRig CameraSpec.Default ]
     let scene =
         { Name = "bake"; Roots = nodes @ [ camera ]; Clips = [ clip ]; ActiveCamera = "camera"; Cuts = []; StaticShapes = []
-          StaticLights = []; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Duration = 2. }
+          StaticLights = []; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Atmosphere = None; Duration = 2. }
         |> AnimatedScene.validate
     let matches =
         trajectories.[0].Samples |> Array.forall (fun sample ->
@@ -110,7 +110,7 @@ let squashTests () =
     let camera = Node.create "camera" |> Node.at 0. 0. 10. |> Node.withContent [ CameraRig CameraSpec.Default ]
     let scene =
         { Name = "squash"; Roots = nodes @ [ camera ]; Clips = [ clip ]; ActiveCamera = "camera"; Cuts = []; StaticShapes = []
-          StaticLights = []; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Duration = 1.5 }
+          StaticLights = []; Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Atmosphere = None; Duration = 1.5 }
     let impact = trajectories.[0].Samples |> Array.find (fun s -> s.ImpactSpeed > 1.)
     let m = (AnimatedScene.worldMatrices scene impact.Time).["ball-spin"]
     let determinant =

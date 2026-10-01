@@ -62,7 +62,7 @@ module Film =
             let sink = Easing.smoothstep (max 0. (min 1. ((inner + 40. - edge) / 80.)))
             let wall = 380. * Easing.smoothstep (max 0. (min 1. ((r - 1400.) / 2600.)))
             Terrain.height settings x z * 1.6 + wall - 160. * sink
-        Terrain.buildWith settings heightAt (Terrain.hazeTexture settings (Colour(0.42, 0.42, 0.58)))
+        Terrain.buildWith settings heightAt (Terrain.farTexture settings)
 
     /// Low sun in the west-south-west, warm; everything below is tuned to it.
     let sunDirection = Vector(-0.85, 0.2, 0.35).Normalise
@@ -84,6 +84,17 @@ module Film =
                 let halo = glow * (0.9 * Math.Pow(sun, 24.) + 0.35 * Math.Pow(sun, 4.) * (1. - t))
                 emissive (baseColour + halo))
         EnvironmentLight(1e6, texture, multiJittered 2 17) :> Light
+
+    // --- c: atmosphere ---
+    /// Height fog for aerial perspective: dense in the valleys, thinning with altitude, glowing around the sun.
+    /// Near ranges stay crisp; each ridge further out is lighter and closer to the horizon colour behind it.
+    let private atmosphere () =
+        Some { Atmosphere.Default with
+                 Density = 3.5e-4; BaseHeight = 0.; ScaleHeight = 200.; HorizonLift = 0.08
+                 Tint = Colour(0.85, 1., 1.25)
+                 Anisotropy = 0.7; SkyWeight = 0.9; SunWeight = 1.
+                 MaxDistance = 7000. }
+    // --- c: end ---
 
     // ------------------------------------------------------------------ timing
 
@@ -243,7 +254,8 @@ module Film =
           StaticLights = [ sun; sky () ]
           Ambient = AmbientLight(Colour.White, 0.)
           MaxBounces = 2
-          Duration = duration }
+          Duration = duration
+          Atmosphere = atmosphere () }
 
 /// The film's soundtrack, derived from the animation itself: wing beats where the wings actually beat,
 /// whooshes where the dragon actually passes the camera, all panned and attenuated from the active camera.
