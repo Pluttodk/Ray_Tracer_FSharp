@@ -18,3 +18,4 @@ Branch names are `dragon-realism-<ws>`, not `dragon-realism/<ws>`. Git refuses a
 15:44 dof done reviewed; merged, tests green, ~0 cost
 15:47 mblur done reviewed; merged, 1595 tests green, ~0 cost
 15:52 fx done reviewed; merged; orchestrator made grains finer (r 0.13, 450/event); 1607 tests green. Wing-tip vapour skipped
+23:12 film done: 720 frames 960x540 56spp in 6h57m; MP4 sent to Telegram. User wants a more complex scene next
