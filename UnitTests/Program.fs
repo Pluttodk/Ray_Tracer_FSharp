@@ -31,6 +31,7 @@ let private suites: (string * (unit -> unit)) list =
       "gltf", GltfTests.allTest
       "pbr", PbrTests.allTest
       "film", FilmTests.allTest
+      "depth-of-field", DepthOfFieldTests.allTest
       "post", PostTests.allTest
       "terrain", TerrainTests.allTest
       "atmosphere", AtmosphereTests.allTest
