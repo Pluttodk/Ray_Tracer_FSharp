@@ -159,12 +159,11 @@ module internal AccelerationCommon =
         if paths |> Array.forall isNull then [||] else paths
 
     /// `consider` for a primitive with an allocation-free hit time. The candidate it records carries no
-    /// HitPoint; `materialize` builds the winner's afterwards. Same acceptance test as `consider`, which sees
-    /// hitFunction |> within minimum primitiveMaximum, then the open interval and the tie-break.
+    /// HitPoint; `materialize` builds the winner's afterwards. Same acceptance test as `consider`.
     let considerTime (fast: IHitTime) index (ray: Ray) minimum maximum candidate =
         let primitiveMaximum = min maximum (Math.BitIncrement candidate.Distance)
-        let time = fast.HitTime ray
-        if time > minimum && time < primitiveMaximum && time < maximum && Double.IsFinite time
+        let time = if minimum < primitiveMaximum then fast.HitTime(ray, minimum, primitiveMaximum) else nan
+        if time > minimum && time < maximum && Double.IsFinite time
            && (time < candidate.Distance || (time = candidate.Distance && index < candidate.Index)) then
             { Distance = time; Index = index; Hit = Unchecked.defaultof<HitPoint> }
         else candidate

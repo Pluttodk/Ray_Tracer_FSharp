@@ -9,10 +9,10 @@ namespace Tracer.Basics
 /// so the hit it returns is the one `hitFunction` would have returned.
 [<AllowNullLiteral>]
 type IHitTime =
-    /// The ray parameter of the hit `hitFunction ray` reports, or NaN when it reports a miss. Must not
-    /// allocate, and must agree exactly with `hitFunction`. Only for single-intersection primitives
-    /// (triangles), whose interval hit is their `hitFunction` hit filtered to the interval.
-    abstract member HitTime: Ray -> float
+    /// The ray parameter of the hit `HitWithin(ray, minimum, maximum)` (IIntervalShape) reports, or NaN when
+    /// it reports a miss. Must not allocate, and must agree exactly with HitWithin. Only for primitives whose
+    /// HitWithin result, when it hits, does not depend on the interval (triangles, alpha-tested or not).
+    abstract member HitTime: Ray * minimum: float * maximum: float -> float
 
 /// Visibility without shading: shadow rays only need to know that something blocks the segment.
 [<AllowNullLiteral>]
