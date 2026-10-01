@@ -21,6 +21,9 @@ type PathIntegrator
      maxDepth: int, rouletteDepth: int) =
 
     let lights = List.toArray scene.Lights
+    /// Which lights NEE samples at a vertex: all of them while there are few local lights,
+    /// otherwise every global light (sun, sky) plus one local light picked by a light BVH.
+    let selection = LightSelection(lights)
     let environments =
         lights |> Array.choose (function :? EnvironmentLight as light -> Some light | _ -> None)
 
@@ -31,16 +34,18 @@ type PathIntegrator
     /// needs to recognize that and ask what the light-sampling density would
     /// have been, which means mapping the hit shape back to its light.
     let areaLightByShape =
-        let map = Dictionary<Shape, AreaLight>(HashIdentity.Reference)
-        for light in lights do
-            match light with
-            | :? AreaLight as area -> map.[area.Shape] <- area
+        let map = Dictionary<Shape, struct (AreaLight * int)>(HashIdentity.Reference)
+        for index = 0 to lights.Length - 1 do
+            match lights.[index] with
+            | :? AreaLight as area -> map.[area.Shape] <- struct (area, index)
             | _ -> ()
         map
 
     let isDeltaLight (light: Light) =
         match light with
-        | :? PointLight | :? DirectionalLight -> true
+        // A sphere light is not geometry, so BSDF sampling can never find it: like a delta
+        // light, its NEE sample takes the full weight.
+        | :? PointLight | :? DirectionalLight | :? SphereLight -> true
         | _ -> false
 
     /// Beer-Lambert absorption over a segment inside a filtering medium.
@@ -158,6 +163,9 @@ type PathIntegrator
         | :? DirectionalLight as directional ->
             ValueSome { Direction = directional.Direction; Distance = infinity
                         Radiance = directional.GetColour hit; Weight = 1. }
+        | :? SphereLight as sphere ->
+            let sample = sphere.Sample(hit.Point, u1, u2)
+            if sample.Weight > 0. then ValueSome sample else ValueNone
         | :? AreaLight as area ->
             let surface = area.SampleSurface(hit.Point, u1, u2)
             if not (Double.IsFinite surface.AreaPdf) || surface.AreaPdf <= 0. then ValueNone
@@ -192,58 +200,75 @@ type PathIntegrator
                             Radiance = environment.Radiance direction; Weight = Math.PI / cosine }
         | _ -> ValueNone
 
-    /// Next-event estimation: sample every light directly and MIS the result
+    /// NEE estimate for one light, divided by the probability `selected` with which it was
+    /// chosen (1 when every light is sampled), MIS-weighted against BSDF sampling.
+    let estimateLight (lightIndex: int) (selected: float) (hit: HitPoint) (surface: SurfaceParams)
+                      (frame: ShadingFrame) (wo: Vector) (key: uint64) (mediumFilter: Colour) (translucent: bool) =
+        let light = lights.[lightIndex]
+        let sampleCount = LightSampling.sampleCount light
+        let lightKey = mixKey (key ^^^ (uint64 lightIndex + 0x51ED2701UL))
+        let mutable contribution = Colour.Black
+        for sampleIndex = 0 to sampleCount - 1 do
+            let u1, u2 = sample2D lightKey (sampleIndex + 3)
+            match sampleLight light hit translucent u1 u2 with
+            | ValueNone -> ()
+            | ValueSome sample ->
+            if sample.Weight > 0. && not sample.Radiance.IsBlack then
+                let wi = frame.ToLocal sample.Direction
+                // Lights behind the surface only reach it through a
+                // diffuse transmission lobe (thin translucent sheets).
+                if wi.Z > 0. || (wi.Z < 0. && translucent) then
+                    let f = Bsdf.evalLocal surface wo wi
+                    if not f.IsBlack then
+                        let weight =
+                            if isDeltaLight light then 1.
+                            else
+                                // Weight is cos/(d^2 * areaPdf), so its
+                                // reciprocal is the solid-angle density; light
+                                // selection scales it by the selection probability.
+                                let lightPdf = (if selected = 1. then 1. else selected) * (1. / sample.Weight)
+                                let bsdfPdf = Bsdf.pdfLocal surface wo wi
+                                powerHeuristic lightPdf bsdfPdf
+                        if weight > 0. then
+                            let origin = hit.ShadowOrigin sample.Direction
+                            let maximum =
+                                if Double.IsPositiveInfinity sample.Distance then infinity
+                                else
+                                    let target = hit.Point + sample.Distance * sample.Direction
+                                    let delta = target - origin
+                                    let scale =
+                                        max (max (abs origin.X) (max (abs origin.Y) (abs origin.Z)))
+                                            (max (abs target.X) (max (abs target.Y) (abs target.Z)))
+                                    let margin = 32. * 2.220446049250313e-16 * scale
+                                    max 0. (Math.BitDecrement(delta.Magnitude - margin))
+                            let shadowRay = Ray(origin, sample.Direction, hit.Ray.ShutterTime)
+                            let transmittance = visibility shadowRay maximum mediumFilter
+                            if not transmittance.IsBlack then
+                                let radiance = mulColour sample.Radiance transmittance
+                                contribution <-
+                                    addColour contribution
+                                        (scaleColour (mulColour f radiance) (sample.Weight * weight))
+        if sampleCount = 0 then Colour.Black
+        else
+            let average = scaleColour contribution (1. / float sampleCount)
+            if selected = 1. then average else scaleColour average (1. / selected)
+
+    /// Next-event estimation: sample the lights directly and MIS the result
     /// against what BSDF sampling would have produced for the same direction.
+    /// With few local lights every light is sampled; with many, the global
+    /// lights are and one local light is selected (see LightSelection).
     let directLighting (hit: HitPoint) (surface: SurfaceParams) (frame: ShadingFrame)
                        (wo: Vector) (key: uint64) (mediumFilter: Colour) =
         let mutable total = Colour.Black
         let translucent = Bsdf.hasDiffuseTransmission surface
-        for lightIndex = 0 to lights.Length - 1 do
-            let light = lights.[lightIndex]
-            let sampleCount = LightSampling.sampleCount light
-            let lightKey = mixKey (key ^^^ (uint64 lightIndex + 0x51ED2701UL))
-            let mutable contribution = Colour.Black
-            for sampleIndex = 0 to sampleCount - 1 do
-                let u1, u2 = sample2D lightKey (sampleIndex + 3)
-                match sampleLight light hit translucent u1 u2 with
-                | ValueNone -> ()
-                | ValueSome sample ->
-                if sample.Weight > 0. && not sample.Radiance.IsBlack then
-                    let wi = frame.ToLocal sample.Direction
-                    // Lights behind the surface only reach it through a
-                    // diffuse transmission lobe (thin translucent sheets).
-                    if wi.Z > 0. || (wi.Z < 0. && translucent) then
-                        let f = Bsdf.evalLocal surface wo wi
-                        if not f.IsBlack then
-                            let weight =
-                                if isDeltaLight light then 1.
-                                else
-                                    // Weight is cos/(d^2 * areaPdf), so its
-                                    // reciprocal is the solid-angle density.
-                                    let lightPdf = 1. / sample.Weight
-                                    let bsdfPdf = Bsdf.pdfLocal surface wo wi
-                                    powerHeuristic lightPdf bsdfPdf
-                            if weight > 0. then
-                                let origin = hit.ShadowOrigin sample.Direction
-                                let maximum =
-                                    if Double.IsPositiveInfinity sample.Distance then infinity
-                                    else
-                                        let target = hit.Point + sample.Distance * sample.Direction
-                                        let delta = target - origin
-                                        let scale =
-                                            max (max (abs origin.X) (max (abs origin.Y) (abs origin.Z)))
-                                                (max (abs target.X) (max (abs target.Y) (abs target.Z)))
-                                        let margin = 32. * 2.220446049250313e-16 * scale
-                                        max 0. (Math.BitDecrement(delta.Magnitude - margin))
-                                let shadowRay = Ray(origin, sample.Direction, hit.Ray.ShutterTime)
-                                let transmittance = visibility shadowRay maximum mediumFilter
-                                if not transmittance.IsBlack then
-                                    let radiance = mulColour sample.Radiance transmittance
-                                    contribution <-
-                                        addColour contribution
-                                            (scaleColour (mulColour f radiance) (sample.Weight * weight))
-            if sampleCount > 0 then
-                total <- addColour total (scaleColour contribution (1. / float sampleCount))
+        let always = selection.Always
+        for k = 0 to always.Length - 1 do
+            total <- addColour total (estimateLight always.[k] 1. hit surface frame wo key mediumFilter translucent)
+        if not selection.IsExhaustive then
+            let u, _ = sample2D (mixKey (key ^^^ 0x5E1EC7EDUL)) 0
+            let struct (index, probability) = selection.Select(hit.Point, frame.Normal, translucent, u)
+            if index >= 0 && probability > 0. then
+                total <- addColour total (estimateLight index probability hit surface frame wo key mediumFilter translucent)
         total
 
     member _.MaxDepth = maxDepth
@@ -266,6 +291,8 @@ type PathIntegrator
         // Shading normal of the vertex the current ray left, needed to evaluate
         // the environment light's density for MIS when the ray escapes.
         let mutable previousNormal = Vector(0., 0., 1.)
+        // Whether that vertex's NEE also selected lights behind its surface.
+        let mutable previousTranslucent = false
         // Stack of transparent materials the ray is currently inside, innermost
         // first. Drives both the relative IOR at the next boundary and the
         // absorption applied along each segment.
@@ -337,8 +364,11 @@ type PathIntegrator
                         if previousWasSpecular then 1.
                         else
                             match areaLightByShape.TryGetValue hit.Shape with
-                            | true, light ->
-                                let lightPdf = areaLightPdf light previousPoint hit
+                            | true, struct (light, index) ->
+                                let selected =
+                                    if selection.IsExhaustive then 1.
+                                    else selection.Probability(previousPoint, previousNormal, previousTranslucent, index)
+                                let lightPdf = selected * areaLightPdf light previousPoint hit
                                 powerHeuristic previousBsdfPdf lightPdf
                             | _ -> 1.
                     radiance <- addColour radiance (scaleColour (mulColour throughput emission) weight)
@@ -390,6 +420,7 @@ type PathIntegrator
                                 previousBsdfPdf <- bsdf.Pdf
                                 previousPoint <- hit.Point
                                 previousNormal <- frame.Normal
+                                previousTranslucent <- Bsdf.hasDiffuseTransmission surface
                                 currentRay <- hit.SpawnRay worldDirection
                                 depth <- depth + 1
 
