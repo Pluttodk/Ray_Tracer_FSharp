@@ -1,6 +1,6 @@
 {
   "_comment": "Shared shot and lighting description for the `sponza` demo (F#) and the Cycles ground truth (scripts/sponza). Units: metres, degrees, seconds. Azimuth = atan2(x, z) of the direction TOWARDS the light (+Y up).",
-  "duration": 24.0,
+  "duration": 20.0,
   "parts": {
     "main": "main_sponza/NewSponza_Main_glTF_003.gltf",
     "curtains": "pkg_a_curtains/NewSponza_Curtains_glTF.gltf",
@@ -25,220 +25,232 @@
   },
   "sky": {
     "hdri": "main_sponza/textures/kloppenheim_05_4k.hdr",
-    "rotationDeg": 0.0,
+    "rotationDeg": 155.0,
     "intensity": 1.0,
     "turbidity": 2.5,
     "sunToSky": 6.0
   },
   "lamps": {
-    "enabled": false,
+    "enabled": true,
     "intensity": 2.0,
     "colour": [
       1.0,
       0.456,
       0.114
     ],
-    "radius": 0.05
+    "radius": 0.05,
+    "offset": [
+      0.0,
+      -0.2,
+      0.0
+    ]
   },
   "exposure": 3.0,
   "shots": [
     {
-      "name": "cam-1",
+      "name": "establish",
       "start": 0.0,
-      "yfovDeg": 58.5,
+      "yfovDeg": 50.0,
       "keys": [
         [
           0.0,
           [
-            -8.807,
-            1.592,
-            -0.858
+            15.5,
+            6.5,
+            -3.2
           ],
           [
-            -3.988,
-            2.564,
-            0.052
+            7.0,
+            1.2,
+            -0.4
           ]
         ],
         [
           4.0,
           [
-            -8.2,
-            1.7,
-            -0.6
+            14.6,
+            5.6,
+            -2.6
           ],
           [
-            -3.4,
-            2.6,
-            0.2
+            7.2,
+            1.2,
+            -0.3
           ]
         ]
       ]
     },
     {
-      "name": "cam-2",
+      "name": "vigil",
       "start": 4.0,
-      "yfovDeg": 58.6,
+      "yfovDeg": 30.0,
+      "aperture": 0.012,
       "keys": [
         [
           4.0,
           [
-            10.531,
-            7.353,
-            1.528
+            5.9,
+            1.5,
+            -2.9
           ],
           [
-            5.572,
-            7.465,
-            0.902
+            7.86,
+            1.62,
+            -0.1
           ]
         ],
         [
-          8.0,
+          7.5,
           [
-            10.2,
-            7.35,
-            1.2
+            6.5,
+            1.62,
+            -2.1
           ],
           [
-            5.3,
-            7.4,
-            0.6
+            7.86,
+            1.66,
+            -0.1
           ]
         ]
       ]
     },
     {
-      "name": "cam-3",
-      "start": 8.0,
-      "yfovDeg": 36.3,
+      "name": "guard",
+      "start": 7.5,
+      "yfovDeg": 40.0,
       "keys": [
         [
-          8.0,
+          7.5,
           [
-            2.703,
-            1.355,
-            2.111
+            5.2,
+            0.55,
+            2.0
           ],
           [
-            -1.994,
-            1.787,
-            0.453
+            8.1,
+            1.15,
+            -0.15
           ]
         ],
         [
-          12.0,
+          11.2,
           [
-            2.5,
-            1.4,
-            2.2
+            5.6,
+            0.65,
+            2.5
           ],
           [
-            -2.1,
-            1.8,
+            8.1,
+            1.25,
+            -0.15
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "advance",
+      "start": 11.2,
+      "yfovDeg": 45.0,
+      "keys": [
+        [
+          11.2,
+          [
+            4.3,
+            1.3,
+            2.6
+          ],
+          [
+            8.1,
+            1.0,
+            -0.1
+          ]
+        ],
+        [
+          12.5,
+          [
+            3.9,
+            1.3,
+            2.5
+          ],
+          [
+            6.9,
+            1.0,
+            0.0
+          ]
+        ],
+        [
+          13.5,
+          [
+            3.7,
+            1.35,
+            2.5
+          ],
+          [
+            6.0,
+            1.05,
+            0.4
+          ]
+        ],
+        [
+          15.5,
+          [
+            3.6,
+            1.4,
+            2.6
+          ],
+          [
+            5.2,
+            1.1,
             0.5
           ]
         ]
       ]
     },
     {
-      "name": "cam-4",
-      "start": 12.0,
-      "yfovDeg": 58.2,
+      "name": "rise",
+      "start": 15.5,
+      "yfovDeg": 45.0,
       "keys": [
         [
-          12.0,
+          15.5,
           [
-            -9.594,
-            6.921,
-            5.353
+            6.6,
+            1.0,
+            2.4
           ],
           [
-            -4.888,
-            6.82,
-            3.669
+            5.08,
+            1.6,
+            0.54
           ]
         ],
         [
-          16.0,
+          20.0,
           [
-            -9.3,
-            6.9,
-            5.1
-          ],
-          [
-            -4.6,
+            10.5,
             6.8,
-            3.4
-          ]
-        ]
-      ]
-    },
-    {
-      "name": "cam-5",
-      "start": 16.0,
-      "yfovDeg": 37.2,
-      "keys": [
-        [
-          16.0,
-          [
-            -2.237,
-            0.744,
-            2.361
+            4.6
           ],
           [
-            2.105,
-            1.961,
-            0.201
-          ]
-        ],
-        [
-          20.0,
-          [
-            -2.0,
-            0.8,
-            2.3
-          ],
-          [
-            2.3,
-            2.0,
-            0.1
-          ]
-        ]
-      ]
-    },
-    {
-      "name": "cam-6",
-      "start": 20.0,
-      "yfovDeg": 37.2,
-      "keys": [
-        [
-          20.0,
-          [
-            -6.595,
-            10.879,
-            -0.629
-          ],
-          [
-            -1.782,
-            9.53,
-            -0.542
-          ]
-        ],
-        [
-          24.0,
-          [
-            -6.3,
-            10.8,
-            -0.6
-          ],
-          [
-            -1.5,
-            9.5,
-            -0.5
+            4.0,
+            1.2,
+            0.0
           ]
         ]
       ]
     }
-  ]
+  ],
+  "_lamps": "Lamp lights sit inside opaque lanterns in the file; offset moves them just below the lanterns.",
+  "knight": {
+    "enabled": true,
+    "position": [
+      8.0,
+      0.0,
+      0.0
+    ],
+    "yawDeg": 0.0,
+    "start": 3.0,
+    "speed": 1.0,
+    "maxTexture": 2048
+  }
 }

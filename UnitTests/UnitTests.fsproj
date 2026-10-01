@@ -23,6 +23,7 @@
     <Compile Include="BsdfTests.fs" />
     <Compile Include="PathTransportTests.fs" />
     <Compile Include="SkyTests.fs" />
+    <Compile Include="LightTests.fs" />
     <Compile Include="ShapeTest.fs" />
     <Compile Include="ImageIOTests.fs" />
     <Compile Include="AccelerationRegressionTests.fs" />
@@ -43,6 +44,7 @@
     <Compile Include="AtmosphereTests.fs" />
     <Compile Include="ShadowTerminatorTests.fs" />
     <Compile Include="ParticleTests.fs" />
+    <Compile Include="KnightTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -111,9 +111,13 @@ type EnvironmentDistribution(width: int, height: int, weights: float[]) =
 /// With `importanceWidth` > 0, light sampling draws directions from a luminance table of that
 /// width (and half that height), mixed with cosine sampling about the normal. With 0 it
 /// cosine-samples the hemisphere, as it always did.
+///
+/// A prebuilt `table` (for example one tabulated straight from an HDR image's pixels, see
+/// HdrEnvironment) takes the place of the luminance table and turns importance sampling on.
 type EnvironmentLight
     (radius: float, texture: Texture, sampler: Sampler,
-     radiance: (Vector -> Colour) option, visible: (Vector -> Colour) option, importanceWidth: int) =
+     radiance: (Vector -> Colour) option, visible: (Vector -> Colour) option, importanceWidth: int,
+     table: EnvironmentDistribution option) =
     inherit Light(Colour.Black, 1.)
     do
         if not (Double.IsFinite radius) || radius <= 0. then
@@ -136,7 +140,8 @@ type EnvironmentLight
 
     let distribution =
         lazy (
-            if importanceWidth = 0 then None
+            if table.IsSome then table
+            elif importanceWidth = 0 then None
             else
                 let luminance (d: Vector) = let c = radianceOf d in 0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B
                 Some (EnvironmentDistribution.OfLuminance(importanceWidth, max 1 (importanceWidth / 2), luminance)))
@@ -145,13 +150,15 @@ type EnvironmentLight
     /// normal, which bounds the variance where the table fits badly (faces turned from the sun).
     static let tableShare = 0.75
 
-    new(radius, texture, sampler) = EnvironmentLight(radius, texture, sampler, None, None, 0)
+    new(radius, texture, sampler, radiance, visible, importanceWidth) =
+        EnvironmentLight(radius, texture, sampler, radiance, visible, importanceWidth, None)
+    new(radius, texture, sampler) = EnvironmentLight(radius, texture, sampler, None, None, 0, None)
 
     member _.Radius = radius
     member _.Texture = texture
     member _.Sampler = sampler
     member _.Sphere = sphere
-    member _.IsImportanceSampled = importanceWidth > 0
+    member _.IsImportanceSampled = importanceWidth > 0 || table.IsSome
     member _.Distribution = distribution.Value
 
     member _.Radiance(direction: Vector) = radianceOf direction

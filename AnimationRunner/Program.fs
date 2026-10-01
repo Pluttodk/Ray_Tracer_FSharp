@@ -14,6 +14,8 @@ type Options =
       Settings: FrameSettings
       Start: int
       End: int option
+      /// Renders only these frames (from one scene load), e.g. for review stills.
+      Only: int list option
       Frames: int option
       Seed: int
       FixedNoise: bool
@@ -38,7 +40,7 @@ type Options =
       AudioOnly: bool }
 
 let private defaults =
-    { Demo = None; Scene = None; Clip = None; Settings = FrameSettings.Default; Start = 0; End = None; Frames = None
+    { Demo = None; Scene = None; Clip = None; Settings = FrameSettings.Default; Start = 0; End = None; Only = None; Frames = None
       Seed = 2026; FixedNoise = false; Spp = None; Integrator = None; Denoise = None; Transfer = None; Bounces = None
       Bloom = None; Vignette = None; Exposure = None; Saturation = None; WhiteBalance = None
       Output = None; Resume = true; Video = true; ExportGltf = None; LightScale = 1.; Telegram = false; Audio = true; AudioOnly = false }
@@ -48,6 +50,7 @@ let usage () =
   --fps N              frames per second (default 24)
   --frames N           render N frames from --start (default: the whole animation)
   --start S / --end E  frame range [S, E)
+  --only A,B,C         render just these frames, loading the scene once
   --res WxH            resolution (default 640x360)
   --spp N              samples per pixel (default 16, or the animation's recommendation)
   --integrator K       classic | path (default classic, or the animation's recommendation)
@@ -92,6 +95,7 @@ let parse (argv: string[]) =
         | "--frames" :: v :: rest -> go { options with Frames = Some (integer "frames" v) } rest
         | "--start" :: v :: rest -> go { options with Start = integer "start" v } rest
         | "--end" :: v :: rest -> go { options with End = Some (integer "end" v) } rest
+        | "--only" :: v :: rest -> go { options with Only = Some [ for f in v.Split(',') -> integer "only" f ] } rest
         | "--res" :: v :: rest ->
             match v.ToLowerInvariant().Split('x') with
             | [| w; h |] -> go { options with Settings = { options.Settings with Width = integer "res" w; Height = integer "res" h } } rest
@@ -253,7 +257,8 @@ let render (options: Options) (scene: AnimatedScene) =
         settings.SamplesPerPixel settings.Shutter directory
     let timer = Stopwatch.StartNew()
     let mutable rendered = 0
-    for frame in options.Start .. last - 1 do
+    let frames = match options.Only with Some list -> list | None -> [ options.Start .. last - 1 ]
+    for frame in frames do
         let path = Path.Combine(directory, $"frame_%05d{frame}.png")
         if options.Resume && File.Exists path && FileInfo(path).Length > 0L then
             printfn "  frame %5d  exists, skipped" frame

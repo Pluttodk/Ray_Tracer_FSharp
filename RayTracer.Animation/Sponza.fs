@@ -26,7 +26,7 @@ module Sponza =
 
     // ------------------------------------------------------------------ shared description
 
-    type Shot = { Name: string; Start: float; YFov: float; Keys: (float * Vector * Vector) list }
+    type Shot = { Name: string; Start: float; YFov: float; Aperture: float; Keys: (float * Vector * Vector) list }
 
     type Spec =
         { Duration: float
@@ -45,6 +45,7 @@ module Sponza =
           LampIntensity: float
           LampColour: Colour
           LampRadius: float
+          LampOffset: Vector
           Shots: Shot list
           Root: JsonElement }
 
@@ -81,11 +82,13 @@ module Sponza =
           LampIntensity = num lamps "intensity"
           LampColour = col (get lamps "colour")
           LampRadius = num lamps "radius"
+          LampOffset = (match lamps.TryGetProperty "offset" with | true, v -> vec v | _ -> Vector.Zero)
           Shots =
             [ for s in (get root "shots").EnumerateArray() ->
                 { Name = (get s "name").GetString()
                   Start = num s "start"
                   YFov = radians (num s "yfovDeg")
+                  Aperture = (match s.TryGetProperty "aperture" with | true, v -> v.GetDouble() | _ -> 0.)
                   Keys =
                     [ for k in (get s "keys").EnumerateArray() ->
                         let a = k.EnumerateArray() |> Array.ofSeq
@@ -130,9 +133,13 @@ module Sponza =
     let private cameras (spec: Spec) =
         let nodes =
             spec.Shots |> List.collect (fun shot ->
-                [ Node.create shot.Name
-                  |> Node.withContent [ CameraRig { CameraSpec.Default with YFov = shot.YFov; Target = Some (shot.Name + "-aim") } ]
-                  Node.create (shot.Name + "-aim") ])
+                let aim = shot.Name + "-aim"
+                let rig =
+                    { CameraSpec.Default with
+                        YFov = shot.YFov; Target = Some aim; ApertureRadius = shot.Aperture
+                        FocusTarget = (if shot.Aperture > 0. then Some aim else None) }
+                [ Node.create shot.Name |> Node.withContent [ CameraRig rig ]
+                  Node.create aim ])
         let track (keys: (float * Vector) list) =
             match keys with
             | [ single ] -> Sampler.linear [ single; fst single + 1., snd single ]
@@ -153,9 +160,70 @@ module Sponza =
     let private lights (spec: Spec) (lamps: Point list) =
         let sky = skyModel spec
         let sun = DirectionalLight(spec.SunColour, spec.SunIrradiance, sunDirection spec) :> Light
-        // Lamps wait for an attenuated point light (workstream R2); PointLight has no falloff.
-        ignore lamps
-        [ sun; Sky.light sky 2 512 :> Light ]
+        // --- r2 ---
+        // The HDRI's own sun is clamped out of the map (camera rays see the clamped map too) so the
+        // spec's analytic sun is the only sun; without an HDRI the Preetham sky stands in.
+        let skyLight =
+            match spec.SkyHdri with
+            | Some file ->
+                let image = HdrImage.load (asset file)
+                let clamped, hdriSun = HdrEnvironment.extractSun image spec.SkyRotation None 5.
+                let d = hdriSun.Direction
+                eprintfn "sponza: HDRI sun clamped (%d px, %.0f%% of the map's power) at azimuth %.1f, elevation %.1f deg"
+                    hdriSun.Pixels (100. * hdriSun.PowerFraction) (Math.Atan2(d.X, d.Z) * 180. / Math.PI) (Math.Asin d.Y * 180. / Math.PI)
+                HdrEnvironment.light clamped None spec.SkyRotation spec.SkyIntensity 2 1024 :> Light
+            | None -> Sky.light sky 2 512 :> Light
+        let lampLights =
+            if spec.LampsEnabled then
+                lamps |> List.map (fun p -> SphereLight(spec.LampColour, spec.LampIntensity, p + spec.LampOffset, spec.LampRadius) :> Light)
+            else []
+        sun :: skyLight :: lampLights
+        // --- end r2 ---
+
+    // --- k ---
+    /// The animated knight (Knight.fs), placed from the optional "knight" block of sponza.json:
+    /// { "enabled": true, "position": [x, y, z], "yawDeg": 0, "start": 0, "speed": 1, "maxTexture": 2048 }.
+    /// Defaults: on the atrium floor (y = 0) at (8, 0, 0), yaw 0, starting at scene time 0. It starts in a
+    /// guard stance and later walks ~2.9 m towards -X along the long axis, stopping about 2 m short of the
+    /// cypress add-on's ground cover (the 15 m tree stands at the origin, with ground cover to |x|, |z| = 3.1).
+    /// Skipped with a message when assets/sponza/knight/knight.cache has not been baked.
+    type KnightSetup = { Enabled: bool; Position: Vector; Yaw: float; Start: float; Speed: float; MaxTexture: int }
+
+    let knightSetup (spec: Spec) =
+        let fallback = { Enabled = true; Position = Vector(8., 0., 0.); Yaw = 0.; Start = 0.; Speed = 1.; MaxTexture = 2048 }
+        match spec.Root.TryGetProperty "knight" with
+        | true, k ->
+            let num name fallback = match k.TryGetProperty(name: string) with | true, v -> v.GetDouble() | _ -> fallback
+            { Enabled = (match k.TryGetProperty "enabled" with | true, v -> v.GetBoolean() | _ -> true)
+              Position =
+                (match k.TryGetProperty "position" with
+                 | true, v -> let a = v.EnumerateArray() |> Seq.map (fun x -> x.GetDouble()) |> Array.ofSeq in Vector(a.[0], a.[1], a.[2])
+                 | _ -> fallback.Position)
+              Yaw = radians (num "yawDeg" 0.)
+              Start = num "start" fallback.Start
+              Speed = num "speed" fallback.Speed
+              MaxTexture = int (num "maxTexture" (float fallback.MaxTexture)) }
+        | _ -> fallback
+
+    /// The knight's placement and clock (scene time to animation time), for camera helpers such as
+    /// `Knight.headAt cache placement clock t`.
+    let knightPlacement (setup: KnightSetup) =
+        Knight.placeAt setup.Position.X setup.Position.Y setup.Position.Z setup.Yaw, Knight.clock setup.Start setup.Speed
+
+    /// The knight cache, if it has been baked (loaded once per process).
+    let knightCache = lazy (searchUp (Path.Combine(assetDirectory, "knight", "knight.cache")) |> Option.map Knight.load)
+
+    let private knightNodes (spec: Spec) =
+        let setup = knightSetup spec
+        match setup.Enabled, knightCache.Force() with
+        | false, _ -> []
+        | true, None ->
+            eprintfn "sponza: knight cache missing (run scripts/fetch-sponza-assets.sh knight); rendering without the knight."
+            []
+        | true, Some cache ->
+            let placement, clock = knightPlacement setup
+            [ Knight.node "knight" cache (Knight.textures cache setup.MaxTexture (fun _ p -> p)) placement clock ]
+    // --- end k ---
 
     // ------------------------------------------------------------------ scene
 
@@ -167,7 +235,7 @@ module Sponza =
         let cameraNodes, cameraClip = cameras spec
         let shots = spec.Shots |> List.sortBy (fun s -> s.Start)
         { Name = "sponza"
-          Roots = geometry @ cameraNodes
+          Roots = geometry @ cameraNodes @ knightNodes spec // --- k ---
           Clips = [ cameraClip ]
           ActiveCamera = shots.Head.Name
           Cuts = [ for s in shots.Tail -> s.Start, s.Name ]

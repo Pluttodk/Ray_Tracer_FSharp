@@ -35,7 +35,9 @@
     <Compile Include="Lights/GlobalLight.fs" />
     <Compile Include="Lights/BasicLight.fs" />
     <Compile Include="Lights/Sky.fs" />
+    <Compile Include="Lights/HdrImage.fs" />
     <Compile Include="Lights/AreaLight.fs" />
+    <Compile Include="Lights/LightSelection.fs" />
     <Compile Include="Acceleration/KDTree.fs" />
     <Compile Include="Acceleration/BVH.fs" />
     <Compile Include="Acceleration/RegularGrids.fs" />
