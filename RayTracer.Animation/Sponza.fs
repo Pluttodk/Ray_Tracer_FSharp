@@ -187,11 +187,11 @@ module Sponza =
     let hazeDefaults =
         { Volume.Default with
             Min = Point(-18., -0.5, -10.); Max = Point(18., 27., 10.)
-            Scattering = Colour(0.006, 0.006, 0.006); Absorption = Colour(0.0006, 0.0006, 0.0006)
+            Scattering = Colour(0.008, 0.008, 0.008); Absorption = Colour(0.0008, 0.0008, 0.0008)
             BaseHeight = 0.; ScaleHeight = infinity
-            SunAnisotropy = 0.6; LampAnisotropy = 0.2
+            SunAnisotropy = 0.5; LampAnisotropy = 0.2
             SunSamples = 4; LampSamples = 2; ScatterDepth = 0
-            Ambient = Colour(0.03, 0.033, 0.039); SunWeight = 1.; LampWeight = 1.; LampClearance = 0.15 }
+            Ambient = Colour(0.03, 0.033, 0.039); SunWeight = 1.; LampWeight = 2.; LampClearance = 0.15 }
 
     let haze (spec: Spec) : Volume option =
         match spec.Root.TryGetProperty "volume" with
