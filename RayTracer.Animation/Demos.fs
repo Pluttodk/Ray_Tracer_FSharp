@@ -64,7 +64,7 @@ module Demos =
           StaticShapes = []
           StaticLights = daylight ()
           Ambient = ambient 0.
-          MaxBounces = 3
+          MaxBounces = 3; Atmosphere = None
           Duration = duration }
 
     let private ballTexture (colour: Colour) = checker 8 4 (plastic colour) (plastic (rgb 0.95 0.92 0.85))
@@ -108,7 +108,7 @@ module Demos =
           StaticShapes = []
           StaticLights = daylight ()
           Ambient = ambient 0.
-          MaxBounces = 3
+          MaxBounces = 3; Atmosphere = None
           Duration = duration }
 
     /// A ball thrown onto the floor bounces with cartoon squash on impact and stretch in flight.
@@ -131,7 +131,7 @@ module Demos =
           StaticShapes = []
           StaticLights = daylight ()
           Ambient = ambient 0.
-          MaxBounces = 3
+          MaxBounces = 3; Atmosphere = None
           Duration = duration }
 
     /// Finds a repository asset by walking up from the working directory and the executable.
@@ -192,7 +192,7 @@ module Demos =
           StaticShapes = []
           StaticLights = daylight ()
           Ambient = ambient 0.
-          MaxBounces = 4
+          MaxBounces = 4; Atmosphere = None
           Duration = duration }
 
     /// A desk lamp in the spirit of Pixar's Luxo Jr.: an articulated hierarchy (base, two arms, head with its own
@@ -277,7 +277,7 @@ module Demos =
           StaticShapes = []
           StaticLights = [ sun (Vector(-0.3, 1., 0.8)) 0.55; sky (rgb 0.8 0.85 1.) (rgb 0.25 0.35 0.7) 0.25 2 ]
           Ambient = ambient 0.
-          MaxBounces = 3
+          MaxBounces = 3; Atmosphere = None
           Duration = duration }
 
     let all =

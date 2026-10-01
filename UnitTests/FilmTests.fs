@@ -13,7 +13,7 @@ let private white = Textures.mkMatTexture (MatteMaterial(Colour.White, 0., Colou
 let private camera name = Node.create name |> Node.at 0. 0. 10. |> Node.withContent [ CameraRig CameraSpec.Default ]
 let private scene roots clips cuts =
     { Name = "t"; Roots = roots; Clips = clips; ActiveCamera = "camera"; Cuts = cuts; StaticShapes = []; StaticLights = []
-      Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Duration = 2. }
+      Ambient = AmbientLight(Colour.White, 0.); MaxBounces = 1; Atmosphere = None; Duration = 2. }
 
 /// A unit quad along +X bound to two joints: the root, and a joint at x = 1 that bends 90 degrees about Z.
 let skinningTests () =
