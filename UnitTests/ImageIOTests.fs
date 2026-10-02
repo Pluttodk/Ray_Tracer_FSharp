@@ -61,7 +61,8 @@ let allTest () =
     disposed.Dispose()
     Assert.Throws<ObjectDisposedException>((fun () -> disposed.GetPixel(0, 0) |> ignore), "disposed image rejects pixel access")
 
-    let directory = Path.GetFullPath(Path.Combine(__SOURCE_DIRECTORY__, "../artifacts/image-io-tests"))
+    // A scratch file in the temp directory: deterministic CI builds map __SOURCE_DIRECTORY__ to "/_/".
+    let directory = Path.Combine(Path.GetTempPath(), "raytracer-image-io-tests")
     Directory.CreateDirectory directory |> ignore
     let path = Path.Combine(directory, Guid.NewGuid().ToString("N") + ".png")
     try
