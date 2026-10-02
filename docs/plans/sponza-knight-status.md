@@ -16,3 +16,4 @@
 01:45 v done 7433e69..b978d8f: haze volume (0.015/m, 4 sun + 2 lamp samples, ~+15-25%); merged; 1719 tests
 01:52 p2 done 26b72df,8cc0e7c,41e8e80: baked static BVH, ~2x less CPU, noise-level diff; merged; 1721 tests
 02:03 final render started: sponza 480 frames 960x540 32spp, ~45 s/frame (bake 33 s), --telegram; ETA ~08:00
+08:02 film done: sponza 480 frames 960x540 32spp in 5h54m (avg 44 s/frame); MP4 sent to Telegram
